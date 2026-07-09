@@ -57,7 +57,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
               PrimaryCtaButton(
                 label: 'Get Started',
                 trailingIcon: LucideIcons.arrowRight,
-                onPressed: () => Get.toNamed(AppRoutes.otp),
+                onPressed: () => Get.toNamed(AppRoutes.becomePartnerIntro),
               ),
               const SizedBox(height: AppSpacing.sm),
               _LoginCard(onTap: () => Get.toNamed(AppRoutes.otp)),
@@ -78,7 +78,7 @@ class _Wordmark extends StatelessWidget {
     return Column(
       children: [
         Image.asset(
-          'assets/images/logo.jpeg',
+          'assets/images/logo.png',
           height: 44,
           fit: BoxFit.contain,
         ),

@@ -3,6 +3,7 @@ class AppRoutes {
 
   static const splash = '/splash';
   static const welcome = '/welcome';
+  static const becomePartnerIntro = '/become-partner';
   static const otp = '/otp';
   static const personalInfo = '/registration/personal-info';
   static const vehicleSelection = '/registration/vehicle-selection';
