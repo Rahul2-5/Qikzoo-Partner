@@ -77,13 +77,10 @@ class _Wordmark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          'QIKZOO',
-          style: AppTypography.h1.copyWith(
-            fontSize: 32,
-            letterSpacing: 0.5,
-            color: AppColors.secondary,
-          ),
+        Image.asset(
+          'assets/images/logo.jpeg',
+          height: 44,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: AppSpacing.xs),
         RichText(
