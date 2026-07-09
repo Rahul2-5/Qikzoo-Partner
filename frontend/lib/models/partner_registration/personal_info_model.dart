@@ -7,7 +7,8 @@ class PersonalInfoModel extends Equatable {
   final DateTime dateOfBirth;
   final Gender gender;
   final String? email;
-  final String emergencyContact;
+  final String emergencyContactName;
+  final String emergencyContactNumber;
   final String? referralCode;
 
   const PersonalInfoModel({
@@ -15,11 +16,19 @@ class PersonalInfoModel extends Equatable {
     required this.dateOfBirth,
     required this.gender,
     this.email,
-    required this.emergencyContact,
+    required this.emergencyContactName,
+    required this.emergencyContactNumber,
     this.referralCode,
   });
 
   @override
-  List<Object?> get props =>
-      [fullName, dateOfBirth, gender, email, emergencyContact, referralCode];
+  List<Object?> get props => [
+        fullName,
+        dateOfBirth,
+        gender,
+        email,
+        emergencyContactName,
+        emergencyContactNumber,
+        referralCode,
+      ];
 }

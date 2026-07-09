@@ -10,6 +10,12 @@ class AppTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final String? errorText;
   final bool obscureText;
+  final bool showFloatingLabel;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final void Function(String)? onChanged;
 
   const AppTextField({
     super.key,
@@ -19,6 +25,12 @@ class AppTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.errorText,
     this.obscureText = false,
+    this.showFloatingLabel = true,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.readOnly = false,
+    this.onTap,
+    this.onChanged,
   });
 
   @override
@@ -27,11 +39,16 @@ class AppTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      readOnly: readOnly,
+      onTap: onTap,
+      onChanged: onChanged,
       style: AppTypography.body,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: showFloatingLabel ? label : null,
         hintText: hint,
         errorText: errorText,
+        prefixIcon: prefixIcon,
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: AppColors.surface,
         border: OutlineInputBorder(

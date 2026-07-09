@@ -6,6 +6,7 @@ import '../../features/onboarding_welcome/screens/onboarding_welcome_screen.dart
 import '../../features/onboarding_welcome/screens/join_as_partner_screen.dart';
 import '../../features/authentication/screens/mobile_number_screen.dart';
 import '../../features/authentication/screens/otp_verification_screen.dart';
+import '../../features/partner_registration/screens/personal_info_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -16,7 +17,7 @@ class AppPages {
     GetPage(name: AppRoutes.becomePartnerIntro, page: () => const JoinAsPartnerScreen()),
     GetPage(name: AppRoutes.otp, page: () => const MobileNumberScreen()),
     GetPage(name: AppRoutes.otpVerification, page: () => const OtpVerificationScreen()),
-    GetPage(name: AppRoutes.personalInfo, page: () => const PlaceholderScreen(title: 'Personal Information')),
+    GetPage(name: AppRoutes.personalInfo, page: () => const PersonalInfoScreen()),
     GetPage(name: AppRoutes.vehicleSelection, page: () => const PlaceholderScreen(title: 'Vehicle Selection')),
     GetPage(name: AppRoutes.deliveryZone, page: () => const PlaceholderScreen(title: 'Delivery Zone')),
     GetPage(name: AppRoutes.documentUpload, page: () => const PlaceholderScreen(title: 'Document Upload')),
