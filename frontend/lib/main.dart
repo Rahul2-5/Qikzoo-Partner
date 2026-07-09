@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app.dart';
 
 void main() {
-  runApp(const _TemporaryApp());
-}
-
-class _TemporaryApp extends StatelessWidget {
-  const _TemporaryApp();
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(home: Scaffold());
-  }
+  runApp(const ProviderScope(child: DeliveryPartnerApp()));
 }
