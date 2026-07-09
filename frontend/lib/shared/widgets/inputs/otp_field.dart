@@ -7,12 +7,16 @@ class OtpField extends StatelessWidget {
   final int length;
   final void Function(String) onCompleted;
   final void Function(String)? onChanged;
+  final TextEditingController? controller;
+  final bool readOnly;
 
   const OtpField({
     super.key,
     this.length = 6,
     required this.onCompleted,
     this.onChanged,
+    this.controller,
+    this.readOnly = false,
   });
 
   @override
@@ -20,6 +24,8 @@ class OtpField extends StatelessWidget {
     return PinCodeTextField(
       appContext: context,
       length: length,
+      controller: controller,
+      readOnly: readOnly,
       onCompleted: onCompleted,
       onChanged: onChanged ?? (_) {},
       keyboardType: TextInputType.number,

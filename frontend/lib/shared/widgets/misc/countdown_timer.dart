@@ -6,8 +6,14 @@ import '../../../core/theme/app_typography.dart';
 class CountdownTimer extends StatefulWidget {
   final int seconds;
   final VoidCallback onExpired;
+  final Color color;
 
-  const CountdownTimer({super.key, required this.seconds, required this.onExpired});
+  const CountdownTimer({
+    super.key,
+    required this.seconds,
+    required this.onExpired,
+    this.color = AppColors.warning,
+  });
 
   @override
   State<CountdownTimer> createState() => _CountdownTimerState();
@@ -41,7 +47,7 @@ class _CountdownTimerState extends State<CountdownTimer> {
   Widget build(BuildContext context) {
     return Text(
       '00:${_remaining.toString().padLeft(2, '0')}',
-      style: AppTypography.numericMd.copyWith(color: AppColors.warning),
+      style: AppTypography.numericMd.copyWith(color: widget.color),
     );
   }
 }
