@@ -5,6 +5,7 @@ class AppRoutes {
   static const welcome = '/welcome';
   static const becomePartnerIntro = '/become-partner';
   static const otp = '/otp';
+  static const otpVerification = '/otp/verify';
   static const personalInfo = '/registration/personal-info';
   static const vehicleSelection = '/registration/vehicle-selection';
   static const deliveryZone = '/registration/delivery-zone';
