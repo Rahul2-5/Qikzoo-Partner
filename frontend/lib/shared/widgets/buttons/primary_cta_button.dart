@@ -22,42 +22,58 @@ class PrimaryCtaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: fullWidth ? double.infinity : null,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                  ),
-                  if (trailingIcon != null) ...[
-                    const SizedBox(width: AppSpacing.sm),
-                    Icon(trailingIcon, color: Colors.white, size: 20),
-                  ],
-                ],
+    final isDisabled = onPressed == null && !isLoading;
+    return Opacity(
+      opacity: isDisabled ? 0.5 : 1,
+      child: SizedBox(
+        width: fullWidth ? double.infinity : null,
+        height: 52,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: AppColors.ctaGradient,
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+              onTap: isLoading ? null : onPressed,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Center(
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              label,
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                            if (trailingIcon != null) ...[
+                              const SizedBox(width: AppSpacing.sm),
+                              Icon(trailingIcon, color: Colors.white, size: 20),
+                            ],
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

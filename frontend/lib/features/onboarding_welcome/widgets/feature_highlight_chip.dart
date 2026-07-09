@@ -7,8 +7,14 @@ import '../../../core/theme/app_typography.dart';
 class FeatureHighlightChip extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
 
-  const FeatureHighlightChip({super.key, required this.icon, required this.label});
+  const FeatureHighlightChip({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.color = AppColors.secondary,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +25,10 @@ class FeatureHighlightChip extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.secondaryBg,
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppRadius.button),
           ),
-          child: Icon(icon, color: AppColors.secondary, size: 22),
+          child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(

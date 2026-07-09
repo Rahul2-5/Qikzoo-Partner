@@ -45,7 +45,11 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   FeatureHighlightChip(icon: LucideIcons.clock, label: 'Flexible\nhours'),
-                  FeatureHighlightChip(icon: LucideIcons.wallet, label: 'Weekly\npayouts'),
+                  FeatureHighlightChip(
+                    icon: LucideIcons.wallet,
+                    label: 'Weekly\npayouts',
+                    color: AppColors.accent,
+                  ),
                   FeatureHighlightChip(icon: LucideIcons.trendingUp, label: 'Be your\nown boss'),
                 ],
               ),
@@ -73,21 +77,22 @@ class _Wordmark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        RichText(
-          text: TextSpan(
-            style: AppTypography.h1.copyWith(fontSize: 30, letterSpacing: 0.5),
-            children: const [
-              TextSpan(text: 'QIK', style: TextStyle(color: AppColors.primary)),
-              TextSpan(text: 'ZOO', style: TextStyle(color: AppColors.secondary)),
-            ],
+        Text(
+          'QIKZOO',
+          style: AppTypography.h1.copyWith(
+            fontSize: 32,
+            letterSpacing: 0.5,
+            color: AppColors.secondary,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          'delivery partner',
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 1.2,
+        RichText(
+          text: TextSpan(
+            style: AppTypography.bodyMedium.copyWith(letterSpacing: 1.2),
+            children: const [
+              TextSpan(text: 'delivery ', style: TextStyle(color: AppColors.primary)),
+              TextSpan(text: 'partner', style: TextStyle(color: AppColors.secondary)),
+            ],
           ),
         ),
       ],

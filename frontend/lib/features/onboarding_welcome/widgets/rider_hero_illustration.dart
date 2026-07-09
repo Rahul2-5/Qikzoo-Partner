@@ -64,7 +64,7 @@ class _RoutePin extends StatelessWidget {
         color: AppColors.accent,
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(color: Color(0x33FFB800), blurRadius: 16, offset: Offset(0, 6)),
+          BoxShadow(color: Color(0x3322C55E), blurRadius: 16, offset: Offset(0, 6)),
         ],
       ),
       child: const Icon(LucideIcons.mapPin, color: AppColors.primary, size: 20),
