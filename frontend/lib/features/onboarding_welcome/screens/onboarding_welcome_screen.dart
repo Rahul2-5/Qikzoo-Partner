@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/buttons/primary_cta_button.dart';
+import '../widgets/feature_highlight_chip.dart';
+import '../widgets/rider_hero_illustration.dart';
+
+class OnboardingWelcomeScreen extends StatelessWidget {
+  const OnboardingWelcomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Column(
+            children: [
+              const SizedBox(height: AppSpacing.xl),
+              const _Wordmark(),
+              const SizedBox(height: AppSpacing.xxl),
+              const RiderHeroIllustration(),
+              const SizedBox(height: AppSpacing.xl),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: AppTypography.h1.copyWith(fontSize: 28),
+                  children: const [
+                    TextSpan(text: 'Deliver more,\n'),
+                    TextSpan(
+                      text: 'Earn more',
+                      style: TextStyle(color: AppColors.secondary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  FeatureHighlightChip(icon: LucideIcons.clock, label: 'Flexible\nhours'),
+                  FeatureHighlightChip(icon: LucideIcons.wallet, label: 'Weekly\npayouts'),
+                  FeatureHighlightChip(icon: LucideIcons.trendingUp, label: 'Be your\nown boss'),
+                ],
+              ),
+              const Spacer(),
+              PrimaryCtaButton(
+                label: 'Get Started',
+                trailingIcon: LucideIcons.arrowRight,
+                onPressed: () => Get.toNamed(AppRoutes.otp),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _LoginCard(onTap: () => Get.toNamed(AppRoutes.otp)),
+              const SizedBox(height: AppSpacing.md),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Wordmark extends StatelessWidget {
+  const _Wordmark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        RichText(
+          text: TextSpan(
+            style: AppTypography.h1.copyWith(fontSize: 30, letterSpacing: 0.5),
+            children: const [
+              TextSpan(text: 'QIK', style: TextStyle(color: AppColors.primary)),
+              TextSpan(text: 'ZOO', style: TextStyle(color: AppColors.secondary)),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'delivery partner',
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LoginCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _LoginCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.button),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        onTap: onTap,
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+            border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.15)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Already a partner? ', style: AppTypography.body),
+              Text(
+                'Login',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.secondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -9,6 +9,7 @@ class PrimaryCtaButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final bool fullWidth;
+  final IconData? trailingIcon;
 
   const PrimaryCtaButton({
     super.key,
@@ -16,6 +17,7 @@ class PrimaryCtaButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.fullWidth = true,
+    this.trailingIcon,
   });
 
   @override
@@ -39,13 +41,22 @@ class PrimaryCtaButton extends StatelessWidget {
                 height: 22,
                 child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
               )
-            : Text(
-                label,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (trailingIcon != null) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(trailingIcon, color: Colors.white, size: 20),
+                  ],
+                ],
               ),
       ),
     );

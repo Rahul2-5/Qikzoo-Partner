@@ -2,13 +2,14 @@ import 'package:get/get.dart';
 import 'app_routes.dart';
 import 'placeholder_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
+import '../../features/onboarding_welcome/screens/onboarding_welcome_screen.dart';
 
 class AppPages {
   AppPages._();
 
   static final pages = <GetPage>[
     GetPage(name: AppRoutes.splash, page: () => const SplashScreen()),
-    GetPage(name: AppRoutes.welcome, page: () => const PlaceholderScreen(title: 'Welcome')),
+    GetPage(name: AppRoutes.welcome, page: () => const OnboardingWelcomeScreen()),
     GetPage(name: AppRoutes.otp, page: () => const PlaceholderScreen(title: 'OTP Verification')),
     GetPage(name: AppRoutes.personalInfo, page: () => const PlaceholderScreen(title: 'Personal Information')),
     GetPage(name: AppRoutes.vehicleSelection, page: () => const PlaceholderScreen(title: 'Vehicle Selection')),
