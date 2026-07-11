@@ -28,19 +28,22 @@ class NumericKeypad extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.secondaryBg, AppColors.accentBg],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.surface,
+        border: Border(
+            top: BorderSide(color: AppColors.border.withValues(alpha: 0.8))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final row in _rows) ...[
-            Row(children: row.map(_buildKey).toList()),
+            _buildRow(row),
             const SizedBox(height: AppSpacing.sm),
           ],
           Row(
@@ -52,7 +55,8 @@ class NumericKeypad extends StatelessWidget {
               Expanded(
                 child: _KeypadButton(
                   onTap: onBackspaceTap,
-                  child: const Icon(LucideIcons.delete, color: AppColors.textPrimary, size: 22),
+                  child: const Icon(LucideIcons.delete,
+                      color: AppColors.textPrimary, size: 22),
                 ),
               ),
             ],
@@ -62,14 +66,22 @@ class NumericKeypad extends StatelessWidget {
     );
   }
 
+  Widget _buildRow(List<String> row) {
+    return Row(
+      children: [
+        for (var index = 0; index < row.length; index++) ...[
+          if (index > 0) const SizedBox(width: AppSpacing.sm),
+          _buildKey(row[index]),
+        ],
+      ],
+    );
+  }
+
   Widget _buildKey(String digit) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
-        child: _KeypadButton(
-          onTap: () => onDigitTap(digit),
-          child: Text(digit, style: AppTypography.h2.copyWith(fontSize: 22)),
-        ),
+      child: _KeypadButton(
+        onTap: () => onDigitTap(digit),
+        child: Text(digit, style: AppTypography.h2.copyWith(fontSize: 22)),
       ),
     );
   }
@@ -84,13 +96,13 @@ class _KeypadButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.button),
+      color: AppColors.surfaceMuted,
+      borderRadius: BorderRadius.circular(AppRadius.control),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.button),
+        borderRadius: BorderRadius.circular(AppRadius.control),
         onTap: onTap,
         child: Container(
-          height: 60,
+          height: 56,
           alignment: Alignment.center,
           child: child,
         ),

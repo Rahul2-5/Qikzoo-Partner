@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/partner_registration/personal_info_model.dart';
@@ -12,9 +14,12 @@ import '../../../repositories/partner_registration/partner_registration_reposito
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/inputs/app_text_field.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/navigation/step_progress_indicator.dart';
 import '../widgets/date_of_birth_field.dart';
 import '../widgets/gender_selector.dart';
 import '../widgets/labeled_field.dart';
+import '../widgets/relation_selector.dart';
 
 class PersonalInfoScreen extends ConsumerStatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -28,6 +33,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   final _emailController = TextEditingController();
   final _emergencyNameController = TextEditingController();
   final _emergencyNumberController = TextEditingController();
+  final _relationOtherController = TextEditingController();
   final _referralController = TextEditingController();
   bool _isSaving = false;
 
@@ -37,6 +43,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     _emailController.dispose();
     _emergencyNameController.dispose();
     _emergencyNumberController.dispose();
+    _relationOtherController.dispose();
     _referralController.dispose();
     super.dispose();
   }
@@ -50,9 +57,16 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       email: formState.email.isEmpty ? null : formState.email,
       emergencyContactName: formState.emergencyContactName,
       emergencyContactNumber: formState.emergencyContactNumber,
-      referralCode: formState.referralCode.isEmpty ? null : formState.referralCode,
+      relation: formState.relation!,
+      relationOther: formState.relation == Relation.other
+          ? formState.relationOther
+          : null,
+      referralCode:
+          formState.referralCode.isEmpty ? null : formState.referralCode,
     );
-    await ref.read(partnerRegistrationRepositoryProvider).savePersonalInfo(info);
+    await ref
+        .read(partnerRegistrationRepositoryProvider)
+        .savePersonalInfo(info);
     if (!mounted) return;
     setState(() => _isSaving = false);
     Get.toNamed(AppRoutes.vehicleSelection);
@@ -66,30 +80,39 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: ResponsiveFrame(
+          maxWidth: 520,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(
+                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const StepProgressIndicator(
+                          totalSteps: 4, currentStep: 0),
+                      const SizedBox(height: AppSpacing.lg),
                       RichText(
                         text: TextSpan(
                           style: AppTypography.h1.copyWith(fontSize: 26),
                           children: [
-                            const TextSpan(text: 'Tell us ', style: TextStyle(color: AppColors.textPrimary)),
+                            const TextSpan(
+                                text: 'Tell us ',
+                                style: TextStyle(color: AppColors.textPrimary)),
                             TextSpan(
                               text: 'about yourself',
                               style: TextStyle(
                                 foreground: Paint()
-                                  ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                                      .createShader(const Rect.fromLTWH(0, 0, 220, 26)),
+                                  ..shader = const LinearGradient(
+                                          colors: AppColors.ctaGradient)
+                                      .createShader(
+                                          const Rect.fromLTWH(0, 0, 220, 26)),
                               ),
                             ),
                           ],
@@ -98,84 +121,133 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Please enter your details',
-                        style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      LabeledField(
-                        label: 'Full Name',
-                        child: AppTextField(
-                          label: 'Full Name',
-                          controller: _fullNameController,
-                          showFloatingLabel: false,
-                          hint: 'Enter your full name',
-                          prefixIcon: const Icon(LucideIcons.user, color: AppColors.secondary, size: 20),
-                          onChanged: formNotifier.setFullName,
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(color: AppColors.border),
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      LabeledField(
-                        label: 'Email ID',
-                        child: AppTextField(
-                          label: 'Email ID',
-                          controller: _emailController,
-                          showFloatingLabel: false,
-                          hint: 'you@email.com',
-                          keyboardType: TextInputType.emailAddress,
-                          prefixIcon: const Icon(LucideIcons.mail, color: AppColors.secondary, size: 20),
-                          onChanged: formNotifier.setEmail,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      LabeledField(
-                        label: 'Date of Birth',
-                        child: DateOfBirthField(
-                          value: formState.dateOfBirth,
-                          onChanged: formNotifier.setDateOfBirth,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      LabeledField(
-                        label: 'Gender',
-                        child: GenderSelector(
-                          selected: formState.gender,
-                          onChanged: formNotifier.setGender,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      LabeledField(
-                        label: 'Emergency Contact Name (with relation)',
-                        child: AppTextField(
-                          label: 'Emergency Contact Name',
-                          controller: _emergencyNameController,
-                          showFloatingLabel: false,
-                          hint: 'e.g. Suresh Verma (Father)',
-                          prefixIcon: const Icon(LucideIcons.users, color: AppColors.secondary, size: 20),
-                          onChanged: formNotifier.setEmergencyContactName,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      LabeledField(
-                        label: 'Emergency Contact Number',
-                        child: AppTextField(
-                          label: 'Emergency Contact Number',
-                          controller: _emergencyNumberController,
-                          showFloatingLabel: false,
-                          hint: '10-digit mobile number',
-                          keyboardType: TextInputType.phone,
-                          prefixIcon: const Icon(LucideIcons.phone, color: AppColors.secondary, size: 20),
-                          onChanged: formNotifier.setEmergencyContactNumber,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      LabeledField(
-                        label: 'Referral Code (optional)',
-                        child: AppTextField(
-                          label: 'Referral Code',
-                          controller: _referralController,
-                          showFloatingLabel: false,
-                          hint: 'Enter referral code',
-                          prefixIcon: const Icon(LucideIcons.gift, color: AppColors.secondary, size: 20),
-                          onChanged: formNotifier.setReferralCode,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            LabeledField(
+                              label: 'Full Name',
+                              child: AppTextField(
+                                label: 'Full Name',
+                                controller: _fullNameController,
+                                showFloatingLabel: false,
+                                hint: 'Enter your full name',
+                                prefixIcon: const Icon(
+                                  LucideIcons.user,
+                                  color: AppColors.secondary,
+                                  size: 20,
+                                ),
+                                onChanged: formNotifier.setFullName,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            LabeledField(
+                              label: 'Email ID',
+                              child: AppTextField(
+                                label: 'Email ID',
+                                controller: _emailController,
+                                showFloatingLabel: false,
+                                hint: 'you@email.com',
+                                keyboardType: TextInputType.emailAddress,
+                                prefixIcon: const Icon(
+                                  LucideIcons.mail,
+                                  color: AppColors.secondary,
+                                  size: 20,
+                                ),
+                                onChanged: formNotifier.setEmail,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            LabeledField(
+                              label: 'Date of Birth',
+                              child: DateOfBirthField(
+                                value: formState.dateOfBirth,
+                                onChanged: formNotifier.setDateOfBirth,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            LabeledField(
+                              label: 'Gender',
+                              child: GenderSelector(
+                                selected: formState.gender,
+                                onChanged: formNotifier.setGender,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            LabeledField(
+                              label: 'Relation to Emergency Contact',
+                              child: RelationSelector(
+                                selected: formState.relation,
+                                onChanged: formNotifier.setRelation,
+                                otherController: _relationOtherController,
+                                onOtherChanged: formNotifier.setRelationOther,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            LabeledField(
+                              label: 'Emergency Contact Name',
+                              child: AppTextField(
+                                label: 'Emergency Contact Name',
+                                controller: _emergencyNameController,
+                                showFloatingLabel: false,
+                                hint: 'e.g. Suresh Verma',
+                                prefixIcon: const Icon(
+                                  LucideIcons.users,
+                                  color: AppColors.secondary,
+                                  size: 20,
+                                ),
+                                onChanged: formNotifier.setEmergencyContactName,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            LabeledField(
+                              label: 'Emergency Contact Number',
+                              child: AppTextField(
+                                label: 'Emergency Contact Number',
+                                controller: _emergencyNumberController,
+                                showFloatingLabel: false,
+                                hint: '10-digit mobile number',
+                                keyboardType: TextInputType.phone,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                maxLength: 10,
+                                prefixIcon: const Icon(
+                                  LucideIcons.phone,
+                                  color: AppColors.secondary,
+                                  size: 20,
+                                ),
+                                onChanged:
+                                    formNotifier.setEmergencyContactNumber,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            LabeledField(
+                              label: 'Referral Code (optional)',
+                              child: AppTextField(
+                                label: 'Referral Code',
+                                controller: _referralController,
+                                showFloatingLabel: false,
+                                hint: 'Enter referral code',
+                                prefixIcon: const Icon(
+                                  LucideIcons.gift,
+                                  color: AppColors.secondary,
+                                  size: 20,
+                                ),
+                                onChanged: formNotifier.setReferralCode,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
@@ -187,7 +259,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 label: 'Continue',
                 trailingIcon: LucideIcons.arrowRight,
                 isLoading: _isSaving,
-                onPressed: formState.isPersonalInfoValid ? () => _onContinue(formState) : null,
+                onPressed: formState.isPersonalInfoValid
+                    ? () => _onContinue(formState)
+                    : null,
               ),
               const SizedBox(height: AppSpacing.md),
             ],

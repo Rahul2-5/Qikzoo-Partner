@@ -7,6 +7,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../widgets/feature_highlight_chip.dart';
 import '../widgets/rider_hero_illustration.dart';
 
@@ -18,51 +19,67 @@ class OnboardingWelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Column(
-            children: [
-              const SizedBox(height: AppSpacing.xl),
-              const _Wordmark(),
-              const SizedBox(height: AppSpacing.xxl),
-              const RiderHeroIllustration(),
-              const SizedBox(height: AppSpacing.xl),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: AppTypography.h1.copyWith(fontSize: 28),
-                  children: const [
-                    TextSpan(text: 'Deliver more,\n'),
-                    TextSpan(
-                      text: 'Earn more',
-                      style: TextStyle(color: AppColors.secondary),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+        child: ResponsiveFrame(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isShort = constraints.maxHeight < 700;
+
+              return Column(
                 children: [
-                  FeatureHighlightChip(icon: LucideIcons.clock, label: 'Flexible\nhours'),
-                  FeatureHighlightChip(
-                    icon: LucideIcons.wallet,
-                    label: 'Weekly\npayouts',
-                    color: AppColors.accent,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: isShort ? AppSpacing.lg : AppSpacing.xl,
+                          bottom: AppSpacing.lg,
+                        ),
+                        child: Column(
+                          children: [
+                            const _Wordmark(),
+                            SizedBox(
+                                height:
+                                    isShort ? AppSpacing.lg : AppSpacing.xl),
+                            RiderHeroIllustration(height: isShort ? 198 : 232),
+                            SizedBox(
+                                height:
+                                    isShort ? AppSpacing.lg : AppSpacing.xl),
+                            RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: AppTypography.display.copyWith(
+                                  fontSize: isShort ? 27 : 30,
+                                ),
+                                children: const [
+                                  TextSpan(text: 'Deliver more,\n'),
+                                  TextSpan(
+                                    text: 'Earn more',
+                                    style:
+                                        TextStyle(color: AppColors.secondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                                height:
+                                    isShort ? AppSpacing.lg : AppSpacing.xl),
+                            const _FeatureRow(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  FeatureHighlightChip(icon: LucideIcons.trendingUp, label: 'Be your\nown boss'),
+                  PrimaryCtaButton(
+                    label: 'Get Started',
+                    trailingIcon: LucideIcons.arrowRight,
+                    onPressed: () => Get.toNamed(AppRoutes.becomePartnerIntro),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _LoginCard(onTap: () => Get.toNamed(AppRoutes.otp)),
+                  const SizedBox(height: AppSpacing.md),
                 ],
-              ),
-              const Spacer(),
-              PrimaryCtaButton(
-                label: 'Get Started',
-                trailingIcon: LucideIcons.arrowRight,
-                onPressed: () => Get.toNamed(AppRoutes.becomePartnerIntro),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _LoginCard(onTap: () => Get.toNamed(AppRoutes.otp)),
-              const SizedBox(height: AppSpacing.md),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -79,7 +96,7 @@ class _Wordmark extends StatelessWidget {
       children: [
         Image.asset(
           'assets/images/logo.png',
-          height: 44,
+          height: 130,
           fit: BoxFit.contain,
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -87,9 +104,43 @@ class _Wordmark extends StatelessWidget {
           text: TextSpan(
             style: AppTypography.bodyMedium.copyWith(letterSpacing: 1.2),
             children: const [
-              TextSpan(text: 'delivery ', style: TextStyle(color: AppColors.primary)),
-              TextSpan(text: 'partner', style: TextStyle(color: AppColors.secondary)),
+              TextSpan(
+                  text: 'Delivery ',
+                  style: TextStyle(color: AppColors.primary)),
+              TextSpan(
+                  text: 'Partner',
+                  style: TextStyle(color: AppColors.secondary)),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FeatureRow extends StatelessWidget {
+  const _FeatureRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(
+            child: FeatureHighlightChip(
+                icon: LucideIcons.clock, label: 'Flexible\nhours')),
+        SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: FeatureHighlightChip(
+            icon: LucideIcons.wallet,
+            label: 'Weekly\npayouts',
+            color: AppColors.accent,
+          ),
+        ),
+        SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: FeatureHighlightChip(
+            icon: LucideIcons.trendingUp,
+            label: 'Be your\nown boss',
           ),
         ),
       ],
@@ -115,7 +166,7 @@ class _LoginCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.button),
-            border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.15)),
+            border: Border.all(color: AppColors.border),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -129,7 +180,8 @@ class _LoginCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.secondary),
+              const Icon(LucideIcons.chevronRight,
+                  size: 18, color: AppColors.secondary),
             ],
           ),
         ),

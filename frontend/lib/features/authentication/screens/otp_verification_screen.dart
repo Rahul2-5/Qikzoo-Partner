@@ -11,13 +11,15 @@ import '../../../repositories/authentication/auth_repository.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/inputs/numeric_keypad.dart';
 import '../../../shared/widgets/inputs/otp_field.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/countdown_timer.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   const OtpVerificationScreen({super.key});
 
   @override
-  ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+  ConsumerState<OtpVerificationScreen> createState() =>
+      _OtpVerificationScreenState();
 }
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
@@ -39,7 +41,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
   void _onBackspaceTap() {
     if (_otpController.text.isEmpty) return;
-    _otpController.text = _otpController.text.substring(0, _otpController.text.length - 1);
+    _otpController.text =
+        _otpController.text.substring(0, _otpController.text.length - 1);
   }
 
   Future<void> _onOtpCompleted(String otp) async {
@@ -50,7 +53,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     setState(() => _isVerifying = false);
     final session = ref.read(authSessionProvider).value;
     if (session?.isAuthenticated == true) {
-      Get.toNamed(AppRoutes.personalInfo);
+      Get.offNamed(AppRoutes.setPassword);
     }
   }
 
@@ -77,89 +80,103 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: AppSpacing.sm),
-                    IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
-                    const SizedBox(height: AppSpacing.lg),
-                    RichText(
-                      text: TextSpan(
-                        style: AppTypography.h1.copyWith(fontSize: 28),
-                        children: [
-                          const TextSpan(text: 'Verify ', style: TextStyle(color: AppColors.textPrimary)),
-                          TextSpan(
-                            text: 'OTP',
-                            style: TextStyle(
-                              foreground: Paint()
-                                ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                                    .createShader(const Rect.fromLTWH(0, 0, 90, 28)),
+        child: ResponsiveFrame(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: AppSpacing.sm),
+                      IconButtonCustom(
+                          icon: LucideIcons.arrowLeft,
+                          onPressed: () => Get.back()),
+                      const SizedBox(height: AppSpacing.lg),
+                      RichText(
+                        text: TextSpan(
+                          style: AppTypography.h1.copyWith(fontSize: 28),
+                          children: [
+                            const TextSpan(
+                                text: 'Verify ',
+                                style: TextStyle(color: AppColors.textPrimary)),
+                            TextSpan(
+                              text: 'OTP',
+                              style: TextStyle(
+                                foreground: Paint()
+                                  ..shader = const LinearGradient(
+                                          colors: AppColors.ctaGradient)
+                                      .createShader(
+                                          const Rect.fromLTWH(0, 0, 90, 28)),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Enter the 6 digit OTP sent to',
-                      style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-                    ),
-                    Text(
-                      _maskedPhone(phone),
-                      style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    IgnorePointer(
-                      ignoring: _isVerifying,
-                      child: Opacity(
-                        opacity: _isVerifying ? 0.5 : 1,
-                        child: OtpField(
-                          controller: _otpController,
-                          readOnly: true,
-                          onCompleted: _onOtpCompleted,
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    Center(
-                      child: _canResend
-                          ? GestureDetector(
-                              onTap: _onResend,
-                              child: Text(
-                                'Resend OTP',
-                                style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.secondary,
-                                  fontWeight: FontWeight.w700,
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Enter the 6 digit OTP sent to',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.textSecondary),
+                      ),
+                      Text(
+                        _maskedPhone(phone),
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      IgnorePointer(
+                        ignoring: _isVerifying,
+                        child: Opacity(
+                          opacity: _isVerifying ? 0.5 : 1,
+                          child: OtpField(
+                            controller: _otpController,
+                            readOnly: true,
+                            onCompleted: _onOtpCompleted,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      Center(
+                        child: _canResend
+                            ? GestureDetector(
+                                onTap: _onResend,
+                                child: Text(
+                                  'Resend OTP',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.secondary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Resend OTP in  ',
+                                      style: AppTypography.body.copyWith(
+                                          color: AppColors.textSecondary)),
+                                  CountdownTimer(
+                                    key: ValueKey(_resendAttempt),
+                                    seconds: 30,
+                                    color: AppColors.accent,
+                                    onExpired: () =>
+                                        setState(() => _canResend = true),
+                                  ),
+                                ],
                               ),
-                            )
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('Resend OTP in  ', style: AppTypography.body.copyWith(color: AppColors.textSecondary)),
-                                CountdownTimer(
-                                  key: ValueKey(_resendAttempt),
-                                  seconds: 30,
-                                  color: AppColors.accent,
-                                  onExpired: () => setState(() => _canResend = true),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            IgnorePointer(
-              ignoring: _isVerifying,
-              child: NumericKeypad(onDigitTap: _onDigitTap, onBackspaceTap: _onBackspaceTap),
-            ),
-          ],
+              IgnorePointer(
+                ignoring: _isVerifying,
+                child: NumericKeypad(
+                    onDigitTap: _onDigitTap, onBackspaceTap: _onBackspaceTap),
+              ),
+            ],
+          ),
         ),
       ),
     );

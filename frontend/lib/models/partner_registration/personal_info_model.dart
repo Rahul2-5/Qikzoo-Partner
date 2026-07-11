@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 
 enum Gender { male, female, other }
 
+enum Relation { father, mother, brother, other }
+
 class PersonalInfoModel extends Equatable {
   final String fullName;
   final DateTime dateOfBirth;
@@ -9,6 +11,8 @@ class PersonalInfoModel extends Equatable {
   final String? email;
   final String emergencyContactName;
   final String emergencyContactNumber;
+  final Relation relation;
+  final String? relationOther;
   final String? referralCode;
 
   const PersonalInfoModel({
@@ -18,6 +22,8 @@ class PersonalInfoModel extends Equatable {
     this.email,
     required this.emergencyContactName,
     required this.emergencyContactNumber,
+    required this.relation,
+    this.relationOther,
     this.referralCode,
   });
 
@@ -29,6 +35,8 @@ class PersonalInfoModel extends Equatable {
         email,
         emergencyContactName,
         emergencyContactNumber,
+        relation,
+        relationOther,
         referralCode,
       ];
 }

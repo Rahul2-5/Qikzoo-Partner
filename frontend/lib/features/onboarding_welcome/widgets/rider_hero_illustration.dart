@@ -4,18 +4,22 @@ import '../../../core/theme/app_colors.dart';
 /// Hero illustration for the Welcome screen — the branded 3D delivery-rider
 /// asset (transparent background, route pin baked in) supplied by the user.
 class RiderHeroIllustration extends StatelessWidget {
-  const RiderHeroIllustration({super.key});
+  final double height;
+
+  const RiderHeroIllustration({super.key, this.height = 236});
 
   @override
   Widget build(BuildContext context) {
+    final circleSize = height * 0.78;
+
     return SizedBox(
-      height: 260,
+      height: height,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Container(
-            width: 220,
-            height: 220,
+            width: circleSize,
+            height: circleSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.secondaryBg,
@@ -23,7 +27,7 @@ class RiderHeroIllustration extends StatelessWidget {
           ),
           Image.asset(
             'assets/images/3d_asset.png',
-            height: 260,
+            height: height,
             fit: BoxFit.contain,
           ),
         ],

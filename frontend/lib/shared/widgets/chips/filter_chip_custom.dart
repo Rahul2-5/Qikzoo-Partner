@@ -9,26 +9,41 @@ class FilterChipCustom extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const FilterChipCustom({super.key, required this.label, required this.selected, required this.onTap});
+  const FilterChipCustom(
+      {super.key,
+      required this.label,
+      required this.selected,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.secondary : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(
-            color: selected ? AppColors.secondary : AppColors.textSecondary.withValues(alpha: 0.2),
+    return Material(
+      color: selected ? AppColors.secondary : AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.chip),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        onTap: onTap,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
           ),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.caption.copyWith(
-            color: selected ? Colors.white : AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            border: Border.all(
+              color: selected ? AppColors.secondary : AppColors.border,
+            ),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.caption.copyWith(
+              color: selected ? Colors.white : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

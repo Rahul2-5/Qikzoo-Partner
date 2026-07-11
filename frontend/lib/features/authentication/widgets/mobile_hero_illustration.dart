@@ -6,13 +6,20 @@ import '../../../core/theme/app_spacing.dart';
 /// dashed path, faint skyline and clouds — built entirely from theme
 /// tokens (no stock imagery), echoing the Welcome hero's route pin.
 class MobileHeroIllustration extends StatelessWidget {
-  const MobileHeroIllustration({super.key});
+  final double width;
+  final double height;
+
+  const MobileHeroIllustration({
+    super.key,
+    this.width = 128,
+    this.height = 194,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 140,
-      height: 220,
+      width: width,
+      height: height,
       child: Stack(
         children: [
           const Positioned(
@@ -41,11 +48,15 @@ class MobileHeroIllustration extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                     boxShadow: [
-                      BoxShadow(color: Color(0x3312A783), blurRadius: 14, offset: Offset(0, 6)),
+                      BoxShadow(
+                          color: Color(0x3312A783),
+                          blurRadius: 14,
+                          offset: Offset(0, 6)),
                     ],
                   ),
                   child: const Center(
-                    child: CircleAvatar(radius: 7, backgroundColor: Colors.white),
+                    child:
+                        CircleAvatar(radius: 7, backgroundColor: Colors.white),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -117,7 +128,8 @@ class _Skyline extends StatelessWidget {
               margin: const EdgeInsets.only(left: 4),
               decoration: BoxDecoration(
                 color: AppColors.textSecondary.withValues(alpha: 0.08),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(3)),
               ),
             ),
           )

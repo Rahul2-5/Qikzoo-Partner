@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/validators/validators.dart';
@@ -11,6 +12,7 @@ import '../../../providers/authentication/auth_provider.dart';
 import '../../../repositories/authentication/auth_repository.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../widgets/mobile_hero_illustration.dart';
 import '../widgets/phone_input_field.dart';
 
@@ -47,91 +49,162 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: ResponsiveFrame(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(
+                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
               const SizedBox(height: AppSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            style: AppTypography.h1.copyWith(fontSize: 28, height: 1.25),
-                            children: const [
-                              TextSpan(text: 'Enter ', style: TextStyle(color: AppColors.textPrimary)),
-                              TextSpan(text: 'Mobile', style: TextStyle(color: AppColors.secondary)),
-                              TextSpan(text: '\nNumber', style: TextStyle(color: AppColors.textPrimary)),
-                            ],
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final showHero = constraints.maxWidth >= 360;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (showHero)
+                            const Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: _MobileHeader()),
+                                SizedBox(width: AppSpacing.md),
+                                MobileHeroIllustration(),
+                              ],
+                            )
+                          else
+                            const _MobileHeader(),
+                          const SizedBox(height: AppSpacing.xl),
+                          PhoneInputField(
+                            controller: _controller,
+                            onChanged: (value) => ref
+                                .read(phoneNumberUiProvider.notifier)
+                                .state = value,
                           ),
+                          const SizedBox(height: AppSpacing.lg),
+                          PrimaryCtaButton(
+                            label: 'Continue',
+                            trailingIcon: LucideIcons.arrowRight,
+                            isLoading: _isRequesting,
+                            onPressed:
+                                isValid ? () => _onContinue(phone) : null,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          const _SecurityNote(),
+                          const SizedBox(height: AppSpacing.lg),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: Center(
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.textSecondary),
+                      children: const [
+                        TextSpan(text: 'By continuing, you agree to our\n'),
+                        TextSpan(
+                          text: 'Terms & Conditions',
+                          style: TextStyle(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          "We'll send you an OTP to verify your number",
-                          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                        TextSpan(text: ' and '),
+                        TextSpan(
+                          text: 'Privacy Policy',
+                          style: TextStyle(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
-                  ),
-                  const MobileHeroIllustration(),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              PhoneInputField(
-                controller: _controller,
-                onChanged: (value) => ref.read(phoneNumberUiProvider.notifier).state = value,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              PrimaryCtaButton(
-                label: 'Continue',
-                trailingIcon: LucideIcons.arrowRight,
-                isLoading: _isRequesting,
-                onPressed: isValid ? () => _onContinue(phone) : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(child: Divider(color: AppColors.textSecondary.withValues(alpha: 0.15))),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                    child: Text('or continue with',
-                        style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
-                  ),
-                  Expanded(child: Divider(color: AppColors.textSecondary.withValues(alpha: 0.15))),
-                ],
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                    children: const [
-                      TextSpan(text: 'By continuing, you agree to our\n'),
-                      TextSpan(
-                        text: 'Terms & Conditions',
-                        style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.w600),
-                      ),
-                      TextSpan(text: ' and '),
-                      TextSpan(
-                        text: 'Privacy Policy',
-                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
-                      ),
-                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MobileHeader extends StatelessWidget {
+  const _MobileHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            style: AppTypography.display.copyWith(fontSize: 28),
+            children: const [
+              TextSpan(
+                  text: 'Enter ',
+                  style: TextStyle(color: AppColors.textPrimary)),
+              TextSpan(
+                  text: 'Mobile', style: TextStyle(color: AppColors.secondary)),
+              TextSpan(
+                  text: '\nNumber',
+                  style: TextStyle(color: AppColors.textPrimary)),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          "We'll send you an OTP to verify your number",
+          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+class _SecurityNote extends StatelessWidget {
+  const _SecurityNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.secondaryBg,
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+            child: const Icon(LucideIcons.shieldCheck,
+                color: AppColors.secondary, size: 19),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              'Your number is used only for secure OTP verification.',
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ],
       ),
     );
   }

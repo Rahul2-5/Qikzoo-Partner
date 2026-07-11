@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
 
 class IconButtonCustom extends StatelessWidget {
   final IconData icon;
@@ -28,6 +29,11 @@ class IconButtonCustom extends StatelessWidget {
           width: 48,
           height: 48,
           alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppShadows.control,
+          ),
           child: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
         ),
       ),

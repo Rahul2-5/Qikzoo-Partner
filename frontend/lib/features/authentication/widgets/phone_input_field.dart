@@ -9,7 +9,8 @@ class PhoneInputField extends StatelessWidget {
   final TextEditingController controller;
   final void Function(String) onChanged;
 
-  const PhoneInputField({super.key, required this.controller, required this.onChanged});
+  const PhoneInputField(
+      {super.key, required this.controller, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class PhoneInputField extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.button),
-        border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.15)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -29,11 +30,15 @@ class PhoneInputField extends StatelessWidget {
               children: [
                 Text('+91', style: AppTypography.bodyMedium),
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.textSecondary),
+                const Icon(LucideIcons.chevronDown,
+                    size: 16, color: AppColors.textSecondary),
               ],
             ),
           ),
-          Container(width: 1, height: 28, color: AppColors.textSecondary.withValues(alpha: 0.15)),
+          Container(
+              width: 1,
+              height: 28,
+              color: AppColors.textSecondary.withValues(alpha: 0.15)),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -42,14 +47,14 @@ class PhoneInputField extends StatelessWidget {
                 onChanged: onChanged,
                 keyboardType: TextInputType.phone,
                 maxLength: 10,
-                style: AppTypography.bodyMedium.copyWith(letterSpacing: 1),
+                style: AppTypography.bodyMedium.copyWith(letterSpacing: 0.4),
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   counterText: '',
-                  hintText: 'XXXXXXXXXX',
+                  hintText: '98765 43210',
                   hintStyle: AppTypography.bodyMedium.copyWith(
                     color: AppColors.textSecondary.withValues(alpha: 0.5),
-                    letterSpacing: 1,
+                    letterSpacing: 0.4,
                   ),
                 ),
               ),

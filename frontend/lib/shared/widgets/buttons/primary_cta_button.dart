@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 
@@ -22,27 +23,37 @@ class PrimaryCtaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDisabled = onPressed == null && !isLoading;
-    return Opacity(
-      opacity: isDisabled ? 0.5 : 1,
-      child: SizedBox(
-        width: fullWidth ? double.infinity : null,
-        height: 52,
+    final isDisabled = onPressed == null;
+    final isInteractive = !isLoading && !isDisabled;
+
+    return SizedBox(
+      width: fullWidth ? double.infinity : null,
+      height: 54,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          boxShadow: isInteractive ? AppShadows.cta : const [],
+        ),
         child: Material(
-          color: Colors.transparent,
+          color: isDisabled ? AppColors.surfaceMuted : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.button),
           child: Ink(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: AppColors.ctaGradient,
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.button),
-            ),
+            decoration: isDisabled
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                    border: Border.all(color: AppColors.border),
+                  )
+                : BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: AppColors.ctaGradient,
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
             child: InkWell(
               borderRadius: BorderRadius.circular(AppRadius.button),
-              onTap: isLoading ? null : onPressed,
+              onTap: isInteractive ? onPressed : null,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Center(
@@ -50,22 +61,35 @@ class PrimaryCtaButton extends StatelessWidget {
                       ? const SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
                         )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              label,
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                            Flexible(
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.button.copyWith(
+                                  color: isDisabled
+                                      ? AppColors.textSecondary
+                                      : Colors.white,
+                                ),
                               ),
                             ),
                             if (trailingIcon != null) ...[
                               const SizedBox(width: AppSpacing.sm),
-                              Icon(trailingIcon, color: Colors.white, size: 20),
+                              Icon(
+                                trailingIcon,
+                                color: isDisabled
+                                    ? AppColors.textSecondary
+                                    : Colors.white,
+                                size: 20,
+                              ),
                             ],
                           ],
                         ),

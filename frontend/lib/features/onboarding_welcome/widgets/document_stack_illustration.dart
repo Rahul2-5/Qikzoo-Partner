@@ -7,31 +7,50 @@ import '../../../core/theme/app_spacing.dart';
 /// Geometric stand-in for the "documents ready for verification" hero,
 /// built entirely from theme tokens (no stock imagery, no red).
 class DocumentStackIllustration extends StatelessWidget {
-  const DocumentStackIllustration({super.key});
+  final double height;
+
+  const DocumentStackIllustration({super.key, this.height = 216});
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 220,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 24,
-            bottom: 12,
-            child: _DocumentCard(width: 140, height: 170, rotation: -0.12, opacity: 0.5),
+    return SizedBox(
+      height: height,
+      child: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: SizedBox(
+          width: 300,
+          height: 220,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                left: 24,
+                bottom: 12,
+                child: _DocumentCard(
+                  width: 140,
+                  height: 170,
+                  rotation: -0.12,
+                  opacity: 0.5,
+                ),
+              ),
+              Positioned(
+                right: 40,
+                bottom: 4,
+                child: _DocumentCard(
+                  width: 150,
+                  height: 190,
+                  rotation: 0.08,
+                  opacity: 1,
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 56,
+                child: _AvatarBadge(),
+              ),
+            ],
           ),
-          Positioned(
-            right: 40,
-            bottom: 4,
-            child: _DocumentCard(width: 150, height: 190, rotation: 0.08, opacity: 1),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 56,
-            child: _AvatarBadge(),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -64,7 +83,10 @@ class _DocumentCard extends StatelessWidget {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.card),
             boxShadow: const [
-              BoxShadow(color: Color(0x141B2559), blurRadius: 20, offset: Offset(0, 10)),
+              BoxShadow(
+                  color: Color(0x141B2559),
+                  blurRadius: 20,
+                  offset: Offset(0, 10)),
             ],
           ),
           child: opacity == 1
@@ -73,9 +95,13 @@ class _DocumentCard extends StatelessWidget {
                   children: [
                     _DocRow(icon: LucideIcons.user, color: AppColors.secondary),
                     SizedBox(height: AppSpacing.sm),
-                    _DocRow(icon: LucideIcons.shieldCheck, color: AppColors.primary),
+                    _DocRow(
+                        icon: LucideIcons.shieldCheck,
+                        color: AppColors.primary),
                     SizedBox(height: AppSpacing.sm),
-                    _DocRow(icon: LucideIcons.checkCircle2, color: AppColors.success),
+                    _DocRow(
+                        icon: LucideIcons.checkCircle2,
+                        color: AppColors.success),
                   ],
                 )
               : null,
@@ -123,7 +149,8 @@ class _AvatarBadge extends StatelessWidget {
         color: AppColors.secondary,
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(color: Color(0x3312A783), blurRadius: 18, offset: Offset(0, 8)),
+          BoxShadow(
+              color: Color(0x3312A783), blurRadius: 18, offset: Offset(0, 8)),
         ],
       ),
       child: const Icon(LucideIcons.user, color: Colors.white, size: 30),

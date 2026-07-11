@@ -14,9 +14,33 @@ class Validators {
 
   static bool isValidEmail(String value) => _emailRegex.hasMatch(value.trim());
 
-  static bool isValidIfsc(String value) => _ifscRegex.hasMatch(value.trim().toUpperCase());
+  static bool isValidIfsc(String value) =>
+      _ifscRegex.hasMatch(value.trim().toUpperCase());
 
-  static bool isValidPan(String value) => _panRegex.hasMatch(value.trim().toUpperCase());
+  static bool isValidPan(String value) =>
+      _panRegex.hasMatch(value.trim().toUpperCase());
 
-  static bool isValidAadhaar(String value) => _aadhaarRegex.hasMatch(value.trim());
+  static bool isValidAadhaar(String value) =>
+      _aadhaarRegex.hasMatch(value.trim());
+
+  static final _specialCharRegex =
+      RegExp(r'[!@#$%^&*(),.?":{}|<>_\-\[\]\\/;+=~`]');
+
+  static bool passwordHasMinLength(String value) => value.length >= 8;
+  static bool passwordHasUppercase(String value) =>
+      value.contains(RegExp(r'[A-Z]'));
+  static bool passwordHasNumber(String value) =>
+      value.contains(RegExp(r'[0-9]'));
+  static bool passwordHasSpecialChar(String value) =>
+      _specialCharRegex.hasMatch(value);
+
+  /// Count of the 4 password requirements met (0-4).
+  static int passwordStrength(String value) => [
+        passwordHasMinLength(value),
+        passwordHasUppercase(value),
+        passwordHasNumber(value),
+        passwordHasSpecialChar(value),
+      ].where((met) => met).length;
+
+  static bool isStrongPassword(String value) => passwordStrength(value) == 4;
 }

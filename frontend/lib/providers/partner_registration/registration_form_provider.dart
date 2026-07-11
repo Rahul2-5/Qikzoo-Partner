@@ -10,6 +10,8 @@ class RegistrationFormState {
   final Gender? gender;
   final String emergencyContactName;
   final String emergencyContactNumber;
+  final Relation? relation;
+  final String relationOther;
   final String referralCode;
   final VehicleType? vehicleType;
   final String? state;
@@ -22,6 +24,8 @@ class RegistrationFormState {
     this.gender,
     this.emergencyContactName = '',
     this.emergencyContactNumber = '',
+    this.relation,
+    this.relationOther = '',
     this.referralCode = '',
     this.vehicleType,
     this.state,
@@ -33,7 +37,9 @@ class RegistrationFormState {
       dateOfBirth != null &&
       gender != null &&
       emergencyContactName.trim().isNotEmpty &&
-      emergencyContactNumber.trim().length == 10;
+      emergencyContactNumber.trim().length == 10 &&
+      relation != null &&
+      (relation != Relation.other || relationOther.trim().isNotEmpty);
 
   RegistrationFormState copyWith({
     String? fullName,
@@ -42,6 +48,8 @@ class RegistrationFormState {
     Gender? gender,
     String? emergencyContactName,
     String? emergencyContactNumber,
+    Relation? relation,
+    String? relationOther,
     String? referralCode,
     VehicleType? vehicleType,
     String? state,
@@ -54,6 +62,8 @@ class RegistrationFormState {
         gender: gender ?? this.gender,
         emergencyContactName: emergencyContactName ?? this.emergencyContactName,
         emergencyContactNumber: emergencyContactNumber ?? this.emergencyContactNumber,
+        relation: relation ?? this.relation,
+        relationOther: relationOther ?? this.relationOther,
         referralCode: referralCode ?? this.referralCode,
         vehicleType: vehicleType ?? this.vehicleType,
         state: state ?? this.state,
@@ -71,6 +81,8 @@ class RegistrationFormNotifier extends Notifier<RegistrationFormState> {
   void setGender(Gender value) => state = state.copyWith(gender: value);
   void setEmergencyContactName(String value) => state = state.copyWith(emergencyContactName: value);
   void setEmergencyContactNumber(String value) => state = state.copyWith(emergencyContactNumber: value);
+  void setRelation(Relation value) => state = state.copyWith(relation: value);
+  void setRelationOther(String value) => state = state.copyWith(relationOther: value);
   void setReferralCode(String value) => state = state.copyWith(referralCode: value);
   void setVehicleType(VehicleType value) => state = state.copyWith(vehicleType: value);
   void setZone(String state_, String city) => state = state.copyWith(state: state_, city: city);
