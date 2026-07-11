@@ -125,4 +125,97 @@ void main() {
     final updated = container.read(documentsProvider).value!.single;
     expect(updated.status, DocumentStatus.notUploaded);
   });
+
+  testWidgets('Use Photo uploads the profile photo document', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        documentRepositoryProvider.overrideWithValue(
+          FakeDocumentRepository([
+            const DocumentModel(type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
+          ]),
+        ),
+        documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(documentsProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Consumer(
+            builder: (context, ref, _) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => pickAndConfirmSelfie(context, ref),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take Photo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Use Photo'), findsOneWidget);
+    await tester.tap(find.text('Use Photo'));
+    await tester.pumpAndSettle();
+
+    final updated = container
+        .read(documentsProvider)
+        .value!
+        .firstWhere((doc) => doc.type == DocumentType.profilePhoto);
+    expect(updated.status, DocumentStatus.pendingVerification);
+    expect(updated.fileUrl, '/tmp/picked.jpg');
+  });
+
+  testWidgets('Retake reopens the source sheet without uploading', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        documentRepositoryProvider.overrideWithValue(
+          FakeDocumentRepository([
+            const DocumentModel(type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
+          ]),
+        ),
+        documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(documentsProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Consumer(
+            builder: (context, ref, _) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => pickAndConfirmSelfie(context, ref),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take Photo'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Retake'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Take Photo'), findsOneWidget);
+    final stillNotUploaded = container
+        .read(documentsProvider)
+        .value!
+        .firstWhere((doc) => doc.type == DocumentType.profilePhoto);
+    expect(stillNotUploaded.status, DocumentStatus.notUploaded);
+  });
 }

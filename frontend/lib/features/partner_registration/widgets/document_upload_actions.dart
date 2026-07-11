@@ -11,13 +11,11 @@ import '../../../core/theme/app_typography.dart';
 import '../../../models/document_verification/document_model.dart';
 import '../../../providers/document_verification/documents_provider.dart';
 import '../../../repositories/document_verification/document_image_picker.dart';
+import '../../../shared/widgets/buttons/outlined_button_custom.dart';
+import '../../../shared/widgets/buttons/primary_cta_button.dart';
 
-Future<void> pickAndUploadDocument(
-  BuildContext context,
-  WidgetRef ref,
-  DocumentType type,
-) async {
-  final source = await showModalBottomSheet<ImageSource>(
+Future<ImageSource?> showImageSourceSheet(BuildContext context) {
+  return showModalBottomSheet<ImageSource>(
     context: context,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
@@ -44,7 +42,14 @@ Future<void> pickAndUploadDocument(
       ),
     ),
   );
+}
 
+Future<void> pickAndUploadDocument(
+  BuildContext context,
+  WidgetRef ref,
+  DocumentType type,
+) async {
+  final source = await showImageSourceSheet(context);
   if (source == null) return;
 
   final path = await ref.read(documentImagePickerProvider).pickImage(source);
@@ -117,5 +122,87 @@ Future<void> showDocumentPreviewSheet(
     ref.read(documentsProvider.notifier).remove(document.type);
   } else if (action == 'replace' && context.mounted) {
     await pickAndUploadDocument(context, ref, document.type);
+  }
+}
+
+Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipOval(
+              child: Image.file(
+                File(path),
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 120,
+                  height: 120,
+                  color: AppColors.surfaceMuted,
+                  child: const Icon(
+                    LucideIcons.userCircle,
+                    color: AppColors.textSecondary,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButtonCustom(
+                    label: 'Retake',
+                    onPressed: () => Navigator.of(sheetContext).pop(false),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: PrimaryCtaButton(
+                    label: 'Use Photo',
+                    onPressed: () => Navigator.of(sheetContext).pop(true),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> pickAndConfirmSelfie(BuildContext context, WidgetRef ref) async {
+  while (true) {
+    final source = await showImageSourceSheet(context);
+    if (source == null) return;
+
+    final path = await ref.read(documentImagePickerProvider).pickImage(source);
+    if (path == null) return;
+
+    if (!context.mounted) return;
+    final useThisPhoto = await showSelfieConfirmSheet(context, path);
+    if (useThisPhoto == null) return;
+    if (useThisPhoto == false) continue;
+
+    try {
+      await ref.read(documentsProvider.notifier).upload(DocumentType.profilePhoto, path);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Upload failed, please try again')),
+        );
+      }
+    }
+    return;
   }
 }
