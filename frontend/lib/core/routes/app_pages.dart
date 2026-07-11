@@ -12,6 +12,7 @@ import '../../features/partner_registration/screens/select_city_screen.dart';
 import '../../features/partner_registration/screens/vehicle_selection_screen.dart';
 import '../../features/partner_registration/screens/vehicle_details_screen.dart';
 import '../../features/partner_registration/screens/document_upload_screen.dart';
+import '../../features/partner_registration/screens/selfie_verification_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -41,6 +42,9 @@ class AppPages {
     GetPage(
         name: AppRoutes.documentUpload,
         page: () => const DocumentUploadScreen()),
+    GetPage(
+        name: AppRoutes.selfieVerification,
+        page: () => const SelfieVerificationScreen()),
     GetPage(
         name: AppRoutes.bankDetails,
         page: () => const PlaceholderScreen(title: 'Bank Details')),
