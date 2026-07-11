@@ -31,8 +31,8 @@ Widget buildApp(List<DocumentModel> documents) {
       getPages: [
         GetPage(name: AppRoutes.documentUpload, page: () => const DocumentUploadScreen()),
         GetPage(
-          name: AppRoutes.bankDetails,
-          page: () => const Scaffold(body: Text('Bank Details Screen')),
+          name: AppRoutes.selfieVerification,
+          page: () => const Scaffold(body: Text('Selfie Verification Screen')),
         ),
       ],
     ),
@@ -91,10 +91,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Aadhaar Card'), findsWidgets);
-    expect(find.text('Bank Details Screen'), findsNothing);
+    expect(find.text('Selfie Verification Screen'), findsNothing);
   });
 
-  testWidgets('Continue navigates to bank details once required documents are uploaded', (tester) async {
+  testWidgets('Continue navigates to selfie verification once required documents are uploaded', (tester) async {
     setTallSurface(tester);
     const requiredTypes = [
       DocumentType.aadhaar,
@@ -117,6 +117,6 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Bank Details Screen'), findsOneWidget);
+    expect(find.text('Selfie Verification Screen'), findsOneWidget);
   });
 }

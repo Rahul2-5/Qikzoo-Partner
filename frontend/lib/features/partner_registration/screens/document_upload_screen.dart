@@ -52,7 +52,7 @@ class DocumentUploadScreen extends ConsumerWidget {
       );
       return;
     }
-    Get.toNamed(AppRoutes.bankDetails);
+    Get.toNamed(AppRoutes.selfieVerification);
   }
 
   @override
@@ -70,7 +70,7 @@ class DocumentUploadScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
               IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
               const SizedBox(height: AppSpacing.lg),
-              const StepProgressIndicator(totalSteps: 5, currentStep: 4),
+              const StepProgressIndicator(totalSteps: 6, currentStep: 4),
               const SizedBox(height: AppSpacing.lg),
               Text.rich(
                 TextSpan(

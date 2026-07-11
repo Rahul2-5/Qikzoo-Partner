@@ -8,7 +8,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/partner_registration/vehicle_model.dart';
 import '../../../providers/partner_registration/registration_form_provider.dart';
-import '../../../repositories/partner_registration/partner_registration_repository.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
@@ -25,16 +24,9 @@ class VehicleSelectionScreen extends ConsumerStatefulWidget {
 
 class _VehicleSelectionScreenState
     extends ConsumerState<VehicleSelectionScreen> {
-  bool _isSaving = false;
-
-  Future<void> _onContinue(VehicleType selected) async {
-    setState(() => _isSaving = true);
-    await ref
-        .read(partnerRegistrationRepositoryProvider)
-        .saveVehicle(VehicleModel(type: selected));
-    if (!mounted) return;
-    setState(() => _isSaving = false);
-    Get.toNamed(AppRoutes.deliveryZone);
+  void _onContinue(VehicleType selected) {
+    ref.read(registrationFormProvider.notifier).setVehicleType(selected);
+    Get.toNamed(AppRoutes.vehicleDetails);
   }
 
   @override
@@ -67,7 +59,7 @@ class _VehicleSelectionScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const StepProgressIndicator(
-                          totalSteps: 4, currentStep: 1),
+                          totalSteps: 6, currentStep: 1),
                       const SizedBox(height: AppSpacing.lg),
                       RichText(
                         text: TextSpan(
@@ -114,7 +106,6 @@ class _VehicleSelectionScreenState
               PrimaryCtaButton(
                 label: 'Continue',
                 trailingIcon: LucideIcons.arrowRight,
-                isLoading: _isSaving,
                 onPressed:
                     selected != null ? () => _onContinue(selected) : null,
               ),

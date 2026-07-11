@@ -9,8 +9,10 @@ class AppRoutes {
   static const setPassword = '/set-password';
   static const personalInfo = '/registration/personal-info';
   static const vehicleSelection = '/registration/vehicle-selection';
+  static const vehicleDetails = '/registration/vehicle-details';
   static const deliveryZone = '/registration/delivery-zone';
   static const documentUpload = '/documents';
+  static const selfieVerification = '/registration/selfie-verification';
   static const bankDetails = '/bank-details';
   static const verificationStatus = '/verification-status';
   static const training = '/training';

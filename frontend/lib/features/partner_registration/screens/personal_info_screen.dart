@@ -96,7 +96,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const StepProgressIndicator(
-                          totalSteps: 4, currentStep: 0),
+                          totalSteps: 6, currentStep: 0),
                       const SizedBox(height: AppSpacing.lg),
                       RichText(
                         text: TextSpan(

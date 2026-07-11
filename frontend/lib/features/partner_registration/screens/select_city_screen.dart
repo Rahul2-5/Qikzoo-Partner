@@ -147,7 +147,7 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const StepProgressIndicator(
-                          totalSteps: 4, currentStep: 2),
+                          totalSteps: 6, currentStep: 3),
                       const SizedBox(height: AppSpacing.lg),
                       RichText(
                         text: TextSpan(
