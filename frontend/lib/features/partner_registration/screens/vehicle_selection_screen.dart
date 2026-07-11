@@ -27,20 +27,6 @@ class _VehicleSelectionScreenState
     extends ConsumerState<VehicleSelectionScreen> {
   bool _isSaving = false;
 
-  String _label(VehicleType type) => switch (type) {
-        VehicleType.scooter => 'Bike Partner',
-        VehicleType.bicycle => 'Cycle Partner',
-        VehicleType.electricVehicle => 'E-Bike Partner',
-        VehicleType.bike => 'Bike Partner',
-      };
-
-  String _image(VehicleType type) => switch (type) {
-        VehicleType.scooter => 'assets/images/bike_3d.png',
-        VehicleType.bicycle => 'assets/images/cycle_3d.png',
-        VehicleType.electricVehicle => 'assets/images/e-bike_3d.png',
-        VehicleType.bike => 'assets/images/bike_3d.png',
-      };
-
   Future<void> _onContinue(VehicleType selected) async {
     setState(() => _isSaving = true);
     await ref
@@ -113,8 +99,8 @@ class _VehicleSelectionScreenState
                       for (var i = 0; i < options.length; i++) ...[
                         if (i > 0) const SizedBox(height: AppSpacing.md),
                         VehicleTypeCard(
-                          imageAsset: _image(options[i]),
-                          label: _label(options[i]),
+                          imageAsset: options[i].imageAsset,
+                          label: options[i].label,
                           selected: selected == options[i],
                           isPopular: options[i] == VehicleType.scooter,
                           onTap: () => formNotifier.setVehicleType(options[i]),

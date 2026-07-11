@@ -14,8 +14,13 @@ class RegistrationFormState {
   final String relationOther;
   final String referralCode;
   final VehicleType? vehicleType;
+  final String vehicleNumber;
+  final String vehicleModel;
   final String? state;
   final String? city;
+
+  static final RegExp _plateRegExp =
+      RegExp(r'^[A-Za-z]{2}\s?\d{1,2}\s?[A-Za-z]{1,2}\s?\d{4}$');
 
   const RegistrationFormState({
     this.fullName = '',
@@ -28,6 +33,8 @@ class RegistrationFormState {
     this.relationOther = '',
     this.referralCode = '',
     this.vehicleType,
+    this.vehicleNumber = '',
+    this.vehicleModel = '',
     this.state,
     this.city,
   });
@@ -41,6 +48,12 @@ class RegistrationFormState {
       relation != null &&
       (relation != Relation.other || relationOther.trim().isNotEmpty);
 
+  bool get isVehicleDetailsValid {
+    if (vehicleType == null || vehicleModel.trim().isEmpty) return false;
+    if (vehicleType == VehicleType.bicycle) return true;
+    return _plateRegExp.hasMatch(vehicleNumber.trim());
+  }
+
   RegistrationFormState copyWith({
     String? fullName,
     String? email,
@@ -52,6 +65,8 @@ class RegistrationFormState {
     String? relationOther,
     String? referralCode,
     VehicleType? vehicleType,
+    String? vehicleNumber,
+    String? vehicleModel,
     String? state,
     String? city,
   }) =>
@@ -66,6 +81,8 @@ class RegistrationFormState {
         relationOther: relationOther ?? this.relationOther,
         referralCode: referralCode ?? this.referralCode,
         vehicleType: vehicleType ?? this.vehicleType,
+        vehicleNumber: vehicleNumber ?? this.vehicleNumber,
+        vehicleModel: vehicleModel ?? this.vehicleModel,
         state: state ?? this.state,
         city: city ?? this.city,
       );
@@ -85,6 +102,8 @@ class RegistrationFormNotifier extends Notifier<RegistrationFormState> {
   void setRelationOther(String value) => state = state.copyWith(relationOther: value);
   void setReferralCode(String value) => state = state.copyWith(referralCode: value);
   void setVehicleType(VehicleType value) => state = state.copyWith(vehicleType: value);
+  void setVehicleNumber(String value) => state = state.copyWith(vehicleNumber: value);
+  void setVehicleModel(String value) => state = state.copyWith(vehicleModel: value);
   void setZone(String state_, String city) => state = state.copyWith(state: state_, city: city);
 }
 
