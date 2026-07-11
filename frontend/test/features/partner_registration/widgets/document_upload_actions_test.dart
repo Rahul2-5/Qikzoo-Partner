@@ -81,4 +81,48 @@ void main() {
     expect(updated.status, DocumentStatus.pendingVerification);
     expect(updated.fileUrl, '/tmp/picked.jpg');
   });
+
+  testWidgets('Remove resets the document to notUploaded', (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        documentRepositoryProvider.overrideWithValue(
+          FakeDocumentRepository([
+            const DocumentModel(
+              type: DocumentType.aadhaar,
+              status: DocumentStatus.pendingVerification,
+              fileUrl: '/tmp/a.jpg',
+            ),
+          ]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final documents = await container.read(documentsProvider.future);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Consumer(
+            builder: (context, ref, _) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => showDocumentPreviewSheet(context, ref, documents.first),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Replace'), findsOneWidget);
+
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+
+    final updated = container.read(documentsProvider).value!.single;
+    expect(updated.status, DocumentStatus.notUploaded);
+  });
 }
