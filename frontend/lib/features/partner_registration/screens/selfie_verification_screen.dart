@@ -102,7 +102,7 @@ class SelfieVerificationScreen extends ConsumerWidget {
                 label: isUploaded ? 'Continue' : 'Capture',
                 trailingIcon: isUploaded ? LucideIcons.arrowRight : LucideIcons.camera,
                 onPressed: () => isUploaded
-                    ? Get.toNamed(AppRoutes.bankDetails)
+                    ? Get.toNamed(AppRoutes.applicationSubmitted)
                     : pickAndConfirmSelfie(context, ref),
               ),
               const SizedBox(height: AppSpacing.md),

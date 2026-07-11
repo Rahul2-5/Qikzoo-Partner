@@ -57,8 +57,8 @@ Widget buildApp(List<DocumentModel> documents) {
           page: () => const SelfieVerificationScreen(),
         ),
         GetPage(
-          name: AppRoutes.bankDetails,
-          page: () => const Scaffold(body: Text('Bank Details Screen')),
+          name: AppRoutes.applicationSubmitted,
+          page: () => const Scaffold(body: Text('Application Submitted Screen')),
         ),
       ],
     ),
@@ -96,7 +96,7 @@ void main() {
     expect(find.text('Continue'), findsOneWidget);
   });
 
-  testWidgets('Continue navigates to bank details once the selfie is uploaded', (tester) async {
+  testWidgets('Continue navigates to application submitted once the selfie is uploaded', (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp([
       const DocumentModel(
@@ -110,6 +110,6 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Bank Details Screen'), findsOneWidget);
+    expect(find.text('Application Submitted Screen'), findsOneWidget);
   });
 }
