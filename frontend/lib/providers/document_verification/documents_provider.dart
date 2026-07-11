@@ -13,6 +13,16 @@ class DocumentsNotifier extends AsyncNotifier<List<DocumentModel>> {
         if (doc.type == type) updated else doc,
     ]);
   }
+
+  void remove(DocumentType type) {
+    state = AsyncData([
+      for (final doc in state.value ?? [])
+        if (doc.type == type)
+          DocumentModel(type: type, status: DocumentStatus.notUploaded)
+        else
+          doc,
+    ]);
+  }
 }
 
 final documentsProvider = AsyncNotifierProvider<DocumentsNotifier, List<DocumentModel>>(
