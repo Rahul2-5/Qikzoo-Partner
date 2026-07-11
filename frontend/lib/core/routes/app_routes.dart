@@ -13,6 +13,7 @@ class AppRoutes {
   static const deliveryZone = '/registration/delivery-zone';
   static const documentUpload = '/documents';
   static const selfieVerification = '/registration/selfie-verification';
+  static const applicationSubmitted = '/registration/application-submitted';
   static const bankDetails = '/bank-details';
   static const verificationStatus = '/verification-status';
   static const training = '/training';

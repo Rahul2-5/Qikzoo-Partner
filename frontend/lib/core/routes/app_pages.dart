@@ -13,6 +13,7 @@ import '../../features/partner_registration/screens/vehicle_selection_screen.dar
 import '../../features/partner_registration/screens/vehicle_details_screen.dart';
 import '../../features/partner_registration/screens/document_upload_screen.dart';
 import '../../features/partner_registration/screens/selfie_verification_screen.dart';
+import '../../features/partner_registration/screens/application_submitted_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -45,6 +46,9 @@ class AppPages {
     GetPage(
         name: AppRoutes.selfieVerification,
         page: () => const SelfieVerificationScreen()),
+    GetPage(
+        name: AppRoutes.applicationSubmitted,
+        page: () => const ApplicationSubmittedScreen()),
     GetPage(
         name: AppRoutes.bankDetails,
         page: () => const PlaceholderScreen(title: 'Bank Details')),
