@@ -10,6 +10,8 @@ import '../../features/authentication/screens/set_password_screen.dart';
 import '../../features/partner_registration/screens/personal_info_screen.dart';
 import '../../features/partner_registration/screens/select_city_screen.dart';
 import '../../features/partner_registration/screens/vehicle_selection_screen.dart';
+import '../../features/partner_registration/screens/vehicle_details_screen.dart';
+import '../../features/partner_registration/screens/document_upload_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -32,10 +34,13 @@ class AppPages {
         name: AppRoutes.vehicleSelection,
         page: () => const VehicleSelectionScreen()),
     GetPage(
+        name: AppRoutes.vehicleDetails,
+        page: () => const VehicleDetailsScreen()),
+    GetPage(
         name: AppRoutes.deliveryZone, page: () => const SelectCityScreen()),
     GetPage(
         name: AppRoutes.documentUpload,
-        page: () => const PlaceholderScreen(title: 'Document Upload')),
+        page: () => const DocumentUploadScreen()),
     GetPage(
         name: AppRoutes.bankDetails,
         page: () => const PlaceholderScreen(title: 'Bank Details')),
