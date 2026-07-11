@@ -34,11 +34,11 @@ class _VehicleSelectionScreenState
         VehicleType.bike => 'Bike Partner',
       };
 
-  IconData _icon(VehicleType type) => switch (type) {
-        VehicleType.scooter => Icons.two_wheeler,
-        VehicleType.bicycle => Icons.pedal_bike,
-        VehicleType.electricVehicle => Icons.electric_bike,
-        VehicleType.bike => Icons.two_wheeler,
+  String _image(VehicleType type) => switch (type) {
+        VehicleType.scooter => 'assets/images/bike_3d.png',
+        VehicleType.bicycle => 'assets/images/cycle_3d.png',
+        VehicleType.electricVehicle => 'assets/images/e-bike_3d.png',
+        VehicleType.bike => 'assets/images/bike_3d.png',
       };
 
   Future<void> _onContinue(VehicleType selected) async {
@@ -113,7 +113,7 @@ class _VehicleSelectionScreenState
                       for (var i = 0; i < options.length; i++) ...[
                         if (i > 0) const SizedBox(height: AppSpacing.md),
                         VehicleTypeCard(
-                          icon: _icon(options[i]),
+                          imageAsset: _image(options[i]),
                           label: _label(options[i]),
                           selected: selected == options[i],
                           isPopular: options[i] == VehicleType.scooter,

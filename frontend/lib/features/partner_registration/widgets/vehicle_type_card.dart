@@ -7,7 +7,7 @@ import '../../../core/theme/app_typography.dart';
 import 'selection_radio.dart';
 
 class VehicleTypeCard extends StatelessWidget {
-  final IconData icon;
+  final String imageAsset;
   final String label;
   final bool selected;
   final bool isPopular;
@@ -15,7 +15,7 @@ class VehicleTypeCard extends StatelessWidget {
 
   const VehicleTypeCard({
     super.key,
-    required this.icon,
+    required this.imageAsset,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -42,14 +42,19 @@ class VehicleTypeCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 76,
+                height: 76,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(AppRadius.control),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 28),
+                child: Image.asset(
+                  imageAsset,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
