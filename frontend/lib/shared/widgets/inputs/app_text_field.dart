@@ -19,6 +19,7 @@ class AppTextField extends StatelessWidget {
   final void Function(String)? onChanged;
   final List<TextInputFormatter>? inputFormatters;
   final int? maxLength;
+  final TextCapitalization textCapitalization;
 
   const AppTextField({
     super.key,
@@ -36,6 +37,7 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.inputFormatters,
     this.maxLength,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -49,6 +51,7 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       inputFormatters: inputFormatters,
       maxLength: maxLength,
+      textCapitalization: textCapitalization,
       style: AppTypography.bodyMedium,
       decoration: InputDecoration(
         labelText: showFloatingLabel ? label : null,
