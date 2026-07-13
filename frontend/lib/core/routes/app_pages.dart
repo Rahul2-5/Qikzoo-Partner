@@ -14,6 +14,7 @@ import '../../features/partner_registration/screens/vehicle_details_screen.dart'
 import '../../features/partner_registration/screens/document_upload_screen.dart';
 import '../../features/partner_registration/screens/selfie_verification_screen.dart';
 import '../../features/partner_registration/screens/application_submitted_screen.dart';
+import '../../features/dashboard/screens/dashboard_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -38,8 +39,7 @@ class AppPages {
     GetPage(
         name: AppRoutes.vehicleDetails,
         page: () => const VehicleDetailsScreen()),
-    GetPage(
-        name: AppRoutes.deliveryZone, page: () => const SelectCityScreen()),
+    GetPage(name: AppRoutes.deliveryZone, page: () => const SelectCityScreen()),
     GetPage(
         name: AppRoutes.documentUpload,
         page: () => const DocumentUploadScreen()),
@@ -64,9 +64,7 @@ class AppPages {
     GetPage(
         name: AppRoutes.approval,
         page: () => const PlaceholderScreen(title: 'Approval')),
-    GetPage(
-        name: AppRoutes.dashboard,
-        page: () => const PlaceholderScreen(title: 'Dashboard')),
+    GetPage(name: AppRoutes.dashboard, page: () => const DashboardScreen()),
     GetPage(
         name: AppRoutes.orders,
         page: () => const PlaceholderScreen(title: 'Orders')),

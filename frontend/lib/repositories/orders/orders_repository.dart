@@ -33,12 +33,22 @@ class MockOrdersRepository implements OrdersRepository {
   OrderModel _mockOrder(String id) => OrderModel(
         id: id,
         restaurantName: 'Spice Route Kitchen',
+        restaurantArea: 'MG Road',
         customerName: 'Aditi Sharma',
         pickupAddress: '12 MG Road',
         dropAddress: '45 Park Street',
+        dropPincode: '560001',
         status: OrderStatus.incomingRequest,
         amount: 96,
         distanceKm: 3.2,
+        pickupDistanceKm: 0.9,
+        etaMinutes: 14,
+        items: const [OrderItem(name: 'Paneer Tikka', quantity: 1)],
+        customerNote: null,
+        pickedUpAt: null,
+        deliveryFee: 80,
+        distancePay: 12,
+        incentive: 4,
       );
 }
 

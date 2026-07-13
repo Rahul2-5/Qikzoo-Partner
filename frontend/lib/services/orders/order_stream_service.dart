@@ -9,12 +9,22 @@ class OrderStreamService {
     yield const OrderModel(
       id: 'order_incoming_1',
       restaurantName: 'Green Bowl Cafe',
+      restaurantArea: 'Residency Road',
       customerName: 'Rohan Mehta',
       pickupAddress: '9 Residency Road',
       dropAddress: '21 Church Street',
+      dropPincode: '560001',
       status: OrderStatus.incomingRequest,
       amount: 78,
       distanceKm: 2.1,
+      pickupDistanceKm: 0.6,
+      etaMinutes: 10,
+      items: [OrderItem(name: 'Buddha Bowl', quantity: 1)],
+      customerNote: null,
+      pickedUpAt: null,
+      deliveryFee: 60,
+      distancePay: 14,
+      incentive: 4,
     );
   }
 }
