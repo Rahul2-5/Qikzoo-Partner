@@ -20,6 +20,7 @@ class AppRoutes {
   static const agreement = '/agreement';
   static const approval = '/approval';
   static const dashboard = '/dashboard';
+  static const earnings = '/earnings';
   static const orders = '/orders';
   static const wallet = '/wallet';
   static const support = '/support';
