@@ -45,7 +45,7 @@ class OrderDeliveredView extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        OrderProgressTracker(status: OrderStatus.deliveryConfirmed),
+        const OrderProgressTracker(status: OrderStatus.deliveryConfirmed),
         const SizedBox(height: AppSpacing.md),
         Expanded(
           child: SingleChildScrollView(

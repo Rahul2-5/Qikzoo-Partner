@@ -35,26 +35,34 @@ class _RatingSelectorState extends State<RatingSelector> {
           Text('Your feedback helps us improve', style: AppTypography.caption),
           const SizedBox(height: AppSpacing.md),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(5, (i) {
               final filled = i < _selected;
-              return Semantics(
-                label: 'Rate ${_labels[i]}, ${i + 1} of 5',
-                button: true,
-                child: GestureDetector(
-                  onTap: () => setState(() => _selected = i + 1),
-                  child: Column(
-                    children: [
-                      Icon(
-                        LucideIcons.star,
-                        size: 28,
-                        color: filled
-                            ? AppColors.accent
-                            : AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(_labels[i], style: AppTypography.caption),
-                    ],
+              return Expanded(
+                child: Semantics(
+                  label: 'Rate ${_labels[i]}, ${i + 1} of 5',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selected = i + 1),
+                    behavior: HitTestBehavior.opaque,
+                    child: Column(
+                      children: [
+                        Icon(
+                          LucideIcons.star,
+                          size: 28,
+                          color: filled
+                              ? AppColors.accent
+                              : AppColors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          _labels[i],
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
