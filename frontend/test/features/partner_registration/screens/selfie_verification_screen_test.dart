@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/partner_registration/screens/selfie_verification_screen.dart';
 import 'package:delivery_partner_app/models/document_verification/document_model.dart';
-import 'package:delivery_partner_app/providers/document_verification/documents_provider.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_repository.dart';
 
@@ -18,14 +17,16 @@ class FakeDocumentRepository implements DocumentRepository {
   Future<List<DocumentModel>> getDocuments() async => _documents;
 
   @override
-  Future<DocumentModel> uploadDocument(DocumentType type, String filePath) async {
+  Future<DocumentModel> uploadDocument(
+      DocumentType type, String filePath) async {
     final updated = DocumentModel(
       type: type,
       status: DocumentStatus.pendingVerification,
       fileUrl: filePath,
     );
     _documents = [
-      for (final doc in _documents) if (doc.type == type) updated else doc,
+      for (final doc in _documents)
+        if (doc.type == type) updated else doc,
     ];
     return updated;
   }
@@ -46,7 +47,8 @@ void setTallSurface(WidgetTester tester) {
 Widget buildApp(List<DocumentModel> documents) {
   return ProviderScope(
     overrides: [
-      documentRepositoryProvider.overrideWithValue(FakeDocumentRepository(documents)),
+      documentRepositoryProvider
+          .overrideWithValue(FakeDocumentRepository(documents)),
       documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
     ],
     child: GetMaterialApp(
@@ -58,7 +60,8 @@ Widget buildApp(List<DocumentModel> documents) {
         ),
         GetPage(
           name: AppRoutes.applicationSubmitted,
-          page: () => const Scaffold(body: Text('Application Submitted Screen')),
+          page: () =>
+              const Scaffold(body: Text('Application Submitted Screen')),
         ),
       ],
     ),
@@ -66,10 +69,12 @@ Widget buildApp(List<DocumentModel> documents) {
 }
 
 void main() {
-  testWidgets('shows Capture initially and the verification tips', (tester) async {
+  testWidgets('shows Capture initially and the verification tips',
+      (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp([
-      const DocumentModel(type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
+      const DocumentModel(
+          type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
     ]));
     await tester.pumpAndSettle();
 
@@ -79,10 +84,12 @@ void main() {
     expect(find.text('No sunglasses or filters'), findsOneWidget);
   });
 
-  testWidgets('capturing and using a photo switches Capture to Continue', (tester) async {
+  testWidgets('capturing and using a photo switches Capture to Continue',
+      (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp([
-      const DocumentModel(type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
+      const DocumentModel(
+          type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
     ]));
     await tester.pumpAndSettle();
 
@@ -96,7 +103,9 @@ void main() {
     expect(find.text('Continue'), findsOneWidget);
   });
 
-  testWidgets('Continue navigates to application submitted once the selfie is uploaded', (tester) async {
+  testWidgets(
+      'Continue navigates to application submitted once the selfie is uploaded',
+      (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp([
       const DocumentModel(

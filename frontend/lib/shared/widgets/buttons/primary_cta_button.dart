@@ -69,18 +69,29 @@ class PrimaryCtaButton extends StatelessWidget {
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Flexible(
-                              child: Text(
+                            if (fullWidth)
+                              Flexible(
+                                child: Text(
+                                  label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.button.copyWith(
+                                    color: isDisabled
+                                        ? AppColors.textSecondary
+                                        : Colors.white,
+                                  ),
+                                ),
+                              )
+                            else
+                              Text(
                                 label,
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: AppTypography.button.copyWith(
                                   color: isDisabled
                                       ? AppColors.textSecondary
                                       : Colors.white,
                                 ),
                               ),
-                            ),
                             if (trailingIcon != null) ...[
                               const SizedBox(width: AppSpacing.sm),
                               Icon(

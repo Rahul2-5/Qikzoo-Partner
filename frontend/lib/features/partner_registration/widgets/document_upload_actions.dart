@@ -19,7 +19,8 @@ Future<ImageSource?> showImageSourceSheet(BuildContext context) {
     context: context,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (sheetContext) => SafeArea(
       child: Padding(
@@ -28,13 +29,16 @@ Future<ImageSource?> showImageSourceSheet(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(LucideIcons.camera, color: AppColors.secondary),
+              leading:
+                  const Icon(LucideIcons.camera, color: AppColors.secondary),
               title: Text('Take Photo', style: AppTypography.bodyMedium),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(LucideIcons.image, color: AppColors.secondary),
-              title: Text('Choose from Gallery', style: AppTypography.bodyMedium),
+              leading:
+                  const Icon(LucideIcons.image, color: AppColors.secondary),
+              title:
+                  Text('Choose from Gallery', style: AppTypography.bodyMedium),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
           ],
@@ -75,7 +79,8 @@ Future<void> showDocumentPreviewSheet(
     context: context,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (sheetContext) => SafeArea(
       child: Padding(
@@ -94,13 +99,15 @@ Future<void> showDocumentPreviewSheet(
                   width: 96,
                   height: 96,
                   color: AppColors.surfaceMuted,
-                  child: const Icon(LucideIcons.fileText, color: AppColors.textSecondary),
+                  child: const Icon(LucideIcons.fileText,
+                      color: AppColors.textSecondary),
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
             ListTile(
-              leading: const Icon(LucideIcons.refreshCw, color: AppColors.secondary),
+              leading:
+                  const Icon(LucideIcons.refreshCw, color: AppColors.secondary),
               title: Text('Replace', style: AppTypography.bodyMedium),
               onTap: () => Navigator.of(sheetContext).pop('replace'),
             ),
@@ -108,7 +115,8 @@ Future<void> showDocumentPreviewSheet(
               leading: const Icon(LucideIcons.trash2, color: AppColors.error),
               title: Text(
                 'Remove',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.error),
+                style:
+                    AppTypography.bodyMedium.copyWith(color: AppColors.error),
               ),
               onTap: () => Navigator.of(sheetContext).pop('remove'),
             ),
@@ -130,7 +138,8 @@ Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) {
     context: context,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
     ),
     builder: (sheetContext) => SafeArea(
       child: Padding(
@@ -183,6 +192,7 @@ Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) {
 
 Future<void> pickAndConfirmSelfie(BuildContext context, WidgetRef ref) async {
   while (true) {
+    if (!context.mounted) return;
     final source = await showImageSourceSheet(context);
     if (source == null) return;
 
@@ -195,7 +205,9 @@ Future<void> pickAndConfirmSelfie(BuildContext context, WidgetRef ref) async {
     if (useThisPhoto == false) continue;
 
     try {
-      await ref.read(documentsProvider.notifier).upload(DocumentType.profilePhoto, path);
+      await ref
+          .read(documentsProvider.notifier)
+          .upload(DocumentType.profilePhoto, path);
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

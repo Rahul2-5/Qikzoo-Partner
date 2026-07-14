@@ -17,6 +17,7 @@ import '../../features/partner_registration/screens/application_submitted_screen
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/earnings/screens/earnings_screen.dart';
 import '../../features/orders/screens/orders_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -75,9 +76,7 @@ class AppPages {
     GetPage(
         name: AppRoutes.support,
         page: () => const PlaceholderScreen(title: 'Support')),
-    GetPage(
-        name: AppRoutes.profile,
-        page: () => const PlaceholderScreen(title: 'Profile')),
+    GetPage(name: AppRoutes.profile, page: () => const ProfileScreen()),
     GetPage(
         name: AppRoutes.notifications,
         page: () => const PlaceholderScreen(title: 'Notifications')),

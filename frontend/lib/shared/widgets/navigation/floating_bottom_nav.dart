@@ -37,34 +37,77 @@ class FloatingBottomNav extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
-            height: 64,
-            decoration: AppShadows.glass().copyWith(boxShadow: AppShadows.card),
+            height: 72,
+            decoration: AppShadows.glass(opacity: 0.88).copyWith(
+              boxShadow: AppShadows.card,
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(items.length, (index) {
                 final isActive = index == currentIndex;
                 final item = items[index];
-                return GestureDetector(
-                  onTap: () => onTap(index),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isActive ? item.activeIcon : item.icon,
-                        color: isActive
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                        size: 22,
+                return Expanded(
+                  child: Semantics(
+                    button: true,
+                    selected: isActive,
+                    label: item.label,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onTap(index),
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
+                          padding: EdgeInsets.symmetric(
+                            horizontal:
+                                isActive ? AppSpacing.xs : AppSpacing.sm,
+                            vertical: AppSpacing.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? AppColors.secondary
+                                : Colors.transparent,
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.control),
+                            boxShadow: isActive
+                                ? const [
+                                    BoxShadow(
+                                      color: Color(0x2412A783),
+                                      offset: Offset(0, 5),
+                                      blurRadius: 10,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: isActive
+                              ? Icon(
+                                  item.activeIcon,
+                                  color: Colors.white,
+                                  size: 20,
+                                )
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      item.icon,
+                                      color: AppColors.textSecondary,
+                                      size: 21,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.caption.copyWith(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
                       ),
-                      if (!isActive) ...[
-                        const SizedBox(height: 2),
-                        Text(item.label,
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            )),
-                      ],
-                    ],
+                    ),
                   ),
                 );
               }),

@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/partner_registration/screens/document_upload_screen.dart';
 import 'package:delivery_partner_app/models/document_verification/document_model.dart';
-import 'package:delivery_partner_app/providers/document_verification/documents_provider.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_repository.dart';
 
 class FakeDocumentRepository implements DocumentRepository {
@@ -16,20 +15,27 @@ class FakeDocumentRepository implements DocumentRepository {
   Future<List<DocumentModel>> getDocuments() async => _documents;
 
   @override
-  Future<DocumentModel> uploadDocument(DocumentType type, String filePath) async {
-    return DocumentModel(type: type, status: DocumentStatus.pendingVerification, fileUrl: filePath);
+  Future<DocumentModel> uploadDocument(
+      DocumentType type, String filePath) async {
+    return DocumentModel(
+        type: type,
+        status: DocumentStatus.pendingVerification,
+        fileUrl: filePath);
   }
 }
 
 Widget buildApp(List<DocumentModel> documents) {
   return ProviderScope(
     overrides: [
-      documentRepositoryProvider.overrideWithValue(FakeDocumentRepository(documents)),
+      documentRepositoryProvider
+          .overrideWithValue(FakeDocumentRepository(documents)),
     ],
     child: GetMaterialApp(
       initialRoute: AppRoutes.documentUpload,
       getPages: [
-        GetPage(name: AppRoutes.documentUpload, page: () => const DocumentUploadScreen()),
+        GetPage(
+            name: AppRoutes.documentUpload,
+            page: () => const DocumentUploadScreen()),
         GetPage(
           name: AppRoutes.selfieVerification,
           page: () => const Scaffold(body: Text('Selfie Verification Screen')),
@@ -47,13 +53,22 @@ void setTallSurface(WidgetTester tester) {
 }
 
 void main() {
-  test('missingRequiredDocumentLabels lists only missing required docs, PAN excluded', () {
+  test(
+      'missingRequiredDocumentLabels lists only missing required docs, PAN excluded',
+      () {
     final documents = [
-      const DocumentModel(type: DocumentType.aadhaar, status: DocumentStatus.pendingVerification),
-      const DocumentModel(type: DocumentType.drivingLicense, status: DocumentStatus.notUploaded),
-      const DocumentModel(type: DocumentType.vehicleRc, status: DocumentStatus.verified),
-      const DocumentModel(type: DocumentType.vehicleInsurance, status: DocumentStatus.rejected),
-      const DocumentModel(type: DocumentType.pan, status: DocumentStatus.notUploaded),
+      const DocumentModel(
+          type: DocumentType.aadhaar,
+          status: DocumentStatus.pendingVerification),
+      const DocumentModel(
+          type: DocumentType.drivingLicense,
+          status: DocumentStatus.notUploaded),
+      const DocumentModel(
+          type: DocumentType.vehicleRc, status: DocumentStatus.verified),
+      const DocumentModel(
+          type: DocumentType.vehicleInsurance, status: DocumentStatus.rejected),
+      const DocumentModel(
+          type: DocumentType.pan, status: DocumentStatus.notUploaded),
     ];
 
     expect(
@@ -66,7 +81,8 @@ void main() {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp(
       DocumentType.values
-          .map((type) => DocumentModel(type: type, status: DocumentStatus.notUploaded))
+          .map((type) =>
+              DocumentModel(type: type, status: DocumentStatus.notUploaded))
           .toList(),
     ));
     await tester.pumpAndSettle();
@@ -78,11 +94,13 @@ void main() {
     expect(find.textContaining('PAN Card'), findsOneWidget);
   });
 
-  testWidgets('Continue shows a snackbar listing missing required documents', (tester) async {
+  testWidgets('Continue shows a snackbar listing missing required documents',
+      (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp(
       DocumentType.values
-          .map((type) => DocumentModel(type: type, status: DocumentStatus.notUploaded))
+          .map((type) =>
+              DocumentModel(type: type, status: DocumentStatus.notUploaded))
           .toList(),
     ));
     await tester.pumpAndSettle();
@@ -94,7 +112,9 @@ void main() {
     expect(find.text('Selfie Verification Screen'), findsNothing);
   });
 
-  testWidgets('Continue navigates to selfie verification once required documents are uploaded', (tester) async {
+  testWidgets(
+      'Continue navigates to selfie verification once required documents are uploaded',
+      (tester) async {
     setTallSurface(tester);
     const requiredTypes = [
       DocumentType.aadhaar,
@@ -106,7 +126,9 @@ void main() {
       final isRequired = requiredTypes.contains(type);
       return DocumentModel(
         type: type,
-        status: isRequired ? DocumentStatus.pendingVerification : DocumentStatus.notUploaded,
+        status: isRequired
+            ? DocumentStatus.pendingVerification
+            : DocumentStatus.notUploaded,
         fileUrl: isRequired ? '/tmp/${type.name}.jpg' : null,
       );
     }).toList();

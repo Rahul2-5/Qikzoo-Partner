@@ -53,7 +53,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     setState(() => _isVerifying = false);
     final session = ref.read(authSessionProvider).value;
     if (session?.isAuthenticated == true) {
-      Get.offNamed(AppRoutes.setPassword);
+      Get.offAllNamed(AppRoutes.dashboard);
     }
   }
 
