@@ -11,7 +11,8 @@ class NavItem {
   final IconData activeIcon;
   final String label;
 
-  const NavItem({required this.icon, required this.activeIcon, required this.label});
+  const NavItem(
+      {required this.icon, required this.activeIcon, required this.label});
 }
 
 class FloatingBottomNav extends StatelessWidget {
@@ -29,7 +30,8 @@ class FloatingBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.sheet),
         child: BackdropFilter(
@@ -49,15 +51,17 @@ class FloatingBottomNav extends StatelessWidget {
                     children: [
                       Icon(
                         isActive ? item.activeIcon : item.icon,
-                        color: isActive ? AppColors.primary : AppColors.textSecondary,
+                        color: isActive
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                         size: 22,
                       ),
-                      if (isActive) ...[
+                      if (!isActive) ...[
                         const SizedBox(height: 2),
                         Text(item.label,
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
                             )),
                       ],
                     ],

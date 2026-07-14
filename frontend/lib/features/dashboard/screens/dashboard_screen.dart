@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/orders/order_model.dart';
 import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
-import '../../../shared/widgets/navigation/floating_bottom_nav.dart';
+import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 import '../views/active_order_view.dart';
 import '../views/home_idle_view.dart';
 import '../views/order_delivered_view.dart';
@@ -147,7 +146,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: _buildBody(),
                 ),
               ),
-              if (showNav) _BottomNav(activeIndex: _isDelivered ? 2 : 0),
+              if (showNav) const AppBottomNav(currentIndex: 0),
             ],
           ),
         ),
@@ -175,37 +174,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       online: _online,
       onGoOnline: _confirmGoOnline,
       onGoOffline: _confirmGoOffline,
-    );
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  final int activeIndex;
-  const _BottomNav({required this.activeIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatingBottomNav(
-      currentIndex: activeIndex,
-      onTap: (_) {},
-      items: const [
-        NavItem(
-            icon: LucideIcons.home,
-            activeIcon: LucideIcons.home,
-            label: 'Home'),
-        NavItem(
-            icon: LucideIcons.indianRupee,
-            activeIcon: LucideIcons.indianRupee,
-            label: 'Earnings'),
-        NavItem(
-            icon: LucideIcons.receipt,
-            activeIcon: LucideIcons.receipt,
-            label: 'Orders'),
-        NavItem(
-            icon: LucideIcons.user,
-            activeIcon: LucideIcons.user,
-            label: 'Profile'),
-      ],
     );
   }
 }

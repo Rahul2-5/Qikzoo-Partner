@@ -15,6 +15,7 @@ import '../../features/partner_registration/screens/document_upload_screen.dart'
 import '../../features/partner_registration/screens/selfie_verification_screen.dart';
 import '../../features/partner_registration/screens/application_submitted_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
+import '../../features/earnings/screens/earnings_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -65,6 +66,7 @@ class AppPages {
         name: AppRoutes.approval,
         page: () => const PlaceholderScreen(title: 'Approval')),
     GetPage(name: AppRoutes.dashboard, page: () => const DashboardScreen()),
+    GetPage(name: AppRoutes.earnings, page: () => const EarningsScreen()),
     GetPage(
         name: AppRoutes.orders,
         page: () => const PlaceholderScreen(title: 'Orders')),
