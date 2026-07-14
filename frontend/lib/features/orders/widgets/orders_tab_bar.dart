@@ -18,17 +18,19 @@ class OrdersTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 40,
-      child: ListView(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        children: [
-          for (final tab in OrdersTab.values)
-            _Tab(
-              label: tab.label,
-              selected: tab == current,
-              onTap: () => onChanged(tab),
-            ),
-        ],
+        child: Row(
+          children: [
+            for (final tab in OrdersTab.values)
+              _Tab(
+                label: tab.label,
+                selected: tab == current,
+                onTap: () => onChanged(tab),
+              ),
+          ],
+        ),
       ),
     );
   }
