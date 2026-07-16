@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -22,13 +23,13 @@ class ActiveOrderView extends StatelessWidget {
     required this.onAdvance,
   });
 
-  static bool _isRestaurantPhase(OrderStatus s) =>
-      s == OrderStatus.accepted ||
-      s == OrderStatus.navigatingToRestaurant ||
-      s == OrderStatus.arrivedAtRestaurant;
+  static bool _isRestaurantPhase(OrderStatus status) =>
+      status == OrderStatus.accepted ||
+      status == OrderStatus.navigatingToRestaurant ||
+      status == OrderStatus.arrivedAtRestaurant;
 
-  static String ctaLabelFor(OrderStatus s) {
-    switch (s) {
+  static String ctaLabelFor(OrderStatus status) {
+    switch (status) {
       case OrderStatus.accepted:
         return 'Navigate to Restaurant';
       case OrderStatus.navigatingToRestaurant:
@@ -45,77 +46,139 @@ class ActiveOrderView extends StatelessWidget {
     }
   }
 
-  static bool isSwipeStatus(OrderStatus s) =>
-      s == OrderStatus.arrivedAtRestaurant ||
-      s == OrderStatus.arrivedAtCustomer;
+  static bool isSwipeStatus(OrderStatus status) =>
+      status == OrderStatus.arrivedAtRestaurant ||
+      status == OrderStatus.arrivedAtCustomer;
 
   @override
   Widget build(BuildContext context) {
     final restaurant = _isRestaurantPhase(order.status);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Header(
-          title: restaurant ? 'Pick up order' : 'Order picked up',
-          subtitle: restaurant
-              ? 'Go to the restaurant first'
-              : 'Now deliver to the customer',
-        ),
+        _Header(order: order, restaurantPhase: restaurant),
         const SizedBox(height: AppSpacing.md),
         OrderProgressTracker(status: order.status),
         const SizedBox(height: AppSpacing.md),
         Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (restaurant)
-                  _StatusBanner(
-                    icon: LucideIcons.timer,
-                    color: AppColors.secondary,
-                    title: 'Pick up in ${order.etaMinutes} mins',
-                    subtitle: 'Reach the restaurant asap to avoid delay',
-                  )
-                else
-                  _StatusBanner(
-                    icon: LucideIcons.checkCircle,
-                    color: AppColors.success,
-                    title:
-                        'Order picked up at ${order.pickedUpAt ?? '10:25 AM'}',
-                    subtitle:
-                        '${order.restaurantName}, ${order.restaurantArea}',
-                  ),
-                const SizedBox(height: AppSpacing.md),
-                CustomerLocationCard(
-                  title:
-                      restaurant ? 'Restaurant Location' : 'Customer Location',
-                  address:
-                      restaurant ? order.restaurantArea : order.dropAddress,
-                  pincode: restaurant ? null : order.dropPincode,
-                  etaLine:
-                      '${order.distanceKm} km away · ${order.etaMinutes} mins · Light traffic',
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final useColumns = constraints.maxWidth >= 760;
+              return SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: _OrderContent(
+                  order: order,
+                  restaurantPhase: restaurant,
+                  useColumns: useColumns,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                OrderDetailsCard(order: order),
-                const SizedBox(height: AppSpacing.md),
-                EarningsStrip(amount: order.amount),
-                const SizedBox(height: AppSpacing.md),
-              ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: _BottomAction(
+              status: order.status,
+              onAdvance: onAdvance,
             ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        _BottomAction(status: order.status, onAdvance: onAdvance),
+      ],
+    );
+  }
+}
+
+class _OrderContent extends StatelessWidget {
+  final OrderModel order;
+  final bool restaurantPhase;
+  final bool useColumns;
+
+  const _OrderContent({
+    required this.order,
+    required this.restaurantPhase,
+    required this.useColumns,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final status = restaurantPhase
+        ? _StatusBanner(
+            icon: LucideIcons.timer,
+            color: AppColors.secondary,
+            title: 'Pick up in ${order.etaMinutes} mins',
+            subtitle: 'Reach the restaurant on time to keep the order moving',
+          )
+        : _StatusBanner(
+            icon: LucideIcons.checkCircle,
+            color: AppColors.success,
+            title: 'Picked up at ${order.pickedUpAt ?? '10:25 AM'}',
+            subtitle: '${order.restaurantName}, ${order.restaurantArea}',
+          );
+
+    final location = CustomerLocationCard(
+      title: restaurantPhase ? 'Restaurant Location' : 'Customer Location',
+      address: restaurantPhase ? order.restaurantArea : order.dropAddress,
+      pincode: restaurantPhase ? null : order.dropPincode,
+      etaLine:
+          '${order.distanceKm} km away · ${order.etaMinutes} mins · Light traffic',
+    );
+    final details = OrderDetailsCard(order: order);
+    final earnings = EarningsStrip(amount: order.amount);
+
+    if (useColumns) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 6,
+            child: Column(
+              children: [
+                status,
+                const SizedBox(height: AppSpacing.md),
+                location,
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            flex: 5,
+            child: Column(
+              children: [
+                details,
+                const SizedBox(height: AppSpacing.md),
+                earnings,
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        status,
+        const SizedBox(height: AppSpacing.md),
+        location,
+        const SizedBox(height: AppSpacing.md),
+        details,
+        const SizedBox(height: AppSpacing.md),
+        earnings,
+        const SizedBox(height: AppSpacing.md),
       ],
     );
   }
 }
 
 class _Header extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  const _Header({required this.title, required this.subtitle});
+  final OrderModel order;
+  final bool restaurantPhase;
+
+  const _Header({required this.order, required this.restaurantPhase});
 
   @override
   Widget build(BuildContext context) {
@@ -125,20 +188,53 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: AppTypography.h1.copyWith(fontSize: 24)),
-              Text(subtitle,
-                  style: AppTypography.body
-                      .copyWith(color: AppColors.textSecondary)),
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary.withValues(alpha: 0.3),
+                          blurRadius: 7,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      'ACTIVE DELIVERY  ·  ${order.id}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.secondary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                restaurantPhase ? 'Pick up order' : 'Order picked up',
+                style: AppTypography.h1.copyWith(fontSize: 25),
+              ),
+              Text(
+                restaurantPhase
+                    ? 'Head to the restaurant first'
+                    : 'Next stop: the customer',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
-          ),
-        ),
-        OutlinedButton.icon(
-          onPressed: () {},
-          icon: const Icon(LucideIcons.helpCircle, size: 18),
-          label: const Text('Help'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            side: const BorderSide(color: AppColors.border),
           ),
         ),
       ],
@@ -164,30 +260,57 @@ class _StatusBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadius.control),
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: color),
-          const SizedBox(width: AppSpacing.md),
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.sm + 2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: AppTypography.bodyMedium.copyWith(color: color)),
-                Text(subtitle, style: AppTypography.caption),
+                Text(
+                  title,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption,
+                ),
               ],
             ),
           ),
-          OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(LucideIcons.phone, size: 16),
-            label: const Text('Call'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: color,
-              side: BorderSide(color: color.withValues(alpha: 0.4)),
+          const SizedBox(width: AppSpacing.sm),
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: IconButton(
+              onPressed: () {},
+              tooltip: 'Call',
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.surface,
+                foregroundColor: color,
+                side: BorderSide(color: color.withValues(alpha: 0.22)),
+              ),
+              icon: const Icon(LucideIcons.phone, size: 18),
             ),
           ),
         ],
@@ -208,40 +331,10 @@ class _BottomAction extends StatelessWidget {
     if (ActiveOrderView.isSwipeStatus(status)) {
       return SwipeActionButton(label: label, onConfirmed: onAdvance);
     }
-    return Row(
-      children: [
-        const _HelpIconButton(),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: PrimaryCtaButton(
-            label: label,
-            trailingIcon: LucideIcons.chevronsRight,
-            onPressed: onAdvance,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HelpIconButton extends StatelessWidget {
-  const _HelpIconButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 54,
-      height: 54,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.button),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: IconButton(
-        onPressed: () {},
-        tooltip: 'Help & Support',
-        icon: const Icon(LucideIcons.headphones, color: AppColors.primary),
-      ),
+    return PrimaryCtaButton(
+      label: label,
+      trailingIcon: LucideIcons.chevronsRight,
+      onPressed: onAdvance,
     );
   }
 }

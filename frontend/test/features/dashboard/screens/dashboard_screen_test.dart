@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/dashboard/screens/dashboard_screen.dart';
+import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
+import 'package:delivery_partner_app/shared/widgets/buttons/primary_cta_button.dart';
+
+class FakeDocumentImagePicker implements DocumentImagePicker {
+  @override
+  Future<String?> pickImage(ImageSource source) async =>
+      '/tmp/shift-selfie.jpg';
+}
 
 void setTallSurface(WidgetTester tester) {
   tester.view.physicalSize = const Size(400, 2000);
@@ -11,11 +21,21 @@ void setTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Widget buildApp() => GetMaterialApp(
-      initialRoute: AppRoutes.dashboard,
-      getPages: [
-        GetPage(name: AppRoutes.dashboard, page: () => const DashboardScreen()),
+Widget buildApp() => ProviderScope(
+      overrides: [
+        documentImagePickerProvider.overrideWithValue(
+          FakeDocumentImagePicker(),
+        ),
       ],
+      child: GetMaterialApp(
+        initialRoute: AppRoutes.dashboard,
+        getPages: [
+          GetPage(
+            name: AppRoutes.dashboard,
+            page: () => const DashboardScreen(),
+          ),
+        ],
+      ),
     );
 
 // The Home has continuously-running animations (waiting radar, countdown ring),
@@ -27,9 +47,14 @@ Future<void> settle(WidgetTester tester) async {
 
 Future<void> goOnline(WidgetTester tester) async {
   await tester.tap(find.text('Go Online'));
-  await settle(tester); // confirmation dialog appears
-  await tester.tap(find.text('Confirm'));
-  await settle(tester); // dialog dismissed, waiting card shown
+  await settle(tester);
+  expect(find.text('One quick check before\nyou go online'), findsOneWidget);
+
+  await tester.tap(find.text('Tap to open camera'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Use Selfie & Go Online'));
+  await tester.pump(const Duration(milliseconds: 400));
+  await settle(tester);
 }
 
 void main() {
@@ -38,6 +63,23 @@ void main() {
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
     expect(find.text("You're offline"), findsOneWidget);
+  });
+
+  testWidgets('Go Online requires the white T-shirt selfie check',
+      (tester) async {
+    setTallSurface(tester);
+    await tester.pumpWidget(buildApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Go Online'));
+    await settle(tester);
+
+    expect(find.text('Use Selfie & Go Online'), findsOneWidget);
+    expect(find.text('White T-shirt'), findsOneWidget);
+    final disabledButton = tester.widget<PrimaryCtaButton>(
+      find.byType(PrimaryCtaButton),
+    );
+    expect(disabledButton.onPressed, isNull);
   });
 
   testWidgets('full happy path: offline → delivered → back to waiting',

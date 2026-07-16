@@ -31,7 +31,8 @@ void main() {
   });
 
   test('swipe statuses are the two confirm actions', () {
-    expect(ActiveOrderView.isSwipeStatus(OrderStatus.arrivedAtRestaurant), true);
+    expect(
+        ActiveOrderView.isSwipeStatus(OrderStatus.arrivedAtRestaurant), true);
     expect(ActiveOrderView.isSwipeStatus(OrderStatus.arrivedAtCustomer), true);
     expect(ActiveOrderView.isSwipeStatus(OrderStatus.accepted), false);
   });
@@ -48,8 +49,8 @@ void main() {
 
   testWidgets('restaurant phase shows pickup header', (tester) async {
     setTallSurface(tester);
-    await tester.pumpWidget(host(
-        OrderModel.mock().copyWith(status: OrderStatus.accepted), () {}));
+    await tester.pumpWidget(
+        host(OrderModel.mock().copyWith(status: OrderStatus.accepted), () {}));
     expect(find.text('Pick up order'), findsOneWidget);
   });
 
@@ -59,5 +60,22 @@ void main() {
         OrderModel.mock().copyWith(status: OrderStatus.navigatingToCustomer),
         () {}));
     expect(find.text('Order picked up'), findsOneWidget);
+  });
+
+  testWidgets('wide active-order workspace renders without overflow',
+      (tester) async {
+    tester.view.physicalSize = const Size(1000, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(host(
+      OrderModel.mock().copyWith(status: OrderStatus.accepted),
+      () {},
+    ));
+
+    expect(find.text('Restaurant Location'), findsOneWidget);
+    expect(find.text('Estimated Earning'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

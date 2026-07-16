@@ -3,8 +3,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../models/orders/order_list_entry.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
+import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 import '../widgets/date_group_header.dart';
 import '../widgets/order_filter_sheet.dart';
@@ -50,9 +52,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   void _openDetails(OrderListEntry entry) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Order details coming soon')),
-    );
+    AppSnackBar.info(context, 'Order details coming soon');
   }
 
   @override
@@ -65,6 +65,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
     final sorted = sortEntries(filtered, _sort);
     final groups = groupByDate(sorted);
+    var motionIndex = 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -75,41 +76,55 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              OrdersHeader(
-                searchOpen: _searchOpen,
-                query: _query,
-                onToggleSearch: _toggleSearch,
-                onQueryChanged: (q) => setState(() => _query = q),
-                onOpenFilter: _openFilter,
+              AppStaggeredReveal(
+                index: 0,
+                child: OrdersHeader(
+                  searchOpen: _searchOpen,
+                  query: _query,
+                  onToggleSearch: _toggleSearch,
+                  onQueryChanged: (q) => setState(() => _query = q),
+                  onOpenFilter: _openFilter,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
-              OrdersTabBar(
-                current: _tab,
-                onChanged: (t) => setState(() => _tab = t),
+              AppStaggeredReveal(
+                index: 1,
+                child: OrdersTabBar(
+                  current: _tab,
+                  onChanged: (t) => setState(() => _tab = t),
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               Expanded(
-                child: sorted.isEmpty
-                    ? const EmptyState(
-                        icon: LucideIcons.inbox,
-                        message: 'No orders here yet',
-                      )
-                    : ListView(
-                        physics: const BouncingScrollPhysics(),
-                        children: [
-                          for (final entry in groups.entries) ...[
-                            DateGroupHeader(label: entry.key),
-                            for (final order in entry.value)
-                              OrderListCard(
-                                entry: order,
-                                onTap: () => _openDetails(order),
-                              ),
+                child: AppAnimatedSwap(
+                  child: sorted.isEmpty
+                      ? const EmptyState(
+                          key: ValueKey('empty-orders'),
+                          icon: LucideIcons.inbox,
+                          message: 'No orders here yet',
+                        )
+                      : ListView(
+                          key: const ValueKey('order-results'),
+                          physics: const BouncingScrollPhysics(),
+                          children: [
+                            for (final entry in groups.entries) ...[
+                              DateGroupHeader(label: entry.key),
+                              for (final order in entry.value)
+                                AppStaggeredReveal(
+                                  key: ValueKey(order.id),
+                                  index: motionIndex++,
+                                  child: OrderListCard(
+                                    entry: order,
+                                    onTap: () => _openDetails(order),
+                                  ),
+                                ),
+                            ],
+                            const SizedBox(height: AppSpacing.sm),
+                            OrdersSupportBanner(onGetSupport: () {}),
+                            const SizedBox(height: AppSpacing.md),
                           ],
-                          const SizedBox(height: AppSpacing.sm),
-                          OrdersSupportBanner(onGetSupport: () {}),
-                          const SizedBox(height: AppSpacing.md),
-                        ],
-                      ),
+                        ),
+                ),
               ),
               const AppBottomNav(currentIndex: 2),
             ],

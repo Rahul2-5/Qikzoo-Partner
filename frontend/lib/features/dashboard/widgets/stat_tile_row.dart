@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
@@ -23,22 +24,31 @@ class StatTileRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-            child: _Tile(
-                icon: LucideIcons.package,
-                value: '$deliveries',
-                label: 'Deliveries')),
+          child: _Tile(
+            icon: LucideIcons.packageCheck,
+            value: '$deliveries',
+            label: 'Deliveries',
+            color: AppColors.secondary,
+          ),
+        ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
-            child: _Tile(
-                icon: LucideIcons.clock,
-                value: hoursOnline,
-                label: 'Online')),
+          child: _Tile(
+            icon: LucideIcons.clock3,
+            value: hoursOnline,
+            label: 'Online',
+            color: AppColors.primary,
+          ),
+        ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
-            child: _Tile(
-                icon: LucideIcons.star,
-                value: rating.toStringAsFixed(1),
-                label: 'Rating')),
+          child: _Tile(
+            icon: LucideIcons.star,
+            value: rating.toStringAsFixed(1),
+            label: 'Rating',
+            color: AppColors.accent,
+          ),
+        ),
       ],
     );
   }
@@ -48,26 +58,59 @@ class _Tile extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
+  final Color color;
 
-  const _Tile({required this.icon, required this.value, required this.label});
+  const _Tile({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm, vertical: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.control),
-        boxShadow: AppShadows.control,
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 18, color: AppColors.secondary),
-          const SizedBox(height: AppSpacing.xs),
-          Text(value, style: AppTypography.numericMd),
-          Text(label, style: AppTypography.caption),
-        ],
+    return Semantics(
+      label: '$label, $value',
+      excludeSemantics: true,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 116),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
+          boxShadow: AppShadows.control,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.11),
+                borderRadius: BorderRadius.circular(AppRadius.control),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value, style: AppTypography.numericMd),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption,
+            ),
+          ],
+        ),
       ),
     );
   }

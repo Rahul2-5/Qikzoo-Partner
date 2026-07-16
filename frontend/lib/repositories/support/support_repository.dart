@@ -13,7 +13,7 @@ class MockSupportRepository implements SupportRepository {
   @override
   Future<List<SupportTicketModel>> getTickets() async {
     await Future.delayed(AppConstants.mockNetworkDelay);
-    return _tickets;
+    return List.unmodifiable(_tickets);
   }
 
   @override
@@ -30,4 +30,5 @@ class MockSupportRepository implements SupportRepository {
   }
 }
 
-final supportRepositoryProvider = Provider<SupportRepository>((ref) => MockSupportRepository());
+final supportRepositoryProvider =
+    Provider<SupportRepository>((ref) => MockSupportRepository());

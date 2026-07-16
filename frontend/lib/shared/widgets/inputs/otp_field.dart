@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
@@ -13,7 +14,7 @@ class OtpField extends StatelessWidget {
 
   const OtpField({
     super.key,
-    this.length = 6,
+    this.length = AppConstants.otpLength,
     required this.onCompleted,
     this.onChanged,
     this.controller,
@@ -32,6 +33,7 @@ class OtpField extends StatelessWidget {
           appContext: context,
           length: length,
           controller: controller,
+          autoDisposeControllers: controller == null,
           readOnly: readOnly,
           onCompleted: onCompleted,
           onChanged: onChanged ?? (_) {},

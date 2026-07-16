@@ -13,7 +13,7 @@ const _tabRoutes = [
 
 void navigateToTab(int index) {
   final route = _tabRoutes[index];
-  if (Get.currentRoute != route) Get.offNamed(route);
+  if (Get.currentRoute != route) Get.offAllNamed(route);
 }
 
 class AppBottomNav extends StatelessWidget {

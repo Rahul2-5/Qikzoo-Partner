@@ -13,10 +13,18 @@ import '../../features/partner_registration/screens/vehicle_selection_screen.dar
 import '../../features/partner_registration/screens/vehicle_details_screen.dart';
 import '../../features/partner_registration/screens/document_upload_screen.dart';
 import '../../features/partner_registration/screens/selfie_verification_screen.dart';
+import '../../features/partner_registration/screens/welcome_kit_screen.dart';
 import '../../features/partner_registration/screens/application_submitted_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/earnings/screens/earnings_screen.dart';
 import '../../features/orders/screens/orders_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
+import '../../features/bank_details/screens/bank_details_screen.dart';
+import '../../features/documents/screens/manage_documents_screen.dart';
+import '../../features/settings/screens/settings_screen.dart';
+import '../../features/support/screens/help_support_screen.dart';
+import '../../features/vehicle_details/screens/manage_vehicle_details_screen.dart';
+import '../../models/authentication/auth_flow.dart';
 
 class AppPages {
   AppPages._();
@@ -28,10 +36,18 @@ class AppPages {
     GetPage(
         name: AppRoutes.becomePartnerIntro,
         page: () => const JoinAsPartnerScreen()),
-    GetPage(name: AppRoutes.otp, page: () => const MobileNumberScreen()),
     GetPage(
-        name: AppRoutes.otpVerification,
-        page: () => const OtpVerificationScreen()),
+      name: AppRoutes.otp,
+      page: () => MobileNumberScreen(
+        flow: authFlowFromRoute(Get.parameters['flow']),
+      ),
+    ),
+    GetPage(
+      name: AppRoutes.otpVerification,
+      page: () => OtpVerificationScreen(
+        flow: authFlowFromRoute(Get.parameters['flow']),
+      ),
+    ),
     GetPage(name: AppRoutes.setPassword, page: () => const SetPasswordScreen()),
     GetPage(
         name: AppRoutes.personalInfo, page: () => const PersonalInfoScreen()),
@@ -48,12 +64,11 @@ class AppPages {
     GetPage(
         name: AppRoutes.selfieVerification,
         page: () => const SelfieVerificationScreen()),
+    GetPage(name: AppRoutes.welcomeKit, page: () => const WelcomeKitScreen()),
     GetPage(
         name: AppRoutes.applicationSubmitted,
         page: () => const ApplicationSubmittedScreen()),
-    GetPage(
-        name: AppRoutes.bankDetails,
-        page: () => const PlaceholderScreen(title: 'Bank Details')),
+    GetPage(name: AppRoutes.bankDetails, page: () => const BankDetailsScreen()),
     GetPage(
         name: AppRoutes.verificationStatus,
         page: () => const PlaceholderScreen(title: 'Verification Status')),
@@ -72,17 +87,17 @@ class AppPages {
     GetPage(
         name: AppRoutes.wallet,
         page: () => const PlaceholderScreen(title: 'Wallet')),
+    GetPage(name: AppRoutes.support, page: () => const HelpSupportScreen()),
+    GetPage(name: AppRoutes.profile, page: () => const ProfileScreen()),
     GetPage(
-        name: AppRoutes.support,
-        page: () => const PlaceholderScreen(title: 'Support')),
+        name: AppRoutes.manageVehicleDetails,
+        page: () => const ManageVehicleDetailsScreen()),
     GetPage(
-        name: AppRoutes.profile,
-        page: () => const PlaceholderScreen(title: 'Profile')),
+        name: AppRoutes.manageDocuments,
+        page: () => const ManageDocumentsScreen()),
     GetPage(
         name: AppRoutes.notifications,
         page: () => const PlaceholderScreen(title: 'Notifications')),
-    GetPage(
-        name: AppRoutes.settings,
-        page: () => const PlaceholderScreen(title: 'Settings')),
+    GetPage(name: AppRoutes.settings, page: () => const SettingsScreen()),
   ];
 }

@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../models/orders/order_model.dart';
 import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
-import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
+import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../views/active_order_view.dart';
 import '../views/home_idle_view.dart';
 import '../views/order_delivered_view.dart';
 import 'incoming_order_screen.dart';
+import 'online_selfie_verification_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -45,12 +49,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _confirmGoOnline() async {
-    final ok = await ConfirmationDialog.show(
-      context,
-      title: 'Go online?',
-      message: 'You will start receiving delivery requests in your area.',
+    final selfiePath = await Navigator.of(context).push<String>(
+      PageRouteBuilder(
+        transitionDuration: AppMotion.duration(context, AppMotion.standard),
+        reverseTransitionDuration: AppMotion.duration(context, AppMotion.quick),
+        pageBuilder: (_, __, ___) => const OnlineSelfieVerificationScreen(),
+        transitionsBuilder: (_, animation, __, child) => SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 0.08),
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(parent: animation, curve: AppMotion.enter),
+          ),
+          child: FadeTransition(opacity: animation, child: child),
+        ),
+      ),
     );
-    if (ok == true && mounted) _goOnline();
+    if (selfiePath == null || !mounted) return;
+    _goOnline();
   }
 
   void _goOnline() {
@@ -69,12 +85,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final accepted = await Navigator.of(context).push<bool>(
       PageRouteBuilder(
         opaque: true,
-        transitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: AppMotion.duration(context, AppMotion.standard),
+        reverseTransitionDuration: AppMotion.duration(context, AppMotion.quick),
         pageBuilder: (_, __, ___) =>
             IncomingOrderScreen(order: OrderModel.mock()),
         transitionsBuilder: (_, anim, __, child) => SlideTransition(
           position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-              .animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+              .animate(CurvedAnimation(parent: anim, curve: AppMotion.enter)),
           child: child,
         ),
       ),
@@ -84,9 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() =>
           _order = OrderModel.mock().copyWith(status: OrderStatus.accepted));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order missed')),
-      );
+      AppSnackBar.warning(context, 'Order missed');
       _scheduleIncoming();
     }
   }
@@ -134,20 +149,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final showNav = !_hasActiveOrder;
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: ResponsiveFrame(
-          maxWidth: 520,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Column(
-            children: [
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: _buildBody(),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF0FAF7), AppColors.background],
+            stops: [0, 0.34],
+          ),
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final expanded = constraints.maxWidth >= 840;
+              final horizontalPadding =
+                  expanded ? AppSpacing.xl : AppSpacing.md;
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      AppSpacing.sm,
+                      horizontalPadding,
+                      0,
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: AppAnimatedSwap(
+                            child: _buildBody(),
+                          ),
+                        ),
+                        if (showNav)
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 560),
+                              child: const AppBottomNav(currentIndex: 0),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              if (showNav) const AppBottomNav(currentIndex: 0),
-            ],
+              );
+            },
           ),
         ),
       ),

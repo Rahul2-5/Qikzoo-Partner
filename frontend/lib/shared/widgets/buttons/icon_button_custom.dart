@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
+import '../motion/app_motion_widgets.dart';
 
 class IconButtonCustom extends StatelessWidget {
   final IconData icon;
@@ -19,22 +20,26 @@ class IconButtonCustom extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: backgroundColor ?? AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.button),
-      child: InkWell(
+    return AppPressEffect(
+      enabled: onPressed != null,
+      pressedScale: 0.94,
+      child: Material(
+        color: backgroundColor ?? AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.button),
-        onTap: onPressed,
-        child: Container(
-          width: 48,
-          height: 48,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            border: Border.all(color: AppColors.border),
-            boxShadow: AppShadows.control,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          onTap: onPressed,
+          child: Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+              border: Border.all(color: AppColors.border),
+              boxShadow: AppShadows.control,
+            ),
+            child: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
           ),
-          child: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
         ),
       ),
     );

@@ -122,14 +122,15 @@ class _Skyline extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: _heights
           .map(
-            (h) => Container(
-              width: 16,
-              height: h,
-              margin: const EdgeInsets.only(left: 4),
-              decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.08),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(3)),
+            (h) => Expanded(
+              child: Container(
+                height: h,
+                margin: const EdgeInsets.only(left: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.08),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(3)),
+                ),
               ),
             ),
           )

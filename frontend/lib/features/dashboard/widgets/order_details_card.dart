@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/orders/order_model.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 
 class OrderDetailsCard extends StatelessWidget {
   final OrderModel order;
@@ -15,9 +17,7 @@ class OrderDetailsCard extends StatelessWidget {
 
   void _copyId(BuildContext context) {
     Clipboard.setData(ClipboardData(text: order.id));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Order ID copied')),
-    );
+    AppSnackBar.success(context, 'Order ID copied');
   }
 
   @override
@@ -39,8 +39,8 @@ class OrderDetailsCard extends StatelessWidget {
                 height: 44,
                 decoration: const BoxDecoration(
                     color: AppColors.primary, shape: BoxShape.circle),
-                child:
-                    const Icon(LucideIcons.store, color: Colors.white, size: 20),
+                child: const Icon(LucideIcons.store,
+                    color: Colors.white, size: 20),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -102,8 +102,7 @@ class OrderDetailsCard extends StatelessWidget {
                   .toList(),
             ),
           ),
-          if (order.customerNote != null &&
-              order.customerNote!.isNotEmpty) ...[
+          if (order.customerNote != null && order.customerNote!.isNotEmpty) ...[
             const Divider(height: AppSpacing.lg, color: AppColors.border),
             _ExpandableRow(
               icon: LucideIcons.stickyNote,
@@ -170,11 +169,13 @@ class _ExpandableRowState extends State<_ExpandableRow> {
             ],
           ),
           AnimatedCrossFade(
-            duration: const Duration(milliseconds: 200),
+            duration: AppMotion.duration(context, AppMotion.quick),
+            firstCurve: AppMotion.enter,
+            secondCurve: AppMotion.enter,
             crossFadeState:
                 _open ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-            firstChild: Align(
-                alignment: Alignment.centerLeft, child: widget.detail),
+            firstChild:
+                Align(alignment: Alignment.centerLeft, child: widget.detail),
             secondChild: const SizedBox(width: double.infinity),
           ),
         ],

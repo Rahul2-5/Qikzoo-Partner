@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../routes/app_page_transition.dart';
 import 'app_colors.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
@@ -30,6 +31,19 @@ class AppTheme {
           elevation: 0,
           centerTitle: false,
           foregroundColor: AppColors.textPrimary,
+        ),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.primary,
+          contentTextStyle: AppTypography.bodyMedium.copyWith(
+            color: Colors.white,
+          ),
+          actionTextColor: Colors.white,
+          elevation: 8,
+          insetPadding: const EdgeInsets.all(AppSpacing.md),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.control),
+          ),
         ),
         dividerTheme: DividerThemeData(
           color: AppColors.border.withValues(alpha: 0.75),
@@ -75,6 +89,15 @@ class AppTheme {
           cursorColor: AppColors.secondary,
           selectionColor: AppColors.secondary.withValues(alpha: 0.2),
           selectionHandleColor: AppColors.secondary,
+        ),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: AppPageTransitionsBuilder(),
+            TargetPlatform.iOS: AppPageTransitionsBuilder(),
+            TargetPlatform.macOS: AppPageTransitionsBuilder(),
+            TargetPlatform.windows: AppPageTransitionsBuilder(),
+            TargetPlatform.linux: AppPageTransitionsBuilder(),
+          },
         ),
       );
 }
