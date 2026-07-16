@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../models/earnings/earnings_models.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 import '../widgets/earnings_breakdown_grid.dart';
 import '../widgets/earnings_header.dart';
@@ -40,27 +41,49 @@ class _EarningsScreenState extends State<EarningsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      EarningsHeader(
-                          period: _period, onPeriodChanged: _setPeriod),
-                      const SizedBox(height: AppSpacing.md),
-                      TotalEarningsCard(
-                        total: summary.total,
-                        deltaPercent: summary.deltaPercent,
-                        comparisonLabel: _period.comparisonLabel,
+                      AppStaggeredReveal(
+                        index: 0,
+                        child: EarningsHeader(
+                          period: _period,
+                          onPeriodChanged: _setPeriod,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      EarningsBreakdownGrid(categories: summary.categories),
-                      const SizedBox(height: AppSpacing.md),
-                      EarningsTrendChart(
-                        bars: summary.bars,
-                        maxValue: summary.maxBarValue,
-                        period: _period,
-                        onPeriodChanged: _setPeriod,
+                      AppStaggeredReveal(
+                        index: 1,
+                        child: TotalEarningsCard(
+                          total: summary.total,
+                          deltaPercent: summary.deltaPercent,
+                          comparisonLabel: _period.comparisonLabel,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      EarningsHistoryList(history: summary.history),
+                      AppStaggeredReveal(
+                        index: 2,
+                        child: EarningsBreakdownGrid(
+                          categories: summary.categories,
+                        ),
+                      ),
                       const SizedBox(height: AppSpacing.md),
-                      NextPayoutCard(payout: summary.payout),
+                      AppStaggeredReveal(
+                        index: 3,
+                        child: EarningsTrendChart(
+                          bars: summary.bars,
+                          maxValue: summary.maxBarValue,
+                          period: _period,
+                          onPeriodChanged: _setPeriod,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppStaggeredReveal(
+                        index: 4,
+                        child: EarningsHistoryList(history: summary.history),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppStaggeredReveal(
+                        index: 5,
+                        child: NextPayoutCard(payout: summary.payout),
+                      ),
                       const SizedBox(height: AppSpacing.md),
                     ],
                   ),

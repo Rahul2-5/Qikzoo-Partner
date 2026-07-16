@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -97,7 +98,8 @@ class _Node extends StatelessWidget {
       child: Column(
         children: [
           AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
+            duration: AppMotion.duration(context, AppMotion.standard),
+            curve: AppMotion.enter,
             width: 44,
             height: 44,
             decoration: BoxDecoration(
@@ -136,7 +138,8 @@ class _Segment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      duration: AppMotion.duration(context, AppMotion.standard),
+      curve: AppMotion.enter,
       height: 3,
       decoration: BoxDecoration(
         color: filled ? AppColors.success : AppColors.border,

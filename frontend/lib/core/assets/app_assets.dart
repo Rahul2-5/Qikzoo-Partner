@@ -6,6 +6,13 @@ class AppAssets {
   static const illustrationsPath = 'assets/illustrations';
   static const animationsPath = 'assets/animations';
 
+  static const partnerStatusOffline3d =
+      '$iconsPath/partner_status_offline_3d.png';
+  static const orderSearch3d = '$iconsPath/order_search_3d.png';
+  static const applicationSubmitted3d =
+      '$iconsPath/application_submitted_3d.png';
+  static const welcomeKit3d = '$iconsPath/welcome_kit_3d.png';
+
   static const emptyStateIllustration = '$illustrationsPath/empty_state.svg';
   static const successAnimation = '$animationsPath/success.json';
 }

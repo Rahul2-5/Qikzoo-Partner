@@ -10,6 +10,7 @@ import '../../../models/document_verification/document_model.dart';
 import '../../../providers/document_verification/documents_provider.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/navigation/step_progress_indicator.dart';
 import '../widgets/document_upload_actions.dart';
@@ -31,13 +32,15 @@ const _requiredDocumentTypes = [
 ];
 
 bool _isUploaded(DocumentStatus status) =>
-    status == DocumentStatus.pendingVerification || status == DocumentStatus.verified;
+    status == DocumentStatus.pendingVerification ||
+    status == DocumentStatus.verified;
 
 List<String> missingRequiredDocumentLabels(List<DocumentModel> documents) {
   final byType = {for (final doc in documents) doc.type: doc};
   return [
     for (final type in _requiredDocumentTypes)
-      if (!_isUploaded(byType[type]?.status ?? DocumentStatus.notUploaded)) type.label,
+      if (!_isUploaded(byType[type]?.status ?? DocumentStatus.notUploaded))
+        type.label,
   ];
 }
 
@@ -47,8 +50,9 @@ class DocumentUploadScreen extends ConsumerWidget {
   void _onContinue(BuildContext context, List<DocumentModel> documents) {
     final missing = missingRequiredDocumentLabels(documents);
     if (missing.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please upload: ${missing.join(', ')}')),
+      AppSnackBar.warning(
+        context,
+        'Please upload: ${missing.join(', ')}',
       );
       return;
     }
@@ -68,7 +72,8 @@ class DocumentUploadScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(
+                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
               const SizedBox(height: AppSpacing.lg),
               const StepProgressIndicator(totalSteps: 6, currentStep: 4),
               const SizedBox(height: AppSpacing.lg),
@@ -84,7 +89,8 @@ class DocumentUploadScreen extends ConsumerWidget {
                       text: 'Documents',
                       style: TextStyle(
                         foreground: Paint()
-                          ..shader = const LinearGradient(colors: AppColors.ctaGradient)
+                          ..shader = const LinearGradient(
+                                  colors: AppColors.ctaGradient)
                               .createShader(const Rect.fromLTWH(0, 0, 160, 26)),
                       ),
                     ),
@@ -94,17 +100,20 @@ class DocumentUploadScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Upload clear photos of the following documents',
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                style:
+                    AppTypography.body.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: documentsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Could not load documents', style: AppTypography.body),
+                        Text('Could not load documents',
+                            style: AppTypography.body),
                         const SizedBox(height: AppSpacing.sm),
                         TextButton(
                           onPressed: () => ref.invalidate(documentsProvider),
@@ -118,11 +127,13 @@ class DocumentUploadScreen extends ConsumerWidget {
                     return ListView.separated(
                       physics: const BouncingScrollPhysics(),
                       itemCount: documentDisplayOrder.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.md),
                       itemBuilder: (context, index) {
                         final type = documentDisplayOrder[index];
                         final document = byType[type] ??
-                            DocumentModel(type: type, status: DocumentStatus.notUploaded);
+                            DocumentModel(
+                                type: type, status: DocumentStatus.notUploaded);
                         final isUploaded = _isUploaded(document.status);
                         return DocumentUploadTile(
                           document: document,
@@ -139,7 +150,8 @@ class DocumentUploadScreen extends ConsumerWidget {
               PrimaryCtaButton(
                 label: 'Continue',
                 trailingIcon: LucideIcons.arrowRight,
-                onPressed: () => _onContinue(context, documentsAsync.valueOrNull ?? []),
+                onPressed: () =>
+                    _onContinue(context, documentsAsync.valueOrNull ?? []),
               ),
               const SizedBox(height: AppSpacing.md),
             ],

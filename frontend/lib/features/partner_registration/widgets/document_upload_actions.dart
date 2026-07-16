@@ -13,6 +13,7 @@ import '../../../providers/document_verification/documents_provider.dart';
 import '../../../repositories/document_verification/document_image_picker.dart';
 import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 
 Future<ImageSource?> showImageSourceSheet(BuildContext context) {
   return showModalBottomSheet<ImageSource>(
@@ -63,9 +64,7 @@ Future<void> pickAndUploadDocument(
     await ref.read(documentsProvider.notifier).upload(type, path);
   } catch (_) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Upload failed, please try again')),
-      );
+      AppSnackBar.error(context, 'Upload failed, please try again');
     }
   }
 }
@@ -210,9 +209,7 @@ Future<void> pickAndConfirmSelfie(BuildContext context, WidgetRef ref) async {
           .upload(DocumentType.profilePhoto, path);
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Upload failed, please try again')),
-        );
+        AppSnackBar.error(context, 'Upload failed, please try again');
       }
     }
     return;

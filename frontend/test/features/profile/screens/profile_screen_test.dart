@@ -51,6 +51,8 @@ void main() {
     ]) {
       expect(find.text(title), findsOneWidget);
     }
+    expect(find.text('Learnings'), findsOneWidget);
+    expect(find.text('Safe Food Delivery'), findsOneWidget);
   });
 
   testWidgets('Settings menu navigates to the settings route', (tester) async {
@@ -60,6 +62,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Settings Screen'), findsOneWidget);
+  });
+
+  testWidgets('Personal Information opens its bottom sheet', (tester) async {
+    setTallSurface(tester);
+    await tester.pumpWidget(buildApp());
+
+    await tester.tap(find.text('Personal Information'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your account and contact details'), findsOneWidget);
+    expect(find.text('Contact details'), findsOneWidget);
+    expect(find.text('Edit information'), findsOneWidget);
   });
 
   testWidgets('Home tab navigates to the dashboard', (tester) async {

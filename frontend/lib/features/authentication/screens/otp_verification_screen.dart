@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../models/authentication/auth_flow.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../repositories/authentication/auth_repository.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
@@ -15,7 +17,12 @@ import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/countdown_timer.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
-  const OtpVerificationScreen({super.key});
+  const OtpVerificationScreen({
+    super.key,
+    this.flow = AuthFlow.login,
+  });
+
+  final AuthFlow flow;
 
   @override
   ConsumerState<OtpVerificationScreen> createState() =>
@@ -35,7 +42,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 
   void _onDigitTap(String digit) {
-    if (_otpController.text.length >= 6) return;
+    if (_otpController.text.length >= AppConstants.otpLength) return;
     _otpController.text += digit;
   }
 
@@ -53,7 +60,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     setState(() => _isVerifying = false);
     final session = ref.read(authSessionProvider).value;
     if (session?.isAuthenticated == true) {
-      Get.offAllNamed(AppRoutes.dashboard);
+      if (widget.flow == AuthFlow.signUp) {
+        Get.offNamed(AppRoutes.setPassword);
+      } else {
+        Get.offAllNamed(AppRoutes.dashboard);
+      }
     }
   }
 
@@ -116,7 +127,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        'Enter the 6 digit OTP sent to',
+                        'Enter the ${AppConstants.otpLength} digit OTP sent to',
                         style: AppTypography.body
                             .copyWith(color: AppColors.textSecondary),
                       ),
@@ -131,6 +142,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                         child: Opacity(
                           opacity: _isVerifying ? 0.5 : 1,
                           child: OtpField(
+                            length: AppConstants.otpLength,
                             controller: _otpController,
                             readOnly: true,
                             onCompleted: _onOtpCompleted,

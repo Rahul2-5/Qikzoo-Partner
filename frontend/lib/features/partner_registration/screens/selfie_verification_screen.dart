@@ -45,7 +45,8 @@ class SelfieVerificationScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(
+                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
               const SizedBox(height: AppSpacing.lg),
               const StepProgressIndicator(totalSteps: 6, currentStep: 5),
               const SizedBox(height: AppSpacing.lg),
@@ -61,7 +62,8 @@ class SelfieVerificationScreen extends ConsumerWidget {
                       text: 'Selfie',
                       style: TextStyle(
                         foreground: Paint()
-                          ..shader = const LinearGradient(colors: AppColors.ctaGradient)
+                          ..shader = const LinearGradient(
+                                  colors: AppColors.ctaGradient)
                               .createShader(const Rect.fromLTWH(0, 0, 100, 26)),
                       ),
                     ),
@@ -71,7 +73,8 @@ class SelfieVerificationScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Take a clear selfie for verification',
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                style:
+                    AppTypography.body.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
@@ -80,14 +83,17 @@ class SelfieVerificationScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(child: SelfiePreviewFrame(profilePhoto: profilePhoto)),
+                      Center(
+                          child:
+                              SelfiePreviewFrame(profilePhoto: profilePhoto)),
                       const SizedBox(height: AppSpacing.lg),
                       const _SelfieTipRow(
                         icon: LucideIcons.user,
                         label: 'Make sure your face is clearly visible',
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      const _SelfieTipRow(icon: LucideIcons.sun, label: 'Good lighting'),
+                      const _SelfieTipRow(
+                          icon: LucideIcons.sun, label: 'Good lighting'),
                       const SizedBox(height: AppSpacing.sm),
                       const _SelfieTipRow(
                         icon: LucideIcons.glasses,
@@ -100,9 +106,10 @@ class SelfieVerificationScreen extends ConsumerWidget {
               ),
               PrimaryCtaButton(
                 label: isUploaded ? 'Continue' : 'Capture',
-                trailingIcon: isUploaded ? LucideIcons.arrowRight : LucideIcons.camera,
+                trailingIcon:
+                    isUploaded ? LucideIcons.arrowRight : LucideIcons.camera,
                 onPressed: () => isUploaded
-                    ? Get.toNamed(AppRoutes.applicationSubmitted)
+                    ? Get.toNamed(AppRoutes.welcomeKit)
                     : pickAndConfirmSelfie(context, ref),
               ),
               const SizedBox(height: AppSpacing.md),

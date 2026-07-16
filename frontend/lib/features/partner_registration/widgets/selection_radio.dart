@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 
 /// Minimal radio-button visual used by list-style single-select rows
 /// (city list, current-location tile) where FilterChipCustom's chip shape
@@ -12,7 +13,8 @@ class SelectionRadio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
+      duration: AppMotion.duration(context, AppMotion.quick),
+      curve: AppMotion.enter,
       width: 22,
       height: 22,
       decoration: BoxDecoration(

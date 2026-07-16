@@ -1,10 +1,13 @@
 import 'package:delivery_partner_app/core/theme/app_theme.dart';
 import 'package:delivery_partner_app/features/profile/widgets/profile_header.dart';
 import 'package:delivery_partner_app/features/profile/widgets/profile_identity_card.dart';
+import 'package:delivery_partner_app/features/profile/widgets/profile_learning_section.dart';
 import 'package:delivery_partner_app/features/profile/widgets/profile_menu_tile.dart';
+import 'package:delivery_partner_app/features/profile/widgets/personal_information_sheet.dart';
 import 'package:delivery_partner_app/features/profile/widgets/verification_banner.dart';
 import 'package:delivery_partner_app/features/profile/widgets/wallet_balance_card.dart';
 import 'package:delivery_partner_app/models/profile/profile_summary.dart';
+import 'package:delivery_partner_app/models/training/training_module_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -99,5 +102,51 @@ void main() {
     expect(find.text('3'), findsOneWidget);
     await tester.tap(find.byTooltip('Notifications'));
     expect(tapped, isTrue);
+  });
+
+  testWidgets('ProfileLearningSection shows videos and handles a video tap',
+      (tester) async {
+    TrainingModuleModel? selectedModule;
+    const module = TrainingModuleModel(
+      id: 'safe-food-delivery',
+      title: 'Safe Food Delivery',
+      description: 'Keep every order fresh, sealed, and spill-free.',
+      durationMinutes: 4,
+      isCompleted: false,
+    );
+
+    await tester.pumpWidget(wrap(ProfileLearningSection(
+      modules: const [module],
+      onModuleTap: (value) => selectedModule = value,
+    )));
+
+    expect(find.text('Learnings'), findsOneWidget);
+    expect(find.text('Safe Food Delivery'), findsOneWidget);
+    expect(find.text('4 min'), findsOneWidget);
+
+    await tester.tap(find.text('Safe Food Delivery'));
+    expect(selectedModule, module);
+  });
+
+  testWidgets('PersonalInformationSheet switches to edit mode', (tester) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(wrap(const PersonalInformationSheet(
+      information: mockPersonalInformation,
+    )));
+
+    expect(find.text('Your account and contact details'), findsOneWidget);
+    expect(find.text('Rahul Verma'), findsWidgets);
+    expect(find.text('Edit information'), findsOneWidget);
+
+    await tester.tap(find.text('Edit information'));
+    await tester.pump();
+
+    expect(find.text('Update the details you want to change'), findsOneWidget);
+    expect(find.text('Save changes'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
   });
 }

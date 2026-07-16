@@ -15,12 +15,19 @@ class MockAuthRepository implements AuthRepository {
     return OtpModel(
       phoneNumber: phoneNumber,
       isVerified: false,
-      expiresAt: DateTime.now().add(const Duration(seconds: AppConstants.otpResendSeconds)),
+      expiresAt: DateTime.now()
+          .add(const Duration(seconds: AppConstants.otpResendSeconds)),
     );
   }
 
   @override
   Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) async {
+    final isValidOtp = RegExp(
+      '^\\d{${AppConstants.otpLength}}\$',
+    ).hasMatch(otp);
+    if (!isValidOtp) {
+      throw const FormatException('OTP must contain exactly 4 digits.');
+    }
     await Future.delayed(AppConstants.mockNetworkDelay);
     return const AuthSessionModel(
       partnerId: 'partner_mock_001',
@@ -30,4 +37,5 @@ class MockAuthRepository implements AuthRepository {
   }
 }
 
-final authRepositoryProvider = Provider<AuthRepository>((ref) => MockAuthRepository());
+final authRepositoryProvider =
+    Provider<AuthRepository>((ref) => MockAuthRepository());

@@ -13,6 +13,7 @@ class AppRoutes {
   static const deliveryZone = '/registration/delivery-zone';
   static const documentUpload = '/documents';
   static const selfieVerification = '/registration/selfie-verification';
+  static const welcomeKit = '/registration/welcome-kit';
   static const applicationSubmitted = '/registration/application-submitted';
   static const bankDetails = '/bank-details';
   static const verificationStatus = '/verification-status';
@@ -25,6 +26,8 @@ class AppRoutes {
   static const wallet = '/wallet';
   static const support = '/support';
   static const profile = '/profile';
+  static const manageVehicleDetails = '/profile/vehicle-details';
+  static const manageDocuments = '/profile/documents';
   static const notifications = '/notifications';
   static const settings = '/settings';
 }

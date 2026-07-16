@@ -38,4 +38,25 @@ void main() {
     await tester.pump();
     expect(find.text('Thanks for the feedback!'), findsOneWidget);
   });
+
+  testWidgets('wide delivered workspace renders without overflow',
+      (tester) async {
+    tester.view.physicalSize = const Size(1000, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: OrderDeliveredView(
+          order: OrderModel.mock(),
+          onContinue: () {},
+        ),
+      ),
+    ));
+
+    expect(find.text('Earnings breakdown'), findsOneWidget);
+    expect(find.byType(RatingSelector), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/motion/app_motion_widgets.dart';
 
 class ProfileMenuTile extends StatelessWidget {
   final IconData icon;
@@ -27,45 +28,47 @@ class ProfileMenuTile extends StatelessWidget {
     final iconBackground = destructive
         ? AppColors.error.withValues(alpha: 0.1)
         : AppColors.primarySoft;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 68),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                      color: iconBackground,
-                      borderRadius: BorderRadius.circular(AppRadius.control)),
-                  child: Icon(icon, size: 19, color: color),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title,
-                          style:
-                              AppTypography.bodyMedium.copyWith(color: color)),
-                      const SizedBox(height: 2),
-                      Text(subtitle, style: AppTypography.caption),
-                    ],
+    return AppPressEffect(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 68),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        color: iconBackground,
+                        borderRadius: BorderRadius.circular(AppRadius.control)),
+                    child: Icon(icon, size: 19, color: color),
                   ),
-                ),
-                if (!destructive)
-                  const Padding(
-                    padding: EdgeInsets.only(left: AppSpacing.sm),
-                    child: Icon(LucideIcons.chevronRight,
-                        size: 19, color: AppColors.textSecondary),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: AppTypography.bodyMedium
+                                .copyWith(color: color)),
+                        const SizedBox(height: 2),
+                        Text(subtitle, style: AppTypography.caption),
+                      ],
+                    ),
                   ),
-              ],
+                  if (!destructive)
+                    const Padding(
+                      padding: EdgeInsets.only(left: AppSpacing.sm),
+                      child: Icon(LucideIcons.chevronRight,
+                          size: 19, color: AppColors.textSecondary),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
