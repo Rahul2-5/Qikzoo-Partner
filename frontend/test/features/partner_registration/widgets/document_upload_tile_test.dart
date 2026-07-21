@@ -6,10 +6,12 @@ import 'package:delivery_partner_app/models/document_verification/document_model
 void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
-  testWidgets('not uploaded shows Upload label and is tappable', (tester) async {
+  testWidgets('not uploaded shows Upload label and is tappable',
+      (tester) async {
     var tapped = false;
     await tester.pumpWidget(wrap(DocumentUploadTile(
-      document: const DocumentModel(type: DocumentType.aadhaar, status: DocumentStatus.notUploaded),
+      document: const DocumentModel(
+          type: DocumentType.aadhaar, status: DocumentStatus.notUploaded),
       onTap: () => tapped = true,
     )));
 
@@ -18,9 +20,11 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('uploading shows a spinner instead of the status icon', (tester) async {
+  testWidgets('uploading shows a spinner instead of the status icon',
+      (tester) async {
     await tester.pumpWidget(wrap(DocumentUploadTile(
-      document: const DocumentModel(type: DocumentType.aadhaar, status: DocumentStatus.uploading),
+      document: const DocumentModel(
+          type: DocumentType.aadhaar, status: DocumentStatus.uploading),
       onTap: () {},
     )));
 
@@ -54,12 +58,25 @@ void main() {
     expect(find.text('Image is blurry'), findsOneWidget);
   });
 
-  testWidgets('optional document shows the (Optional) suffix', (tester) async {
+  testWidgets('insurance shows the optional suffix', (tester) async {
     await tester.pumpWidget(wrap(DocumentUploadTile(
-      document: const DocumentModel(type: DocumentType.pan, status: DocumentStatus.notUploaded),
+      document: const DocumentModel(
+          type: DocumentType.vehicleInsurance,
+          status: DocumentStatus.notUploaded),
       onTap: () {},
     )));
 
     expect(find.textContaining('(Optional)'), findsOneWidget);
+  });
+
+  testWidgets('PAN card shows the required suffix', (tester) async {
+    await tester.pumpWidget(wrap(DocumentUploadTile(
+      document: const DocumentModel(
+          type: DocumentType.pan, status: DocumentStatus.notUploaded),
+      onTap: () {},
+    )));
+
+    expect(find.textContaining('(Required)'), findsOneWidget);
+    expect(find.textContaining('(Optional)'), findsNothing);
   });
 }

@@ -417,7 +417,7 @@ class _IdentitySummary extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE8EBF7), Color(0xFFE7F7F2)],
+          colors: [AppColors.primarySoft, Color(0xFFDDE3FF)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

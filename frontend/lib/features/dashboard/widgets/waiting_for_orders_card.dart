@@ -57,7 +57,7 @@ class _WaitingForOrdersCardState extends State<WaitingForOrdersCard>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.surface, Color(0xFFECFBF6)],
+          colors: [AppColors.surface, Color(0xFFEFF1FF)],
         ),
         borderRadius: BorderRadius.circular(AppRadius.sheet + 2),
         border: Border.all(color: AppColors.surface),

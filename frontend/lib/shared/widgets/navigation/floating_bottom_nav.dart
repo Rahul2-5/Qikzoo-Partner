@@ -76,7 +76,7 @@ class FloatingBottomNav extends StatelessWidget {
                               boxShadow: isActive
                                   ? const [
                                       BoxShadow(
-                                        color: Color(0x2412A783),
+                                        color: Color(0x24536DFE),
                                         offset: Offset(0, 5),
                                         blurRadius: 10,
                                       ),

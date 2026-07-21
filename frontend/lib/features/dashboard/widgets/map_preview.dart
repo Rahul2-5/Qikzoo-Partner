@@ -55,7 +55,8 @@ class _MapMarker extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2.5),
         boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2)),
+          BoxShadow(
+              color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2)),
         ],
       ),
       child: Icon(icon, color: Colors.white, size: 16),
@@ -73,7 +74,7 @@ class _MapPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, bg);
 
     // Soft "parks"
-    final park = Paint()..color = const Color(0xFFD8EBDA);
+    final park = Paint()..color = const Color(0xFFDCE3F2);
     canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.8), 26, park);
     canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.25), 20, park);
 

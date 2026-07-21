@@ -49,7 +49,7 @@ class MobileHeroIllustration extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                          color: Color(0x3312A783),
+                          color: Color(0x33536DFE),
                           blurRadius: 14,
                           offset: Offset(0, 6)),
                     ],

@@ -29,7 +29,7 @@ class TodaysEarningsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.sheet + 4),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x291B2559),
+              color: Color(0x293F51B5),
               blurRadius: 28,
               offset: Offset(0, 14),
             ),
@@ -116,7 +116,7 @@ class TodaysEarningsCard extends StatelessWidget {
                       child: Text(
                         'LIVE',
                         style: AppTypography.caption.copyWith(
-                          color: const Color(0xFF8CF3D8),
+                          color: const Color(0xFFB8C2FF),
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,

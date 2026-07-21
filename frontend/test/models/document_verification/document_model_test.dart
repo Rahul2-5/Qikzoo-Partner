@@ -10,14 +10,16 @@ void main() {
       expect(DocumentType.vehicleRc.label, 'Vehicle RC');
       expect(DocumentType.vehicleInsurance.label, 'Insurance');
       expect(DocumentType.pan.label, 'PAN Card');
+      expect(DocumentType.bankProof.label, 'Bank Details');
     });
 
-    test('only PAN is optional', () {
-      expect(DocumentType.pan.isOptional, isTrue);
+    test('insurance and bank details are optional while PAN is required', () {
+      expect(DocumentType.vehicleInsurance.isOptional, isTrue);
+      expect(DocumentType.bankProof.isOptional, isTrue);
+      expect(DocumentType.pan.isOptional, isFalse);
       expect(DocumentType.aadhaar.isOptional, isFalse);
       expect(DocumentType.drivingLicense.isOptional, isFalse);
       expect(DocumentType.vehicleRc.isOptional, isFalse);
-      expect(DocumentType.vehicleInsurance.isOptional, isFalse);
     });
 
     test('each displayed type has an icon assigned', () {
@@ -26,6 +28,7 @@ void main() {
       expect(DocumentType.vehicleRc.icon, LucideIcons.car);
       expect(DocumentType.vehicleInsurance.icon, LucideIcons.shieldCheck);
       expect(DocumentType.pan.icon, LucideIcons.contact);
+      expect(DocumentType.bankProof.icon, LucideIcons.landmark);
     });
   });
 }

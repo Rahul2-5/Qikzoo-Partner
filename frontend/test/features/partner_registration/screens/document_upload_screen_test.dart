@@ -54,7 +54,7 @@ void setTallSurface(WidgetTester tester) {
 
 void main() {
   test(
-      'missingRequiredDocumentLabels lists only missing required docs, PAN excluded',
+      'missingRequiredDocumentLabels requires PAN and excludes optional documents',
       () {
     final documents = [
       const DocumentModel(
@@ -69,15 +69,18 @@ void main() {
           type: DocumentType.vehicleInsurance, status: DocumentStatus.rejected),
       const DocumentModel(
           type: DocumentType.pan, status: DocumentStatus.notUploaded),
+      const DocumentModel(
+          type: DocumentType.bankProof, status: DocumentStatus.notUploaded),
     ];
 
     expect(
       missingRequiredDocumentLabels(documents),
-      ['Driving License', 'Insurance'],
+      ['PAN Card', 'Driving License'],
     );
   });
 
-  testWidgets('renders all five documents in order', (tester) async {
+  testWidgets('renders all six documents with requirement labels',
+      (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp(
       DocumentType.values
@@ -87,11 +90,14 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Aadhaar Card'), findsOneWidget);
-    expect(find.text('Driving License'), findsOneWidget);
-    expect(find.text('Vehicle RC'), findsOneWidget);
-    expect(find.text('Insurance'), findsOneWidget);
+    expect(find.textContaining('Aadhaar Card'), findsOneWidget);
+    expect(find.textContaining('Driving License'), findsOneWidget);
+    expect(find.textContaining('Vehicle RC'), findsOneWidget);
+    expect(find.textContaining('Insurance'), findsOneWidget);
     expect(find.textContaining('PAN Card'), findsOneWidget);
+    expect(find.textContaining('Bank Details'), findsOneWidget);
+    expect(find.textContaining('(Optional)'), findsNWidgets(2));
+    expect(find.textContaining('(Required)'), findsNWidgets(4));
   });
 
   testWidgets('Continue shows a snackbar listing missing required documents',
@@ -118,9 +124,9 @@ void main() {
     setTallSurface(tester);
     const requiredTypes = [
       DocumentType.aadhaar,
+      DocumentType.pan,
       DocumentType.drivingLicense,
       DocumentType.vehicleRc,
-      DocumentType.vehicleInsurance,
     ];
     final documents = DocumentType.values.map((type) {
       final isRequired = requiredTypes.contains(type);

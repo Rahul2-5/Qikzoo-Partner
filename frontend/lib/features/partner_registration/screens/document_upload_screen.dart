@@ -18,17 +18,18 @@ import '../widgets/document_upload_tile.dart';
 
 const documentDisplayOrder = [
   DocumentType.aadhaar,
+  DocumentType.pan,
   DocumentType.drivingLicense,
   DocumentType.vehicleRc,
   DocumentType.vehicleInsurance,
-  DocumentType.pan,
+  DocumentType.bankProof,
 ];
 
 const _requiredDocumentTypes = [
   DocumentType.aadhaar,
+  DocumentType.pan,
   DocumentType.drivingLicense,
   DocumentType.vehicleRc,
-  DocumentType.vehicleInsurance,
 ];
 
 bool _isUploaded(DocumentStatus status) =>
@@ -99,7 +100,7 @@ class DocumentUploadScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Upload clear photos of the following documents',
+                'PAN card is required. Bank details and insurance are optional.',
                 style:
                     AppTypography.body.copyWith(color: AppColors.textSecondary),
               ),

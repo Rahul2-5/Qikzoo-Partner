@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/assets/app_assets.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -9,8 +10,8 @@ import '../../../core/theme/app_typography.dart';
 
 /// Branded hero artwork for the welcome screen.
 ///
-/// The source image has its own background, so it is intentionally presented
-/// as a full-bleed card instead of as a transparent cutout.
+/// The transparent hero art sits over an indigo-aware surface so it stays
+/// crisp and legible across the welcome flow.
 class RiderHeroIllustration extends StatelessWidget {
   final double height;
 
@@ -27,6 +28,11 @@ class RiderHeroIllustration extends StatelessWidget {
         width: double.infinity,
         height: height,
         decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF7F8FF), Color(0xFFCDD3F5)],
+          ),
           borderRadius: BorderRadius.circular(AppRadius.sheet + 6),
           boxShadow: AppShadows.card,
         ),
@@ -35,18 +41,25 @@ class RiderHeroIllustration extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(
-                'assets/images/3d_asset.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                excludeFromSemantics: true,
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Image.asset(
+                      AppAssets.riderScooterIndigo3d,
+                      fit: BoxFit.contain,
+                      excludeFromSemantics: true,
+                    ),
+                  ),
+                ),
               ),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0xB8001719)],
+                    colors: [Colors.transparent, Color(0xD42D3436)],
                     stops: [0.54, 1],
                   ),
                 ),

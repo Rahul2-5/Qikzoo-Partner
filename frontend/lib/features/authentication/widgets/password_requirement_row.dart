@@ -32,10 +32,13 @@ class PasswordRequirementRow extends StatelessWidget {
                     : AppColors.textSecondary.withValues(alpha: 0.4),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                label,
-                style: AppTypography.body.copyWith(
-                  color: met ? AppColors.textPrimary : AppColors.textSecondary,
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTypography.body.copyWith(
+                    color:
+                        met ? AppColors.textPrimary : AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],

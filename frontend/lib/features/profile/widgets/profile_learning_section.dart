@@ -48,14 +48,14 @@ class ProfileLearningSection extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1B2559), Color(0xFF126B66)],
+          colors: [AppColors.primary, AppColors.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppRadius.sheet),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x331B2559),
+            color: Color(0x333F51B5),
             offset: Offset(0, 12),
             blurRadius: 28,
           ),
@@ -158,7 +158,7 @@ class LearningVideoCard extends StatelessWidget {
   static const _thumbnailGradients = <List<Color>>[
     [Color(0xFFFFEDD5), Color(0xFFFDBA74)],
     [Color(0xFFDBEAFE), Color(0xFF93C5FD)],
-    [Color(0xFFDCFCE7), Color(0xFF86EFAC)],
+    [Color(0xFFE8EAF6), Color(0xFF9FA8DA)],
   ];
 
   static const _thumbnailIcons = <IconData>[

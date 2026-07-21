@@ -39,7 +39,7 @@ class _ApplicationSubmittedScreenState
 
   void _goToHome() {
     if (!mounted) return;
-    Get.offAllNamed(AppRoutes.dashboard);
+    Get.offAllNamed(AppRoutes.dashboard, arguments: true);
   }
 
   @override

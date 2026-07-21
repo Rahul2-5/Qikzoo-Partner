@@ -8,7 +8,7 @@ class OrderStreamService {
     await Future.delayed(const Duration(seconds: 5));
     yield const OrderModel(
       id: 'order_incoming_1',
-      restaurantName: 'Green Bowl Cafe',
+      restaurantName: 'Indigo Bowl Cafe',
       restaurantArea: 'Residency Road',
       customerName: 'Rohan Mehta',
       pickupAddress: '9 Residency Road',
@@ -29,4 +29,5 @@ class OrderStreamService {
   }
 }
 
-final orderStreamServiceProvider = Provider<OrderStreamService>((ref) => OrderStreamService());
+final orderStreamServiceProvider =
+    Provider<OrderStreamService>((ref) => OrderStreamService());

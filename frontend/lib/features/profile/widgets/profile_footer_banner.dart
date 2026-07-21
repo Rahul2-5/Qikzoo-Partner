@@ -15,7 +15,7 @@ class ProfileFooterBanner extends StatelessWidget {
           AppSpacing.lg, AppSpacing.md, AppSpacing.md, AppSpacing.md),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE8EBF7), Color(0xFFE9F7F1)],
+          colors: [AppColors.primarySoft, Color(0xFFDDE3FF)],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),

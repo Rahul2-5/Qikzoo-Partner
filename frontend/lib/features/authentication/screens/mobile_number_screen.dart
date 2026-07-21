@@ -74,7 +74,7 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFEAF8F3), AppColors.background],
+            colors: [Color(0xFFEFF1FF), AppColors.background],
             stops: [0, 0.42],
           ),
         ),
@@ -266,7 +266,7 @@ class _MobileHero extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0F1B2559),
+            color: Color(0x0F3F51B5),
             blurRadius: 24,
             offset: Offset(0, 10),
           ),

@@ -33,6 +33,7 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
   final _searchController = TextEditingController();
   String _query = '';
   String? _selectedCity;
+  String? _selectedNearbyLocation;
   bool _isLocating = false;
   String? _locationError;
   bool _isSaving = false;
@@ -50,6 +51,26 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
         .where((city) => city.name.toLowerCase().contains(normalized))
         .toList();
   }
+
+  CityInfo? get _selectedCityInfo => CityData.findByName(_selectedCity ?? '');
+
+  List<String> get _filteredNearbyLocations {
+    final locations = _selectedCityInfo?.nearbyLocations ?? [];
+    if (_query.trim().isEmpty) return locations;
+    final normalized = _query.trim().toLowerCase();
+    return locations
+        .where((location) => location.toLowerCase().contains(normalized))
+        .toList();
+  }
+
+  bool get _canContinue {
+    final city = _selectedCityInfo;
+    if (city == null) return false;
+    return city.nearbyLocations.isEmpty || _selectedNearbyLocation != null;
+  }
+
+  bool get _isChoosingNearbyLocation =>
+      _selectedCityInfo?.nearbyLocations.isNotEmpty ?? false;
 
   Future<void> _onCurrentLocationTap() async {
     setState(() {
@@ -76,8 +97,8 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
       }
 
       final position = await Geolocator.getCurrentPosition();
-      final placemarks = await placemarkFromCoordinates(
-          position.latitude, position.longitude);
+      final placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
       if (placemarks.isEmpty) {
         setState(() => _locationError =
             'Couldn\'t detect your city — please pick it manually.');
@@ -97,7 +118,12 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
         return;
       }
 
-      setState(() => _selectedCity = match.name);
+      final detectedLocation =
+          _matchNearbyLocation(match, placemark.locality ?? '');
+      setState(() {
+        _selectedCity = match.name;
+        _selectedNearbyLocation = detectedLocation;
+      });
     } catch (_) {
       setState(() => _locationError =
           'Couldn\'t detect your location — please pick your city manually.');
@@ -107,16 +133,20 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
   }
 
   Future<void> _onContinue() async {
-    final city = CityData.findByName(_selectedCity ?? '');
+    final city = _selectedCityInfo;
     if (city == null) return;
 
     setState(() => _isSaving = true);
-    ref.read(registrationFormProvider.notifier).setZone(city.state, city.name);
+    ref.read(registrationFormProvider.notifier).setZone(
+          city.state,
+          city.name,
+          preferredZone: _selectedNearbyLocation ?? '',
+        );
     await ref.read(partnerRegistrationRepositoryProvider).saveDeliveryZone(
           DeliveryZoneModel(
             state: city.state,
             city: city.name,
-            preferredZone: '',
+            preferredZone: _selectedNearbyLocation ?? '',
           ),
         );
     if (!mounted) return;
@@ -124,9 +154,21 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
     Get.toNamed(AppRoutes.documentUpload);
   }
 
+  String? _matchNearbyLocation(CityInfo city, String locationName) {
+    final normalized = locationName.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    for (final location in city.nearbyLocations) {
+      if (location.toLowerCase() == normalized) return location;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cities = _filteredCities;
+    final selectedCityInfo = _selectedCityInfo;
+    final cities = _isChoosingNearbyLocation && selectedCityInfo != null
+        ? [selectedCityInfo]
+        : _filteredCities;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -171,14 +213,17 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Choose the city you want to deliver in',
+                        'Choose the city and nearby area you want to deliver in',
                         style: AppTypography.body
                             .copyWith(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       SearchBarCustom(
                         controller: _searchController,
-                        hint: 'Search city',
+                        hint:
+                            selectedCityInfo?.nearbyLocations.isNotEmpty == true
+                                ? 'Search nearby location'
+                                : 'Search city',
                         onChanged: (value) => setState(() => _query = value),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -237,16 +282,18 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     vertical: AppSpacing.xs),
                                 child: Text(
-                                  'Popular Cities',
-                                  style: AppTypography.bodyMedium.copyWith(
-                                      color: AppColors.textSecondary),
+                                  _isChoosingNearbyLocation
+                                      ? 'Selected city'
+                                      : 'Popular Cities',
+                                  style: AppTypography.bodyMedium
+                                      .copyWith(color: AppColors.textSecondary),
                                 ),
                               ),
                             ),
                             if (cities.isEmpty)
                               const Padding(
-                                padding:
-                                    EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: AppSpacing.lg),
                                 child: EmptyState(
                                   icon: LucideIcons.searchX,
                                   message: 'No cities found',
@@ -258,10 +305,54 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
                                 CityListTile(
                                   name: cities[i].name,
                                   selected: _selectedCity == cities[i].name,
-                                  onTap: () => setState(
-                                      () => _selectedCity = cities[i].name),
+                                  onTap: () => setState(() {
+                                    _selectedCity = cities[i].name;
+                                    _selectedNearbyLocation = null;
+                                    _query = '';
+                                    _searchController.clear();
+                                  }),
                                 ),
                               ],
+                            if ((selectedCityInfo?.nearbyLocations.isNotEmpty ??
+                                false)) ...[
+                              const CityListDivider(),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: AppSpacing.xs),
+                                  child: Text(
+                                    'Nearby locations',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                        color: AppColors.textSecondary),
+                                  ),
+                                ),
+                              ),
+                              if (_filteredNearbyLocations.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: AppSpacing.lg),
+                                  child: EmptyState(
+                                    icon: LucideIcons.searchX,
+                                    message: 'No locations found',
+                                  ),
+                                )
+                              else
+                                for (var i = 0;
+                                    i < _filteredNearbyLocations.length;
+                                    i++) ...[
+                                  if (i > 0) const CityListDivider(),
+                                  CityListTile(
+                                    icon: LucideIcons.mapPin,
+                                    name: _filteredNearbyLocations[i],
+                                    selected: _selectedNearbyLocation ==
+                                        _filteredNearbyLocations[i],
+                                    onTap: () => setState(() =>
+                                        _selectedNearbyLocation =
+                                            _filteredNearbyLocations[i]),
+                                  ),
+                                ],
+                            ],
                           ],
                         ),
                       ),
@@ -274,8 +365,7 @@ class _SelectCityScreenState extends ConsumerState<SelectCityScreen> {
                 label: 'Continue',
                 trailingIcon: LucideIcons.arrowRight,
                 isLoading: _isSaving,
-                onPressed:
-                    _selectedCity != null ? _onContinue : null,
+                onPressed: _canContinue ? _onContinue : null,
               ),
               const SizedBox(height: AppSpacing.md),
             ],

@@ -302,7 +302,7 @@ class _EmptySelfieState extends StatelessWidget {
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFF8FFFC), Color(0xFFEAF8F3)],
+          colors: [Color(0xFFFAFAFF), Color(0xFFEFF1FF)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -320,7 +320,7 @@ class _EmptySelfieState extends StatelessWidget {
               border: Border.all(color: AppColors.secondary, width: 2),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x1F12A783),
+                  color: Color(0x1F536DFE),
                   blurRadius: 18,
                   offset: Offset(0, 8),
                 ),

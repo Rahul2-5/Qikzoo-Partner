@@ -3,7 +3,7 @@ import 'app_routes.dart';
 import 'placeholder_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../../features/onboarding_welcome/screens/onboarding_welcome_screen.dart';
-import '../../features/onboarding_welcome/screens/join_as_partner_screen.dart';
+import '../../features/onboarding_welcome/screens/partner_benefits_screen.dart';
 import '../../features/authentication/screens/mobile_number_screen.dart';
 import '../../features/authentication/screens/otp_verification_screen.dart';
 import '../../features/authentication/screens/set_password_screen.dart';
@@ -34,8 +34,8 @@ class AppPages {
     GetPage(
         name: AppRoutes.welcome, page: () => const OnboardingWelcomeScreen()),
     GetPage(
-        name: AppRoutes.becomePartnerIntro,
-        page: () => const JoinAsPartnerScreen()),
+        name: AppRoutes.partnerBenefits,
+        page: () => const PartnerBenefitsScreen()),
     GetPage(
       name: AppRoutes.otp,
       page: () => MobileNumberScreen(
@@ -81,7 +81,10 @@ class AppPages {
     GetPage(
         name: AppRoutes.approval,
         page: () => const PlaceholderScreen(title: 'Approval')),
-    GetPage(name: AppRoutes.dashboard, page: () => const DashboardScreen()),
+    GetPage(
+      name: AppRoutes.dashboard,
+      page: () => DashboardScreen(showSignupBonus: Get.arguments == true),
+    ),
     GetPage(name: AppRoutes.earnings, page: () => const EarningsScreen()),
     GetPage(name: AppRoutes.orders, page: () => const OrdersScreen()),
     GetPage(

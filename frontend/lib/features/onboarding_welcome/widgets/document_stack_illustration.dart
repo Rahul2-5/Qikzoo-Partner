@@ -84,7 +84,7 @@ class _DocumentCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.card),
             boxShadow: const [
               BoxShadow(
-                  color: Color(0x141B2559),
+                  color: Color(0x143F51B5),
                   blurRadius: 20,
                   offset: Offset(0, 10)),
             ],
@@ -150,7 +150,7 @@ class _AvatarBadge extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-              color: Color(0x3312A783), blurRadius: 18, offset: Offset(0, 8)),
+              color: Color(0x33536DFE), blurRadius: 18, offset: Offset(0, 8)),
         ],
       ),
       child: const Icon(LucideIcons.user, color: Colors.white, size: 30),

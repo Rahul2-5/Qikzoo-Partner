@@ -27,7 +27,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF0FAF7), AppColors.background],
+            colors: [Color(0xFFF4F5FF), AppColors.background],
             stops: [0, 0.45],
           ),
         ),
@@ -80,7 +80,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                       index: 4,
                       child: _WelcomeActions(
                         onGetStarted: () =>
-                            Get.toNamed(AppRoutes.becomePartnerIntro),
+                            Get.toNamed(AppRoutes.partnerBenefits),
                         onLogin: () => Get.toNamed(
                           authFlowRoute(AppRoutes.otp, AuthFlow.login),
                         ),
@@ -107,7 +107,7 @@ class _WelcomeTopBar extends StatelessWidget {
       children: [
         Expanded(child: _Wordmark()),
         SizedBox(width: AppSpacing.md),
-        OnboardingStepIndicator(currentStep: 1),
+        OnboardingStepIndicator(currentStep: 1, totalSteps: 2),
       ],
     );
   }

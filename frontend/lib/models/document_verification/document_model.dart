@@ -13,7 +13,13 @@ enum DocumentType {
   bankProof,
 }
 
-enum DocumentStatus { notUploaded, uploading, pendingVerification, verified, rejected }
+enum DocumentStatus {
+  notUploaded,
+  uploading,
+  pendingVerification,
+  verified,
+  rejected
+}
 
 class DocumentModel extends Equatable {
   final DocumentType type;
@@ -28,7 +34,8 @@ class DocumentModel extends Equatable {
     this.rejectionReason,
   });
 
-  DocumentModel copyWith({DocumentStatus? status, String? fileUrl, String? rejectionReason}) =>
+  DocumentModel copyWith(
+          {DocumentStatus? status, String? fileUrl, String? rejectionReason}) =>
       DocumentModel(
         type: type,
         status: status ?? this.status,
@@ -58,11 +65,12 @@ extension DocumentTypeDisplay on DocumentType {
       case DocumentType.vehiclePhoto:
         return 'Vehicle Photo';
       case DocumentType.bankProof:
-        return 'Bank Proof';
+        return 'Bank Details';
     }
   }
 
-  bool get isOptional => this == DocumentType.pan;
+  bool get isOptional =>
+      this == DocumentType.vehicleInsurance || this == DocumentType.bankProof;
 
   IconData get icon {
     switch (this) {

@@ -391,7 +391,7 @@ class _PlanCard extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 130),
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFF0FBF8) : AppColors.surface,
+              color: isSelected ? const Color(0xFFF2F3FF) : AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.button),
               border: Border.all(
                 color: isSelected ? AppColors.secondary : AppColors.border,

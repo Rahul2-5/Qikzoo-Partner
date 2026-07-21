@@ -70,8 +70,17 @@ class DocumentUploadTile extends StatelessWidget {
                         style: AppTypography.bodyMedium,
                         children: [
                           TextSpan(text: type.label),
-                          if (type.isOptional)
-                            TextSpan(text: '  (Optional)', style: AppTypography.caption),
+                          TextSpan(
+                            text: type.isOptional
+                                ? '  (Optional)'
+                                : '  (Required)',
+                            style: AppTypography.caption.copyWith(
+                              color: type.isOptional
+                                  ? AppColors.textSecondary
+                                  : AppColors.secondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -79,7 +88,8 @@ class DocumentUploadTile extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     statusLabel,
-                    style: AppTypography.bodyMedium.copyWith(color: statusColor),
+                    style:
+                        AppTypography.bodyMedium.copyWith(color: statusColor),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   isUploading
@@ -103,7 +113,8 @@ class DocumentUploadTile extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   document.rejectionReason!,
-                  style: AppTypography.caption.copyWith(color: AppColors.warning),
+                  style:
+                      AppTypography.caption.copyWith(color: AppColors.warning),
                 ),
               ],
             ],

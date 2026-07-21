@@ -16,7 +16,9 @@ class AppTheme {
           seedColor: AppColors.primary,
           primary: AppColors.primary,
           secondary: AppColors.secondary,
+          tertiary: AppColors.accent,
           surface: AppColors.surface,
+          outline: AppColors.border,
           error: AppColors.error,
         ),
         textTheme: TextTheme(
@@ -46,7 +48,7 @@ class AppTheme {
           ),
         ),
         dividerTheme: DividerThemeData(
-          color: AppColors.border.withValues(alpha: 0.75),
+          color: AppColors.border.withValues(alpha: 0.32),
           thickness: 1,
           space: 1,
         ),

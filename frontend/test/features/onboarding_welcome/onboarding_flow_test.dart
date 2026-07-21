@@ -1,6 +1,6 @@
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
-import 'package:delivery_partner_app/features/onboarding_welcome/screens/join_as_partner_screen.dart';
 import 'package:delivery_partner_app/features/onboarding_welcome/screens/onboarding_welcome_screen.dart';
+import 'package:delivery_partner_app/features/onboarding_welcome/screens/partner_benefits_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -21,8 +21,8 @@ Widget buildApp() {
         page: () => const OnboardingWelcomeScreen(),
       ),
       GetPage(
-        name: AppRoutes.becomePartnerIntro,
-        page: () => const JoinAsPartnerScreen(),
+        name: AppRoutes.partnerBenefits,
+        page: () => const PartnerBenefitsScreen(),
       ),
       GetPage(
         name: AppRoutes.otp,
@@ -49,9 +49,10 @@ void main() {
     expect(find.text('Flexible\nhours'), findsOneWidget);
     expect(find.text('Weekly\npayouts'), findsOneWidget);
     expect(find.text('Start earning with Qikzoo'), findsOneWidget);
+    expect(find.bySemanticsLabel('Step 1 of 2'), findsOneWidget);
   });
 
-  testWidgets('primary welcome action advances to partner introduction',
+  testWidgets('primary welcome action advances to partner benefits',
       (tester) async {
     setSurface(tester, const Size(400, 900));
     await tester.pumpWidget(buildApp());
@@ -59,19 +60,24 @@ void main() {
     await tester.tap(find.text('Start earning with Qikzoo'));
     await tester.pumpAndSettle();
 
-    expect(find.text('BECOME A QIKZOO PARTNER'), findsOneWidget);
-    expect(find.text('Built for your day'), findsOneWidget);
-    expect(find.text('Continue with mobile number'), findsOneWidget);
+    expect(find.text('WELCOME TO QIKZOO'), findsOneWidget);
+    expect(
+      find.text('Medical insurance for you and your family'),
+      findsOneWidget,
+    );
+    expect(find.text('Flexible earning'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
+    expect(find.bySemanticsLabel('Step 2 of 2'), findsOneWidget);
   });
 
-  testWidgets('partner introduction continues to mobile number',
+  testWidgets('benefits continue directly to signup mobile number',
       (tester) async {
     setSurface(tester, const Size(400, 900));
     await tester.pumpWidget(buildApp());
 
     await tester.tap(find.text('Start earning with Qikzoo'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Continue with mobile number'));
+    await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
 
     expect(find.text('Mobile Number Screen'), findsOneWidget);
@@ -98,5 +104,6 @@ void main() {
     await tester.tap(find.text('Start earning with Qikzoo'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    expect(find.text('Get Started'), findsOneWidget);
   });
 }

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../widgets/greeting_header.dart';
-import '../widgets/incentive_progress_card.dart';
 import '../widgets/offline_hero_card.dart';
+import '../widgets/promotional_goals_card.dart';
 import '../widgets/stat_tile_row.dart';
 import '../widgets/todays_earnings_card.dart';
 import '../widgets/waiting_for_orders_card.dart';
@@ -86,54 +84,20 @@ class _DashboardIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good morning, Rahul',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                online ? 'Ready for your next order' : 'Ready to hit the road?',
-                style: AppTypography.h1.copyWith(fontSize: 27),
-              ),
-            ],
-          ),
+        Text(
+          'Good morning, Rahul',
+          style: AppTypography.h1.copyWith(fontSize: 27),
         ),
-        const SizedBox(width: AppSpacing.md),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm + 2,
-            vertical: AppSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: online ? AppColors.successBg : AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                online ? LucideIcons.radio : LucideIcons.pause,
-                size: 14,
-                color: online ? AppColors.success : AppColors.textSecondary,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Text(
-                online ? 'Searching' : 'Shift paused',
-                style: AppTypography.caption.copyWith(
-                  color: online ? AppColors.success : AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          online
+              ? 'Orders are nearby. Stay ready for your next trip.'
+              : 'Go online and turn today\'s time into earnings.',
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary,
           ),
         ),
       ],
@@ -164,6 +128,15 @@ class _CompactDashboard extends StatelessWidget {
         else
           OfflineHeroCard(onGoOnline: onGoOnline),
         const SizedBox(height: AppSpacing.lg),
+        const PromotionalGoalsCard(
+          completedOrders: 36,
+          offerEndsLabel: 'Ends Sunday, 11:59 PM',
+          goals: [
+            DeliveryGoal(deliveries: 48, reward: 150),
+            DeliveryGoal(deliveries: 60, reward: 250),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
         const _SectionTitle(
           title: "Today's performance",
           subtitle: 'Your shift at a glance',
@@ -174,8 +147,6 @@ class _CompactDashboard extends StatelessWidget {
           hoursOnline: '4h 30m',
           rating: 4.8,
         ),
-        const SizedBox(height: AppSpacing.md),
-        const IncentiveProgressCard(completed: 7, target: 10, bonus: 250),
         if (online) ...[
           const SizedBox(height: AppSpacing.md),
           OutlinedButtonCustom(
@@ -223,6 +194,15 @@ class _WideDashboard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const PromotionalGoalsCard(
+                completedOrders: 36,
+                offerEndsLabel: 'Ends Sunday, 11:59 PM',
+                goals: [
+                  DeliveryGoal(deliveries: 48, reward: 150),
+                  DeliveryGoal(deliveries: 60, reward: 250),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
               const _SectionTitle(
                 title: "Today's performance",
                 subtitle: 'Your shift at a glance',
@@ -232,12 +212,6 @@ class _WideDashboard extends StatelessWidget {
                 deliveries: 12,
                 hoursOnline: '4h 30m',
                 rating: 4.8,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              const IncentiveProgressCard(
-                completed: 7,
-                target: 10,
-                bonus: 250,
               ),
               if (online) ...[
                 const SizedBox(height: AppSpacing.md),

@@ -7,12 +7,14 @@ import 'selection_radio.dart';
 
 class CityListTile extends StatelessWidget {
   final String name;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   const CityListTile({
     super.key,
     required this.name,
+    this.icon = LucideIcons.building2,
     required this.selected,
     required this.onTap,
   });
@@ -33,8 +35,8 @@ class CityListTile extends StatelessWidget {
                 color: AppColors.secondaryBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                LucideIcons.building2,
+              child: Icon(
+                icon,
                 color: AppColors.secondary,
                 size: 20,
               ),

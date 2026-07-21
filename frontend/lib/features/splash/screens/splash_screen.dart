@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/assets/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -34,23 +35,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = AppMotion.reduceMotion(context);
+    const logoRed = Color(0xFFFF3D1F);
+    const logoBlue = Color(0xFF0E43B7);
+    const splashBackground = Color(0xFFF8FBFF);
     final glow = Container(
-      width: 260,
-      height: 260,
+      width: 320,
+      height: 220,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            AppColors.secondary.withValues(alpha: 0.16),
-            AppColors.secondary.withValues(alpha: 0.0),
+            logoBlue.withValues(alpha: 0.16),
+            logoRed.withValues(alpha: 0.08),
+            splashBackground.withValues(alpha: 0.0),
           ],
         ),
       ),
     );
     final logo = Image.asset(
-      'assets/images/logo.png',
-      width: 180,
-      height: 180,
+      AppAssets.brandLogo,
+      width: 260,
+      height: 100,
       fit: BoxFit.contain,
     );
     final title = Text(
@@ -69,7 +73,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: splashBackground,
       body: Center(
         child: AnimatedOpacity(
           opacity: _exiting ? 0 : 1,
@@ -135,7 +139,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                         curve: Curves.easeOut,
                       ),
                 const SizedBox(height: AppSpacing.xl),
-                _PulsingDots(motionEnabled: !reduceMotion),
+                _PulsingDots(
+                  activeColor: logoRed,
+                  idleColor: logoBlue,
+                  motionEnabled: !reduceMotion,
+                ),
               ],
             ),
           ),
@@ -146,8 +154,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 }
 
 class _PulsingDots extends StatelessWidget {
-  const _PulsingDots({required this.motionEnabled});
+  const _PulsingDots({
+    required this.activeColor,
+    required this.idleColor,
+    required this.motionEnabled,
+  });
 
+  final Color activeColor;
+  final Color idleColor;
   final bool motionEnabled;
 
   @override
@@ -160,9 +174,9 @@ class _PulsingDots extends StatelessWidget {
           child: Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.secondary,
+              color: i == 0 ? activeColor : idleColor.withValues(alpha: 0.72),
             ),
           ),
         );

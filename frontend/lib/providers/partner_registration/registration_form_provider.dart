@@ -18,6 +18,7 @@ class RegistrationFormState {
   final String vehicleModel;
   final String? state;
   final String? city;
+  final String? preferredZone;
 
   static final RegExp _plateRegExp =
       RegExp(r'^[A-Za-z]{2}\s?\d{1,2}\s?[A-Za-z]{1,2}\s?\d{4}$');
@@ -37,6 +38,7 @@ class RegistrationFormState {
     this.vehicleModel = '',
     this.state,
     this.city,
+    this.preferredZone,
   });
 
   bool get isPersonalInfoValid =>
@@ -69,6 +71,7 @@ class RegistrationFormState {
     String? vehicleModel,
     String? state,
     String? city,
+    String? preferredZone,
   }) =>
       RegistrationFormState(
         fullName: fullName ?? this.fullName,
@@ -76,7 +79,8 @@ class RegistrationFormState {
         dateOfBirth: dateOfBirth ?? this.dateOfBirth,
         gender: gender ?? this.gender,
         emergencyContactName: emergencyContactName ?? this.emergencyContactName,
-        emergencyContactNumber: emergencyContactNumber ?? this.emergencyContactNumber,
+        emergencyContactNumber:
+            emergencyContactNumber ?? this.emergencyContactNumber,
         relation: relation ?? this.relation,
         relationOther: relationOther ?? this.relationOther,
         referralCode: referralCode ?? this.referralCode,
@@ -85,6 +89,7 @@ class RegistrationFormState {
         vehicleModel: vehicleModel ?? this.vehicleModel,
         state: state ?? this.state,
         city: city ?? this.city,
+        preferredZone: preferredZone ?? this.preferredZone,
       );
 }
 
@@ -94,17 +99,30 @@ class RegistrationFormNotifier extends Notifier<RegistrationFormState> {
 
   void setFullName(String value) => state = state.copyWith(fullName: value);
   void setEmail(String value) => state = state.copyWith(email: value);
-  void setDateOfBirth(DateTime value) => state = state.copyWith(dateOfBirth: value);
+  void setDateOfBirth(DateTime value) =>
+      state = state.copyWith(dateOfBirth: value);
   void setGender(Gender value) => state = state.copyWith(gender: value);
-  void setEmergencyContactName(String value) => state = state.copyWith(emergencyContactName: value);
-  void setEmergencyContactNumber(String value) => state = state.copyWith(emergencyContactNumber: value);
+  void setEmergencyContactName(String value) =>
+      state = state.copyWith(emergencyContactName: value);
+  void setEmergencyContactNumber(String value) =>
+      state = state.copyWith(emergencyContactNumber: value);
   void setRelation(Relation value) => state = state.copyWith(relation: value);
-  void setRelationOther(String value) => state = state.copyWith(relationOther: value);
-  void setReferralCode(String value) => state = state.copyWith(referralCode: value);
-  void setVehicleType(VehicleType value) => state = state.copyWith(vehicleType: value);
-  void setVehicleNumber(String value) => state = state.copyWith(vehicleNumber: value);
-  void setVehicleModel(String value) => state = state.copyWith(vehicleModel: value);
-  void setZone(String state_, String city) => state = state.copyWith(state: state_, city: city);
+  void setRelationOther(String value) =>
+      state = state.copyWith(relationOther: value);
+  void setReferralCode(String value) =>
+      state = state.copyWith(referralCode: value);
+  void setVehicleType(VehicleType value) =>
+      state = state.copyWith(vehicleType: value);
+  void setVehicleNumber(String value) =>
+      state = state.copyWith(vehicleNumber: value);
+  void setVehicleModel(String value) =>
+      state = state.copyWith(vehicleModel: value);
+  void setZone(String state_, String city, {String preferredZone = ''}) =>
+      state = state.copyWith(
+        state: state_,
+        city: city,
+        preferredZone: preferredZone,
+      );
 }
 
 final registrationFormProvider =

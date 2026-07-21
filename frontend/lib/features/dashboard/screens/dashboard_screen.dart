@@ -8,6 +8,7 @@ import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
+import '../../authentication/widgets/signup_bonus_dialog.dart';
 import '../views/active_order_view.dart';
 import '../views/home_idle_view.dart';
 import '../views/order_delivered_view.dart';
@@ -15,7 +16,12 @@ import 'incoming_order_screen.dart';
 import 'online_selfie_verification_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({
+    super.key,
+    this.showSignupBonus = false,
+  });
+
+  final bool showSignupBonus;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -25,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _online = false;
   OrderModel? _order;
   Timer? _incomingTimer;
+  bool _signupBonusPresented = false;
 
   static const _statusFlow = {
     OrderStatus.accepted: OrderStatus.navigatingToRestaurant,
@@ -41,6 +48,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool get _isDelivered =>
       _order != null && _order!.status == OrderStatus.deliveryConfirmed;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.showSignupBonus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_presentSignupBonus());
+      });
+    }
+  }
+
+  Future<void> _presentSignupBonus() async {
+    if (!mounted || _signupBonusPresented) return;
+    _signupBonusPresented = true;
+    await SignupBonusDialog.show(context);
+  }
 
   @override
   void dispose() {
@@ -154,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF0FAF7), AppColors.background],
+            colors: [Color(0xFFF4F5FF), AppColors.background],
             stops: [0, 0.34],
           ),
         ),

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/dashboard/screens/dashboard_screen.dart';
+import 'package:delivery_partner_app/features/authentication/widgets/signup_bonus_dialog.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
 import 'package:delivery_partner_app/shared/widgets/buttons/primary_cta_button.dart';
 
@@ -58,11 +59,15 @@ Future<void> goOnline(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(() => Get.testMode = true);
+  tearDown(Get.reset);
+
   testWidgets('starts offline showing the offline hero', (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
     expect(find.text("You're offline"), findsOneWidget);
+    expect(find.byType(SignupBonusDialog), findsNothing);
   });
 
   testWidgets('Go Online requires the white T-shirt selfie check',

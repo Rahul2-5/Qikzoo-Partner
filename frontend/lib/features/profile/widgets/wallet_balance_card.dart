@@ -25,7 +25,7 @@ class WalletBalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primarySoft, Color(0xFFDDF5EE)],
+          colors: [AppColors.primarySoft, Color(0xFFDDE3FF)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

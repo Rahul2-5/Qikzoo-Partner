@@ -24,7 +24,7 @@ class OfflineHeroCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.surface, Color(0xFFF0FAF7)],
+          colors: [AppColors.surface, Color(0xFFF4F5FF)],
         ),
         borderRadius: BorderRadius.circular(AppRadius.sheet + 2),
         border: Border.all(color: AppColors.surface),
