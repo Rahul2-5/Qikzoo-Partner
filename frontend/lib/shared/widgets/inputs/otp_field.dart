@@ -11,6 +11,7 @@ class OtpField extends StatelessWidget {
   final void Function(String)? onChanged;
   final TextEditingController? controller;
   final bool readOnly;
+  final bool autoFocus;
 
   const OtpField({
     super.key,
@@ -19,6 +20,7 @@ class OtpField extends StatelessWidget {
     this.onChanged,
     this.controller,
     this.readOnly = false,
+    this.autoFocus = false,
   });
 
   @override
@@ -35,6 +37,9 @@ class OtpField extends StatelessWidget {
           controller: controller,
           autoDisposeControllers: controller == null,
           readOnly: readOnly,
+          autoFocus: autoFocus,
+          enablePinAutofill: true,
+          autoDismissKeyboard: false,
           onCompleted: onCompleted,
           onChanged: onChanged ?? (_) {},
           keyboardType: TextInputType.number,

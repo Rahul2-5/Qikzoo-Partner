@@ -4,6 +4,7 @@ import 'package:flutter/widget_previews.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -49,12 +50,20 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
     try {
       await ref.read(authRepositoryProvider).requestOtp(phone);
       if (!mounted) return;
-      Get.toNamed(authFlowRoute(AppRoutes.otpVerification, widget.flow));
-    } catch (_) {
+      Get.toNamed(
+        authFlowRoute(
+          AppRoutes.otpVerification,
+          widget.flow,
+          phone: phone,
+        ),
+      );
+    } catch (error) {
       if (mounted) {
         AppSnackBar.error(
           context,
-          'Could not send the OTP. Check your connection and try again.',
+          error is ApiException
+              ? error.message
+              : 'Could not send the OTP. Check your connection and try again.',
         );
       }
     } finally {
@@ -115,15 +124,18 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
                               child: _MobileHero(showIllustration: showHero),
                             ),
                             const SizedBox(height: AppSpacing.lg),
-                            Text(
-                              'Mobile number',
-                              style: AppTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w700,
+                            AppStaggeredReveal(
+                              index: 2,
+                              child: Text(
+                                'Mobile number',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                             const SizedBox(height: AppSpacing.sm),
                             AppStaggeredReveal(
-                              index: 2,
+                              index: 3,
                               child: PhoneInputField(
                                 controller: _controller,
                                 isValid: isValid,

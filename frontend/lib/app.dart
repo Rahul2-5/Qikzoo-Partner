@@ -12,7 +12,7 @@ class DeliveryPartnerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Qikzoo Partner',
+      title: 'Qikzoo Delivery Partner',
       theme: AppTheme.light,
       initialRoute: AppRoutes.splash,
       getPages: AppPages.pages,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:sms_autofill/sms_autofill.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,8 +13,8 @@ import '../../../models/authentication/auth_flow.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../repositories/authentication/auth_repository.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
-import '../../../shared/widgets/inputs/numeric_keypad.dart';
 import '../../../shared/widgets/inputs/otp_field.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/countdown_timer.dart';
 
@@ -29,36 +31,90 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
       _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
+class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
+    with CodeAutoFill {
   final _otpController = TextEditingController();
   bool _isVerifying = false;
   bool _canResend = false;
   int _resendAttempt = 0;
 
+  String get _phone => ref.read(phoneNumberUiProvider).trim().isNotEmpty
+      ? ref.read(phoneNumberUiProvider).trim()
+      : (Get.parameters['phone'] ?? '').trim();
+
+  @override
+  void initState() {
+    super.initState();
+    _startOtpListener();
+  }
+
   @override
   void dispose() {
+    cancel();
     _otpController.dispose();
     super.dispose();
   }
 
-  void _onDigitTap(String digit) {
-    if (_otpController.text.length >= AppConstants.otpLength) return;
-    _otpController.text += digit;
+  @override
+  void codeUpdated() {
+    final receivedCode = code;
+    if (receivedCode == null || receivedCode.isEmpty || !mounted) return;
+    _applyAutofilledCode(receivedCode);
   }
 
-  void _onBackspaceTap() {
-    if (_otpController.text.isEmpty) return;
-    _otpController.text =
-        _otpController.text.substring(0, _otpController.text.length - 1);
+  void _startOtpListener() {
+    listenForCode(smsCodeRegexPattern: '\\d{${AppConstants.otpLength}}');
+  }
+
+  void _applyAutofilledCode(String receivedCode) {
+    final digitsOnly = receivedCode.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length < AppConstants.otpLength) return;
+
+    final otp = digitsOnly.substring(0, AppConstants.otpLength);
+    _otpController
+      ..text = otp
+      ..selection = TextSelection.collapsed(offset: otp.length);
+
+    _onOtpCompleted(otp);
   }
 
   Future<void> _onOtpCompleted(String otp) async {
-    final phone = ref.read(phoneNumberUiProvider);
+    if (_isVerifying) return;
+
+    final phone = _phone;
+    if (phone.isEmpty) {
+      AppSnackBar.error(
+        context,
+        'Phone number missing. Please request the OTP again.',
+      );
+      return;
+    }
+
     setState(() => _isVerifying = true);
-    await ref.read(authSessionProvider.notifier).verifyOtp(phone, otp);
+    try {
+      await ref.read(authSessionProvider.notifier).verifyOtp(phone, otp);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isVerifying = false);
+      AppSnackBar.error(context, 'Could not verify the OTP. Please try again.');
+      return;
+    }
+
     if (!mounted) return;
     setState(() => _isVerifying = false);
-    final session = ref.read(authSessionProvider).value;
+    final authState = ref.read(authSessionProvider);
+    if (authState.hasError) {
+      final error = authState.error;
+      AppSnackBar.error(
+        context,
+        error is ApiException
+            ? error.message
+            : 'Could not verify the OTP. Please try again.',
+      );
+      return;
+    }
+
+    final session = authState.value;
     if (session?.isAuthenticated == true) {
       if (widget.flow == AuthFlow.signUp) {
         Get.offNamed(AppRoutes.setPassword);
@@ -69,14 +125,35 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 
   Future<void> _onResend() async {
-    final phone = ref.read(phoneNumberUiProvider);
-    await ref.read(authRepositoryProvider).requestOtp(phone);
+    final phone = _phone;
+    if (phone.isEmpty) {
+      AppSnackBar.error(
+        context,
+        'Phone number missing. Please request the OTP again.',
+      );
+      return;
+    }
+
+    try {
+      await ref.read(authRepositoryProvider).requestOtp(phone);
+    } catch (error) {
+      if (mounted) {
+        AppSnackBar.error(
+          context,
+          error is ApiException
+              ? error.message
+              : 'Could not resend the OTP. Please try again.',
+        );
+      }
+      return;
+    }
     if (!mounted) return;
     _otpController.clear();
     setState(() {
       _canResend = false;
       _resendAttempt++;
     });
+    _startOtpListener();
   }
 
   String _maskedPhone(String phone) {
@@ -87,6 +164,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     final phone = ref.watch(phoneNumberUiProvider);
+    final displayPhone = phone.trim().isNotEmpty
+        ? phone.trim()
+        : (Get.parameters['phone'] ?? '').trim();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -132,20 +212,22 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                             .copyWith(color: AppColors.textSecondary),
                       ),
                       Text(
-                        _maskedPhone(phone),
+                        _maskedPhone(displayPhone),
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: AppSpacing.lg),
                       IgnorePointer(
                         ignoring: _isVerifying,
                         child: Opacity(
                           opacity: _isVerifying ? 0.5 : 1,
-                          child: OtpField(
-                            length: AppConstants.otpLength,
-                            controller: _otpController,
-                            readOnly: true,
-                            onCompleted: _onOtpCompleted,
+                          child: AutofillGroup(
+                            child: OtpField(
+                              length: AppConstants.otpLength,
+                              controller: _otpController,
+                              autoFocus: true,
+                              onCompleted: _onOtpCompleted,
+                            ),
                           ),
                         ),
                       ),
@@ -181,11 +263,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     ],
                   ),
                 ),
-              ),
-              IgnorePointer(
-                ignoring: _isVerifying,
-                child: NumericKeypad(
-                    onDigitTap: _onDigitTap, onBackspaceTap: _onBackspaceTap),
               ),
             ],
           ),

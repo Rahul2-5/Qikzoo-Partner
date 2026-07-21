@@ -18,6 +18,7 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
   }
 }
 
-final authSessionProvider = AsyncNotifierProvider<AuthSessionNotifier, AuthSessionModel>(
+final authSessionProvider =
+    AsyncNotifierProvider<AuthSessionNotifier, AuthSessionModel>(
   AuthSessionNotifier.new,
 );
