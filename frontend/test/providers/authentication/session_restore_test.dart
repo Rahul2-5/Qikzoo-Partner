@@ -81,7 +81,7 @@ class RecordingAuthRepository implements AuthRepository {
   Future<OtpModel> requestOtp(String phoneNumber) => throw UnimplementedError();
 
   @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) =>
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) =>
       throw UnimplementedError();
 
   @override

@@ -24,7 +24,7 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) {
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) {
     throw UnimplementedError();
   }
 
@@ -92,7 +92,8 @@ void main() {
     final repository = FakeAuthRepository();
     await tester.pumpWidget(buildApp(repository, flow: AuthFlow.signUp));
 
-    await tester.enterText(find.byType(TextField), '9876543210');
+    await tester.enterText(find.byType(TextField).first, '9876543210');
+    await tester.enterText(find.byType(TextField).last, 'Ravi Kumar');
     await tester.pump();
 
     expect(find.text('Number looks good'), findsOneWidget);
@@ -101,5 +102,20 @@ void main() {
 
     expect(repository.requestedPhone, '9876543210');
     expect(find.text('Signup OTP destination'), findsOneWidget);
+  });
+
+  testWidgets('signup Continue stays disabled until a name is entered',
+      (tester) async {
+    setPhoneSurface(tester);
+    final repository = FakeAuthRepository();
+    await tester.pumpWidget(buildApp(repository, flow: AuthFlow.signUp));
+
+    await tester.enterText(find.byType(TextField).first, '9876543210');
+    await tester.pump();
+
+    final button = tester.widget<PrimaryCtaButton>(
+      find.byType(PrimaryCtaButton),
+    );
+    expect(button.onPressed, isNull);
   });
 }

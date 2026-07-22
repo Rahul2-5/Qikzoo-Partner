@@ -16,7 +16,7 @@ class SuccessfulAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) async {
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) async {
     return const AuthSessionModel(
       partnerId: 'partner_1',
       token: 'token',

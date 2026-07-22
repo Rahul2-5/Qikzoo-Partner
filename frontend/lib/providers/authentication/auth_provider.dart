@@ -11,15 +11,20 @@ import '../core/api_providers.dart';
 /// UI state: the phone number currently being entered/verified.
 final phoneNumberUiProvider = StateProvider<String>((ref) => '');
 
+/// UI state: the full name entered during signup — the backend requires it
+/// to create a new Rider account on first verify-otp (see
+/// `RiderAuthService.verifyOtpLogin`); unused/ignored on login.
+final signupNameUiProvider = StateProvider<String>((ref) => '');
+
 /// Domain state: the authenticated session.
 class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
   @override
   Future<AuthSessionModel> build() async => AuthSessionModel.empty;
 
-  Future<void> verifyOtp(String phoneNumber, String otp) async {
+  Future<void> verifyOtp(String phoneNumber, String otp, {String? name}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).verifyOtp(phoneNumber, otp),
+      () => ref.read(authRepositoryProvider).verifyOtp(phoneNumber, otp, name: name),
     );
   }
 

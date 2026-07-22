@@ -17,6 +17,7 @@ import '../../../repositories/authentication/auth_repository.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
+import '../../../shared/widgets/inputs/app_text_field.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../widgets/mobile_hero_illustration.dart';
@@ -36,11 +37,13 @@ class MobileNumberScreen extends ConsumerStatefulWidget {
 
 class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
   final _controller = TextEditingController();
+  final _nameController = TextEditingController();
   bool _isRequesting = false;
 
   @override
   void dispose() {
     _controller.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -74,7 +77,10 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
   @override
   Widget build(BuildContext context) {
     final phone = ref.watch(phoneNumberUiProvider);
-    final isValid = Validators.isValidPhone(phone);
+    final isSignUp = widget.flow == AuthFlow.signUp;
+    final name = ref.watch(signupNameUiProvider);
+    final isNameValid = !isSignUp || name.trim().length >= 2;
+    final isValid = Validators.isValidPhone(phone) && isNameValid;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -174,6 +180,37 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
                                 ),
                               ],
                             ),
+                            if (isSignUp) ...[
+                              const SizedBox(height: AppSpacing.lg),
+                              AppStaggeredReveal(
+                                index: 3,
+                                child: Text(
+                                  'Full name',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              AppStaggeredReveal(
+                                index: 3,
+                                child: AppTextField(
+                                  label: 'Full name',
+                                  controller: _nameController,
+                                  showFloatingLabel: false,
+                                  hint: 'Enter your full name',
+                                  textCapitalization: TextCapitalization.words,
+                                  prefixIcon: const Icon(
+                                    LucideIcons.user,
+                                    color: AppColors.secondary,
+                                    size: 20,
+                                  ),
+                                  onChanged: (value) => ref
+                                      .read(signupNameUiProvider.notifier)
+                                      .state = value,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: AppSpacing.lg),
                             AppStaggeredReveal(
                               index: 3,

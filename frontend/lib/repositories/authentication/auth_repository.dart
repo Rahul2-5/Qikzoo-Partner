@@ -9,7 +9,11 @@ import '../../providers/core/api_providers.dart';
 
 abstract class AuthRepository {
   Future<OtpModel> requestOtp(String phoneNumber);
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp);
+
+  /// [name] is required by the backend the first time this phone number
+  /// logs in (it creates the Rider account) and ignored on every
+  /// subsequent login — see `RiderAuthService.verifyOtpLogin`.
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name});
 
   /// Ends the current session. Always clears local tokens, even if the
   /// server-side revocation call fails (offline, server down) — a rider
@@ -30,7 +34,7 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) async {
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) async {
     final isValidOtp = RegExp(
       '^\\d{${AppConstants.otpLength}}\$',
     ).hasMatch(otp);
@@ -81,12 +85,14 @@ class DioAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) async {
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) async {
+    final trimmedName = name?.trim();
     final response = await _apiClient.post<Map<String, dynamic>>(
       ApiEndpoints.riderVerifyOtp,
       data: {
         'phone': phoneNumber.trim(),
         'code': otp.trim(),
+        if (trimmedName != null && trimmedName.isNotEmpty) 'name': trimmedName,
       },
     );
 
