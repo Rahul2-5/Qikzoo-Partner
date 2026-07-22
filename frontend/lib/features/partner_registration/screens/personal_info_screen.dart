@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/navigation/next_onboarding_step_resolver.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -18,6 +19,7 @@ import '../../../models/partner_registration/personal_info_model.dart';
 import '../../../models/profile/partner_profile_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../repositories/document_verification/document_image_picker.dart';
+import '../../../repositories/onboarding_status/onboarding_status_repository.dart';
 import '../../../repositories/profile/profile_repository.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
@@ -133,6 +135,20 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       _isFormValid &&
       _isDirty;
 
+  /// Asks the backend where the rider belongs next rather than hardcoding
+  /// the following onboarding screen — see [NextOnboardingStepResolver].
+  /// Falls back to the pre-refactor default if the status fetch itself
+  /// fails; the profile save already succeeded, so the rider shouldn't be
+  /// stranded over a second, unrelated network call.
+  Future<String> _resolveNextRoute() async {
+    try {
+      final status = await ref.read(onboardingStatusRepositoryProvider).getStatus();
+      return NextOnboardingStepResolver.resolve(status);
+    } catch (_) {
+      return AppRoutes.vehicleSelection;
+    }
+  }
+
   Future<void> _onSave() async {
     if (!_canSave) return;
     setState(() {
@@ -149,7 +165,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             gender: _gender!,
           );
       if (!mounted) return;
-      Get.toNamed(AppRoutes.vehicleSelection);
+      Get.toNamed(await _resolveNextRoute());
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 401) {

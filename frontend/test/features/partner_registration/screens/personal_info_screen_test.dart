@@ -12,11 +12,13 @@ import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/partner_registration/screens/personal_info_screen.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
+import 'package:delivery_partner_app/models/onboarding_status/onboarding_status_model.dart';
 import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
 import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
 import 'package:delivery_partner_app/models/profile/rating_model.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
+import 'package:delivery_partner_app/repositories/onboarding_status/onboarding_status_repository.dart';
 import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
 import 'package:delivery_partner_app/shared/widgets/buttons/primary_cta_button.dart';
 
@@ -141,6 +143,18 @@ class FakeDocumentImagePicker implements DocumentImagePicker {
   Future<String?> pickImage(ImageSource source) async => path;
 }
 
+class FakeOnboardingStatusRepository implements OnboardingStatusRepository {
+  FakeOnboardingStatusRepository({this.status, this.error});
+  final OnboardingStatusModel? status;
+  final Object? error;
+
+  @override
+  Future<OnboardingStatusModel> getStatus() async {
+    if (error != null) throw error!;
+    return status!;
+  }
+}
+
 PartnerProfileModel mockProfile({
   String name = 'Ravi Kumar',
   String? email,
@@ -170,6 +184,7 @@ Widget buildApp({
   required ProfileRepository profileRepository,
   FakeAuthRepository? authRepository,
   FakeDocumentImagePicker? imagePicker,
+  FakeOnboardingStatusRepository? onboardingStatusRepository,
 }) {
   return ProviderScope(
     overrides: [
@@ -178,6 +193,9 @@ Widget buildApp({
         authRepositoryProvider.overrideWithValue(authRepository),
       if (imagePicker != null)
         documentImagePickerProvider.overrideWithValue(imagePicker),
+      if (onboardingStatusRepository != null)
+        onboardingStatusRepositoryProvider
+            .overrideWithValue(onboardingStatusRepository),
     ],
     child: GetMaterialApp(
       initialRoute: AppRoutes.personalInfo,
@@ -188,6 +206,15 @@ Widget buildApp({
         GetPage(
           name: AppRoutes.vehicleSelection,
           page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
+        ),
+        GetPage(
+          name: AppRoutes.dashboard,
+          page: () => const Scaffold(body: Text('Dashboard Screen')),
+        ),
+        GetPage(
+          name: AppRoutes.verificationStatus,
+          page: () =>
+              const Scaffold(body: Text('Verification Status Screen')),
         ),
         GetPage(
           name: AppRoutes.welcome,
@@ -285,6 +312,92 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.updateCalls, 1);
+    // No onboardingStatusRepository override was supplied, so the resolver
+    // fails to fetch a fresh status and falls back to the pre-refactor
+    // default rather than stranding the rider after a successful save.
+    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+  });
+
+  testWidgets(
+      'navigation after save is backend-driven: VEHICLE as the next step goes to Vehicle Selection',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      dateOfBirth: DateTime(1998, 4, 12),
+      gender: Gender.male,
+    ));
+    final onboardingStatusRepo = FakeOnboardingStatusRepository(
+      status: const OnboardingStatusModel(
+        accountStatus: RiderAccountStatus.pendingKyc,
+        onboardingStatus: RiderOnboardingStatus.inProgress,
+        currentStep: 'VEHICLE',
+      ),
+    );
+    await tester.pumpWidget(buildApp(
+      profileRepository: repo,
+      onboardingStatusRepository: onboardingStatusRepo,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Suresh Kumar');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+  });
+
+  testWidgets(
+      'navigation after save is backend-driven: an already-active account goes straight to the dashboard',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      dateOfBirth: DateTime(1998, 4, 12),
+      gender: Gender.male,
+    ));
+    final onboardingStatusRepo = FakeOnboardingStatusRepository(
+      status: const OnboardingStatusModel(
+        accountStatus: RiderAccountStatus.active,
+        onboardingStatus: RiderOnboardingStatus.approved,
+      ),
+    );
+    await tester.pumpWidget(buildApp(
+      profileRepository: repo,
+      onboardingStatusRepository: onboardingStatusRepo,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Suresh Kumar');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dashboard Screen'), findsOneWidget);
+    expect(find.text('Vehicle Selection Screen'), findsNothing);
+  });
+
+  testWidgets(
+      'falls back to Vehicle Selection when the post-save status fetch fails',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      dateOfBirth: DateTime(1998, 4, 12),
+      gender: Gender.male,
+    ));
+    final onboardingStatusRepo = FakeOnboardingStatusRepository(
+      error: Exception('network unavailable'),
+    );
+    await tester.pumpWidget(buildApp(
+      profileRepository: repo,
+      onboardingStatusRepository: onboardingStatusRepo,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Suresh Kumar');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Vehicle Selection Screen'), findsOneWidget);
   });
 

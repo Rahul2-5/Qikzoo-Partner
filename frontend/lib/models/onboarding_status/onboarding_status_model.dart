@@ -36,6 +36,16 @@ class OnboardingStatusModel extends Equatable {
   /// status flow rather than the dashboard.
   bool get isActive => accountStatus == RiderAccountStatus.active;
 
+  /// Mirrors the backend's own `isEditable` rule
+  /// (`RiderOnboardingService.getProgress`) exactly: a rider may keep
+  /// editing sections before ever submitting, or if an admin has reopened
+  /// specific sections for clarification. Once SUBMITTED/UNDER_REVIEW/
+  /// APPROVED/REJECTED (without clarification), nothing is editable.
+  bool get isEditable =>
+      onboardingStatus == RiderOnboardingStatus.notStarted ||
+      onboardingStatus == RiderOnboardingStatus.inProgress ||
+      onboardingStatus == RiderOnboardingStatus.clarificationRequired;
+
   factory OnboardingStatusModel.fromJson(Map<String, dynamic> json) {
     return OnboardingStatusModel(
       accountStatus: _accountStatusFrom(json['accountStatus']),
