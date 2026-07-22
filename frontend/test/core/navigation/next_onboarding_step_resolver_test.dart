@@ -99,6 +99,19 @@ void main() {
       expect(result, AppRoutes.address);
     });
 
+    test('KYC as the current step resolves to the KYC screen', () {
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.inProgress,
+          currentStep: 'KYC',
+        ),
+        profile: fullyCompleteProfile,
+      );
+
+      expect(result, AppRoutes.kyc);
+    });
+
     test('VEHICLE as the current step resolves to Vehicle Selection', () {
       final result = NextOnboardingStepResolver.resolve(
         status(
@@ -125,7 +138,7 @@ void main() {
       expect(result, AppRoutes.verificationStatus);
     });
 
-    for (final step in ['KYC', 'EMERGENCY_CONTACT', 'REVIEW', 'SOMETHING_UNKNOWN']) {
+    for (final step in ['EMERGENCY_CONTACT', 'REVIEW', 'SOMETHING_UNKNOWN']) {
       test('$step has no dedicated screen yet, so it falls back to the status screen', () {
         final result = NextOnboardingStepResolver.resolve(
           status(

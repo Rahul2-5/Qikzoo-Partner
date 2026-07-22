@@ -36,11 +36,12 @@ class NextOnboardingStepResolver {
               ? AppRoutes.personalInfo
               : AppRoutes.address)
           : AppRoutes.personalInfo,
+      'KYC' => AppRoutes.kyc,
       'VEHICLE' => AppRoutes.vehicleSelection,
-      // KYC, EMERGENCY_CONTACT and REVIEW don't have a dedicated
-      // production screen yet (later onboarding phases) — park the rider
-      // on the status screen rather than guessing a destination that
-      // doesn't exist. Update this mapping as each phase ships its screen.
+      // EMERGENCY_CONTACT and REVIEW don't have a dedicated production
+      // screen yet (later onboarding phases) — park the rider on the
+      // status screen rather than guessing a destination that doesn't
+      // exist. Update this mapping as each phase ships its screen.
       _ => AppRoutes.verificationStatus,
     };
   }
