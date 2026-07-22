@@ -144,19 +144,20 @@ void main() {
     expect(find.text('Welcome Screen'), findsOneWidget);
   });
 
-  testWidgets('offline keeps the rider on the splash screen with a retry action, no login shown',
+  testWidgets('offline falls back to welcome instead of trapping the rider on splash',
       (tester) async {
     await tester.pumpWidget(buildApp([
       const SessionRestoreResult(SessionRestoreOutcome.offline),
     ]));
     await settleBootstrap(tester);
+    await settleTransition(tester);
+    await tester.pumpAndSettle();
 
-    expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Welcome Screen'), findsNothing);
+    expect(find.text('Welcome Screen'), findsOneWidget);
     expect(find.text('Dashboard Screen'), findsNothing);
   });
 
-  testWidgets('retry after offline navigates once connectivity is restored',
+  testWidgets('offline does not make a second session-restore attempt',
       (tester) async {
     await tester.pumpWidget(
       buildApp([
@@ -166,13 +167,10 @@ void main() {
       ]),
     );
     await settleBootstrap(tester);
-    expect(find.text('Retry'), findsOneWidget);
-
-    await tester.tap(find.text('Retry'));
-    await tester.pump();
     await settleTransition(tester);
     await tester.pumpAndSettle();
 
-    expect(find.text('Dashboard Screen'), findsOneWidget);
+    expect(find.text('Welcome Screen'), findsOneWidget);
+    expect(find.text('Dashboard Screen'), findsNothing);
   });
 }

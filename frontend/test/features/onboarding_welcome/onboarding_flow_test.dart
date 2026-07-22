@@ -62,9 +62,10 @@ void main() {
 
     expect(find.text('WELCOME TO QIKZOO'), findsOneWidget);
     expect(
-      find.text('Medical insurance for you and your family'),
+      find.text('Medical & health insurance'),
       findsOneWidget,
     );
+    expect(find.text('COVER UP TO ₹15 LAKH'), findsOneWidget);
     expect(find.text('Flexible earning'), findsOneWidget);
     expect(find.text('Get Started'), findsOneWidget);
     expect(find.bySemanticsLabel('Step 2 of 2'), findsOneWidget);

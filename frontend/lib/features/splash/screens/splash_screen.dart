@@ -1,3 +1,5 @@
+import 'package:delivery_partner_app/models/authentication/session_restore_outcome.dart';
+import 'package:delivery_partner_app/providers/authentication/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,10 +10,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/constants/app_constants.dart';
-import '../../../models/authentication/session_restore_outcome.dart';
-import '../../../providers/authentication/auth_provider.dart';
-import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -22,7 +20,6 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
   bool _exiting = false;
-  bool _showRetry = false;
 
   @override
   void initState() {
@@ -43,13 +40,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     _handleResult(result);
   }
 
-  Future<void> _retry() async {
-    setState(() => _showRetry = false);
-    final result = await ref.read(authSessionProvider.notifier).restoreSession();
-    if (!mounted) return;
-    _handleResult(result);
-  }
-
   /// Active/needsOnboarding both carry a [SessionRestoreResult.route]
   /// already resolved through `NextOnboardingStepResolver` inside
   /// `restoreSession()` — this screen never derives a destination itself,
@@ -64,7 +54,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       case SessionRestoreOutcome.loggedOut:
         _navigateTo(AppRoutes.welcome);
       case SessionRestoreOutcome.offline:
-        setState(() => _showRetry = true);
+        // A saved session must not make the app unusable when the API is
+        // briefly unavailable. Let the rider continue to sign in; a
+        // successful sign-in replaces the saved session.
+        _navigateTo(AppRoutes.welcome);
     }
   }
 
@@ -78,12 +71,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = AppMotion.reduceMotion(context);
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isCompact = screenHeight < 720;
+    final riderHeight =
+        isCompact ? 245.0 : screenHeight >= 900 ? 340.0 : 310.0;
     const logoRed = Color(0xFFFF3D1F);
     const logoBlue = Color(0xFF0E43B7);
     const splashBackground = Color(0xFFF8FBFF);
     final glow = Container(
-      width: 320,
-      height: 220,
+      width: 360,
+      height: riderHeight * 0.78,
       decoration: BoxDecoration(
         gradient: RadialGradient(
           colors: [
@@ -96,23 +93,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     );
     final logo = Image.asset(
       AppAssets.brandLogo,
-      width: 260,
-      height: 100,
+      width: isCompact ? 210 : 240,
+      height: isCompact ? 64 : 76,
       fit: BoxFit.contain,
     );
-    final title = Text(
-      AppConstants.appName,
-      style: AppTypography.h1.copyWith(
-        color: AppColors.textPrimary,
-        fontSize: 28,
+    final riderIllustration = Image.asset(
+      AppAssets.happyDeliveryRider3d,
+      height: riderHeight,
+      fit: BoxFit.contain,
+      semanticLabel: 'Happy Qikzoo delivery partner on a scooter',
+    );
+    final appDescriptor = Text(
+      'DELIVERY PARTNER APP',
+      style: AppTypography.caption.copyWith(
+        color: AppColors.primary,
+        fontSize: 10,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.4,
       ),
     );
     final tagline = Text(
-      'Delivering Opportunities',
-      style: AppTypography.caption.copyWith(
-        color: AppColors.textSecondary,
-        fontWeight: FontWeight.w500,
+      'Kaam pe aate-jaate,\nkamaai bhi badhaate.',
+      style: AppTypography.h2.copyWith(
+        color: AppColors.primaryDark,
+        fontSize: isCompact ? 18 : 21,
+        fontWeight: FontWeight.w800,
+        height: 1.22,
       ),
+      textAlign: TextAlign.center,
     );
 
     return Scaffold(
@@ -145,35 +153,38 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           )
                           .fadeIn(duration: 600.ms),
                     if (reduceMotion)
-                      logo
+                      riderIllustration
                     else
-                      logo
+                      riderIllustration
                           .animate()
                           .scale(
-                            begin: const Offset(0.4, 0.4),
+                            begin: const Offset(0.82, 0.82),
                             end: const Offset(1, 1),
-                            duration: 700.ms,
-                            curve: Curves.elasticOut,
+                            duration: 650.ms,
+                            curve: Curves.easeOutBack,
                           )
                           .fadeIn(duration: 400.ms),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                SizedBox(height: isCompact ? AppSpacing.xs : AppSpacing.sm),
                 if (reduceMotion)
-                  title
+                  logo
                 else
-                  title.animate(delay: 500.ms).fadeIn(duration: 400.ms).slideY(
-                        begin: 0.3,
+                  logo
+                      .animate(delay: 280.ms)
+                      .fadeIn(duration: 350.ms)
+                      .slideY(
+                        begin: 0.15,
                         end: 0,
-                        duration: 400.ms,
+                        duration: 350.ms,
                         curve: Curves.easeOut,
                       ),
                 const SizedBox(height: AppSpacing.xs),
                 if (reduceMotion)
-                  tagline
+                  appDescriptor
                 else
-                  tagline
-                      .animate(delay: 800.ms)
+                  appDescriptor
+                      .animate(delay: 500.ms)
                       .fadeIn(duration: 400.ms)
                       .slideY(
                         begin: 0.3,
@@ -181,15 +192,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                         duration: 400.ms,
                         curve: Curves.easeOut,
                       ),
-                const SizedBox(height: AppSpacing.xl),
-                if (_showRetry)
-                  _ConnectionRetry(onRetry: _retry)
+                const SizedBox(height: AppSpacing.sm),
+                if (reduceMotion)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 340),
+                    child: tagline,
+                  )
                 else
-                  _PulsingDots(
-                    activeColor: logoRed,
-                    idleColor: logoBlue,
-                    motionEnabled: !reduceMotion,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 340),
+                    child: tagline
+                        .animate(delay: 720.ms)
+                        .fadeIn(duration: 420.ms)
+                        .slideY(
+                          begin: 0.25,
+                          end: 0,
+                          duration: 420.ms,
+                          curve: Curves.easeOut,
+                        ),
                   ),
+                SizedBox(height: isCompact ? AppSpacing.lg : AppSpacing.xl),
+                _PulsingDots(
+                  activeColor: logoRed,
+                  idleColor: logoBlue,
+                  motionEnabled: !reduceMotion,
+                ),
               ],
             ),
           ),
@@ -239,30 +266,4 @@ class _PulsingDots extends StatelessWidget {
   }
 }
 
-/// Shown in place of the pulsing dots when session restore can't reach the
 /// network/server — keeps the rider on the splash screen with a manual
-/// retry instead of silently looping or bouncing them to login.
-class _ConnectionRetry extends StatelessWidget {
-  const _ConnectionRetry({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          "Couldn't connect. Check your internet and try again.",
-          textAlign: TextAlign.center,
-          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        SizedBox(
-          width: 160,
-          child: OutlinedButtonCustom(label: 'Retry', onPressed: onRetry),
-        ),
-      ],
-    );
-  }
-}

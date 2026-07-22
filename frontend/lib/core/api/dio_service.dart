@@ -20,8 +20,12 @@ class DioService {
 
   static final BaseOptions _baseOptions = BaseOptions(
     baseUrl: AppConfig.apiBaseUrl,
-    connectTimeout: const Duration(seconds: 20),
-    receiveTimeout: const Duration(seconds: 30),
+    // The development API is hosted on a service that can take longer to
+    // wake up after being idle.  The previous 20/30-second limits made the
+    // splash screen label a reachable API as an internet failure before its
+    // first response arrived.
+    connectTimeout: const Duration(seconds: 60),
+    receiveTimeout: const Duration(seconds: 60),
     headers: const {
       'Content-Type': 'application/json',
       'Accept': 'application/json',

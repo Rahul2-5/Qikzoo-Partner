@@ -54,11 +54,11 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                             AppStaggeredReveal(
                               index: 1,
                               child: RiderHeroIllustration(
-                                height: isCompact ? 214 : 252,
+                                height: isCompact ? 228 : 272,
                               ),
                             ),
                             SizedBox(
-                              height: isCompact ? AppSpacing.lg : AppSpacing.xl,
+                              height: isCompact ? AppSpacing.md : AppSpacing.lg,
                             ),
                             const AppStaggeredReveal(
                               index: 2,
@@ -186,38 +186,63 @@ class _WelcomeCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).height < 760;
+
     return Column(
       children: [
-        Text(
-          'WORK ON YOUR TERMS',
-          textAlign: TextAlign.center,
-          style: AppTypography.caption.copyWith(
-            color: AppColors.secondary,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm + 4,
+            vertical: AppSpacing.xs + 2,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            border: Border.all(
+              color: AppColors.secondary.withValues(alpha: 0.18),
+            ),
+          ),
+          child: Text(
+            'WORK ON YOUR TERMS',
+            textAlign: TextAlign.center,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.primary,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.25,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: AppTypography.display.copyWith(fontSize: 31),
-            children: const [
-              TextSpan(text: 'Deliver more.\n'),
-              TextSpan(
-                text: 'Earn on your terms.',
-                style: TextStyle(color: AppColors.secondary),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 390),
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: AppTypography.display.copyWith(
+                fontSize: isCompact ? 29 : 33,
               ),
-            ],
+              children: const [
+                TextSpan(text: 'Deliver more.\n'),
+                TextSpan(
+                  text: 'Earn on your terms.',
+                  style: TextStyle(color: AppColors.secondary),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm + 2),
-        Text(
-          'Choose your hours, make every trip count, and grow with Qikzoo.',
-          textAlign: TextAlign.center,
-          style: AppTypography.body.copyWith(
-            color: AppColors.textSecondary,
-            fontSize: 15,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 350),
+          child: Text(
+            'Choose your hours, make every trip count, and grow with Qikzoo.',
+            textAlign: TextAlign.center,
+            style: AppTypography.body.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 15,
+              height: 1.5,
+            ),
           ),
         ),
       ],
@@ -230,29 +255,46 @@ class _FeatureRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Column(
       children: [
-        Expanded(
-          child: FeatureHighlightChip(
-            icon: LucideIcons.clock3,
-            label: 'Flexible\nhours',
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'BUILT AROUND YOUR DAY',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.05,
+            ),
           ),
         ),
-        SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: FeatureHighlightChip(
-            icon: LucideIcons.wallet,
-            label: 'Weekly\npayouts',
-            color: AppColors.accent,
-          ),
-        ),
-        SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: FeatureHighlightChip(
-            icon: LucideIcons.trendingUp,
-            label: 'More earning\ncontrol',
-            color: AppColors.primary,
-          ),
+        const SizedBox(height: AppSpacing.sm + 2),
+        const Row(
+          children: [
+            Expanded(
+              child: FeatureHighlightChip(
+                icon: LucideIcons.clock3,
+                label: 'Flexible\nhours',
+              ),
+            ),
+            SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: FeatureHighlightChip(
+                icon: LucideIcons.wallet,
+                label: 'Weekly\npayouts',
+                color: AppColors.accent,
+              ),
+            ),
+            SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: FeatureHighlightChip(
+                icon: LucideIcons.trendingUp,
+                label: 'More earning\ncontrol',
+                color: AppColors.primary,
+              ),
+            ),
+          ],
         ),
       ],
     );

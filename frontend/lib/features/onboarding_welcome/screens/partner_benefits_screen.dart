@@ -173,11 +173,10 @@ class _InsuranceSpotlight extends StatelessWidget {
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label:
-          'Family medical insurance. Medical insurance for you and your family.',
+      label: 'Medical and health insurance cover up to 15 lakh rupees.',
       child: Container(
         width: double.infinity,
-        constraints: BoxConstraints(minHeight: compact ? 172 : 188),
+        constraints: BoxConstraints(minHeight: compact ? 194 : 210),
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
           AppSpacing.md,
@@ -236,16 +235,43 @@ class _InsuranceSpotlight extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm + 2),
                   Text(
-                    'Medical insurance for you and your family',
+                    'Medical & health insurance',
                     style: AppTypography.h2.copyWith(
                       color: AppColors.surface,
                       fontSize: compact ? 17 : 18,
                       height: 1.22,
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.sm + 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm + 2,
+                      vertical: AppSpacing.xs + 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.32),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'COVER UP TO ₹15 LAKH',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primaryDark,
+                        fontSize: compact ? 10 : 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.35,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Extra peace of mind for the people who matter most.',
+                    'Protection for you and your family, wherever the road takes you.',
                     style: AppTypography.caption.copyWith(
                       color: AppColors.surface.withValues(alpha: 0.78),
                       height: 1.35,
@@ -261,7 +287,7 @@ class _InsuranceSpotlight extends StatelessWidget {
                   offset: const Offset(5, 4),
                   child: App3dIllustration(
                     assetPath: AppAssets.applicationSubmitted3d,
-                    semanticLabel: 'Medical insurance protection',
+                    semanticLabel: 'Medical and health insurance protection',
                     size: compact ? 112 : 126,
                     glowColor: const Color(0xFFAAB7FF),
                     fallbackIcon: LucideIcons.shieldCheck,

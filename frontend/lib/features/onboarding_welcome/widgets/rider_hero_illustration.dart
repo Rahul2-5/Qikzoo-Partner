@@ -31,9 +31,12 @@ class RiderHeroIllustration extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF7F8FF), Color(0xFFCDD3F5)],
+            colors: [Color(0xFFF9FAFF), Color(0xFFD8DFFF)],
           ),
           borderRadius: BorderRadius.circular(AppRadius.sheet + 6),
+          border: Border.all(
+            color: AppColors.surface.withValues(alpha: 0.8),
+          ),
           boxShadow: AppShadows.card,
         ),
         child: ClipRRect(
@@ -41,9 +44,38 @@ class RiderHeroIllustration extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
+              Positioned(
+                top: -72,
+                right: -48,
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.secondary.withValues(alpha: 0.13),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: -42,
+                bottom: 26,
+                child: Container(
+                  width: 132,
+                  height: 132,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.surface.withValues(alpha: 0.36),
+                  ),
+                ),
+              ),
               Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                  ),
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: Image.asset(
@@ -89,7 +121,7 @@ class RiderHeroIllustration extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        'DELIVERY PARTNER',
+                        'RIDE. EARN. GROW.',
                         style: AppTypography.caption.copyWith(
                           color: AppColors.primary,
                           fontSize: 10,
@@ -105,35 +137,47 @@ class RiderHeroIllustration extends StatelessWidget {
                 left: AppSpacing.md,
                 right: AppSpacing.md,
                 bottom: AppSpacing.md,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary,
-                        borderRadius: BorderRadius.circular(AppRadius.control),
-                      ),
-                      child: const Icon(
-                        LucideIcons.mapPin,
-                        color: AppColors.surface,
-                        size: 18,
-                      ),
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: const Color(0xB5212C48),
+                    borderRadius: BorderRadius.circular(AppRadius.control),
+                    border: Border.all(
+                      color: AppColors.surface.withValues(alpha: 0.18),
                     ),
-                    const SizedBox(width: AppSpacing.sm + 2),
-                    Expanded(
-                      child: Text(
-                        'Your next opportunity is closer than you think.',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodyMedium.copyWith(
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.control),
+                        ),
+                        child: const Icon(
+                          LucideIcons.mapPin,
                           color: AppColors.surface,
-                          fontSize: 13,
+                          size: 18,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppSpacing.sm + 2),
+                      Expanded(
+                        child: Text(
+                          'Your next opportunity is closer than you think.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.surface,
+                            fontSize: 13,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
