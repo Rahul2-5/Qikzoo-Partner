@@ -24,6 +24,9 @@ class PartnerProfileModel extends Equatable {
   final double? addressLat;
   final double? addressLng;
 
+  final String? emergencyContactName;
+  final String? emergencyContactPhone;
+
   const PartnerProfileModel({
     required this.id,
     required this.name,
@@ -42,6 +45,8 @@ class PartnerProfileModel extends Equatable {
     this.pincode,
     this.addressLat,
     this.addressLng,
+    this.emergencyContactName,
+    this.emergencyContactPhone,
   });
 
   /// Mirrors the backend's own `isProfileSectionComplete` personal-fields
@@ -58,6 +63,11 @@ class PartnerProfileModel extends Equatable {
       (city?.trim().isNotEmpty ?? false) &&
       (state?.trim().isNotEmpty ?? false) &&
       (pincode?.trim().isNotEmpty ?? false);
+
+  /// Mirrors the backend's own `isEmergencyContactSectionComplete` exactly.
+  bool get hasCompleteEmergencyContact =>
+      (emergencyContactName?.trim().isNotEmpty ?? false) &&
+      (emergencyContactPhone?.trim().isNotEmpty ?? false);
 
   @override
   List<Object?> get props => [
@@ -78,5 +88,7 @@ class PartnerProfileModel extends Equatable {
         pincode,
         addressLat,
         addressLng,
+        emergencyContactName,
+        emergencyContactPhone,
       ];
 }

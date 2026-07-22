@@ -10,6 +10,9 @@ class AppRoutes {
   static const personalInfo = '/registration/personal-info';
   static const address = '/registration/address';
   static const kyc = '/registration/kyc';
+  static const vehicleRegistration = '/registration/vehicle';
+  static const emergencyContact = '/registration/emergency-contact';
+  static const review = '/registration/review';
   static const vehicleSelection = '/registration/vehicle-selection';
   static const vehicleDetails = '/registration/vehicle-details';
   static const deliveryZone = '/registration/delivery-zone';

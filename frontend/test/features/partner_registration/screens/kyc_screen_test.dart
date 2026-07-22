@@ -232,6 +232,13 @@ class FakeProfileRepository implements ProfileRepository {
     double? addressLng,
   }) =>
       throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) =>
+      throw UnimplementedError();
 }
 
 class FakeAuthRepository implements AuthRepository {
@@ -261,6 +268,16 @@ class FakeOnboardingStatusRepository implements OnboardingStatusRepository {
     if (error != null) throw error!;
     return status!;
   }
+
+  @override
+  Future<void> submitOnboarding({
+    required String termsVersion,
+    required String privacyPolicyVersion,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> reapply() => throw UnimplementedError();
 }
 
 class FakeDocumentImagePicker implements DocumentImagePicker {

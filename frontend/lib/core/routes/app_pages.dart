@@ -8,9 +8,13 @@ import '../../features/authentication/screens/mobile_number_screen.dart';
 import '../../features/authentication/screens/otp_verification_screen.dart';
 import '../../features/authentication/screens/set_password_screen.dart';
 import '../../features/partner_registration/screens/address_screen.dart';
+import '../../features/partner_registration/screens/emergency_contact_screen.dart';
 import '../../features/partner_registration/screens/kyc_screen.dart';
 import '../../features/partner_registration/screens/personal_info_screen.dart';
+import '../../features/partner_registration/screens/review_screen.dart';
 import '../../features/partner_registration/screens/select_city_screen.dart';
+import '../../features/partner_registration/screens/vehicle_registration_screen.dart';
+import '../../features/partner_registration/screens/verification_status_screen.dart';
 import '../../features/partner_registration/screens/vehicle_selection_screen.dart';
 import '../../features/partner_registration/screens/vehicle_details_screen.dart';
 import '../../features/partner_registration/screens/document_upload_screen.dart';
@@ -56,6 +60,13 @@ class AppPages {
     GetPage(name: AppRoutes.address, page: () => const AddressScreen()),
     GetPage(name: AppRoutes.kyc, page: () => const KycScreen()),
     GetPage(
+        name: AppRoutes.vehicleRegistration,
+        page: () => const VehicleRegistrationScreen()),
+    GetPage(
+        name: AppRoutes.emergencyContact,
+        page: () => const EmergencyContactScreen()),
+    GetPage(name: AppRoutes.review, page: () => const ReviewScreen()),
+    GetPage(
         name: AppRoutes.vehicleSelection,
         page: () => const VehicleSelectionScreen()),
     GetPage(
@@ -75,7 +86,7 @@ class AppPages {
     GetPage(name: AppRoutes.bankDetails, page: () => const BankDetailsScreen()),
     GetPage(
         name: AppRoutes.verificationStatus,
-        page: () => const PlaceholderScreen(title: 'Verification Status')),
+        page: () => const VerificationStatusScreen()),
     GetPage(
         name: AppRoutes.training,
         page: () => const PlaceholderScreen(title: 'Training')),

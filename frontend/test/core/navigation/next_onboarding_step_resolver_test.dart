@@ -112,7 +112,7 @@ void main() {
       expect(result, AppRoutes.kyc);
     });
 
-    test('VEHICLE as the current step resolves to Vehicle Selection', () {
+    test('VEHICLE as the current step resolves to Vehicle Registration', () {
       final result = NextOnboardingStepResolver.resolve(
         status(
           accountStatus: RiderAccountStatus.pendingKyc,
@@ -122,7 +122,33 @@ void main() {
         profile: fullyCompleteProfile,
       );
 
-      expect(result, AppRoutes.vehicleSelection);
+      expect(result, AppRoutes.vehicleRegistration);
+    });
+
+    test('EMERGENCY_CONTACT as the current step resolves to the Emergency Contact screen', () {
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.inProgress,
+          currentStep: 'EMERGENCY_CONTACT',
+        ),
+        profile: fullyCompleteProfile,
+      );
+
+      expect(result, AppRoutes.emergencyContact);
+    });
+
+    test('REVIEW as the current step resolves to the Review screen', () {
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.inProgress,
+          currentStep: 'REVIEW',
+        ),
+        profile: fullyCompleteProfile,
+      );
+
+      expect(result, AppRoutes.review);
     });
 
     test('NOT_STARTED with no currentStep falls back to the status screen', () {
@@ -138,7 +164,7 @@ void main() {
       expect(result, AppRoutes.verificationStatus);
     });
 
-    for (final step in ['EMERGENCY_CONTACT', 'REVIEW', 'SOMETHING_UNKNOWN']) {
+    for (final step in ['SOMETHING_UNKNOWN']) {
       test('$step has no dedicated screen yet, so it falls back to the status screen', () {
         final result = NextOnboardingStepResolver.resolve(
           status(

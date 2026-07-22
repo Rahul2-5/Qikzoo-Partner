@@ -93,6 +93,13 @@ class FakeProfileRepository implements ProfileRepository {
     double? addressLng,
   }) =>
       throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) =>
+      throw UnimplementedError();
 }
 
 class FakeOnboardingStatusRepository implements OnboardingStatusRepository {
@@ -105,6 +112,16 @@ class FakeOnboardingStatusRepository implements OnboardingStatusRepository {
     if (error != null) throw error!;
     return status!;
   }
+
+  @override
+  Future<void> submitOnboarding({
+    required String termsVersion,
+    required String privacyPolicyVersion,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> reapply() => throw UnimplementedError();
 }
 
 class RecordingAuthRepository implements AuthRepository {
@@ -294,7 +311,7 @@ void main() {
   });
 
   test(
-      'pending onboarding with currentStep VEHICLE resumes exactly on Vehicle Selection',
+      'pending onboarding with currentStep VEHICLE resumes exactly on Vehicle Registration',
       () async {
     final storage = SecureTokenStorage();
     await storage.saveTokens(accessToken: 'old', refreshToken: 'refresh-1');
@@ -317,7 +334,7 @@ void main() {
         await container.read(authSessionProvider.notifier).restoreSession();
 
     expect(result.outcome, SessionRestoreOutcome.needsOnboarding);
-    expect(result.route, AppRoutes.vehicleSelection);
+    expect(result.route, AppRoutes.vehicleRegistration);
   });
 
   test('an expired/invalid refresh token restores to loggedOut and clears storage', () async {

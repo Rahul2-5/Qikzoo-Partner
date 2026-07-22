@@ -24,11 +24,33 @@ class OnboardingStatusModel extends Equatable {
   final RiderAccountStatus accountStatus;
   final RiderOnboardingStatus onboardingStatus;
   final String? currentStep;
+  final List<String> completedSections;
+  final List<String> incompleteSections;
+  final String? clarificationReason;
+  final List<String> clarificationSections;
+  final List<String> editableSections;
+  final bool isSubmittable;
+  final bool hasExpiredMandatoryDocuments;
+  final String? rejectionReason;
+  final bool reapplyAllowed;
+  final DateTime? submittedAt;
+  final DateTime? reviewedAt;
 
   const OnboardingStatusModel({
     required this.accountStatus,
     required this.onboardingStatus,
     this.currentStep,
+    this.completedSections = const [],
+    this.incompleteSections = const [],
+    this.clarificationReason,
+    this.clarificationSections = const [],
+    this.editableSections = const [],
+    this.isSubmittable = false,
+    this.hasExpiredMandatoryDocuments = false,
+    this.rejectionReason,
+    this.reapplyAllowed = false,
+    this.submittedAt,
+    this.reviewedAt,
   });
 
   /// A rider whose account is fully active can go straight into the app.
@@ -53,8 +75,30 @@ class OnboardingStatusModel extends Equatable {
       currentStep: json['currentStep'] is String
           ? json['currentStep'] as String
           : null,
+      completedSections: _stringList(json['completedSections']),
+      incompleteSections: _stringList(json['incompleteSections']),
+      clarificationReason: json['clarificationReason'] is String
+          ? json['clarificationReason'] as String
+          : null,
+      clarificationSections: _stringList(json['clarificationSections']),
+      editableSections: _stringList(json['editableSections']),
+      isSubmittable: json['isSubmittable'] == true,
+      hasExpiredMandatoryDocuments:
+          json['hasExpiredMandatoryDocuments'] == true,
+      rejectionReason: json['rejectionReason'] is String
+          ? json['rejectionReason'] as String
+          : null,
+      reapplyAllowed: json['reapplyAllowed'] == true,
+      submittedAt: _date(json['submittedAt']),
+      reviewedAt: _date(json['reviewedAt']),
     );
   }
+
+  static List<String> _stringList(Object? value) =>
+      value is List ? value.whereType<String>().toList() : const [];
+
+  static DateTime? _date(Object? value) =>
+      value is String ? DateTime.tryParse(value) : null;
 
   static RiderAccountStatus _accountStatusFrom(Object? value) {
     if (value is! String) return RiderAccountStatus.unknown;
@@ -82,5 +126,20 @@ class OnboardingStatusModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [accountStatus, onboardingStatus, currentStep];
+  List<Object?> get props => [
+        accountStatus,
+        onboardingStatus,
+        currentStep,
+        completedSections,
+        incompleteSections,
+        clarificationReason,
+        clarificationSections,
+        editableSections,
+        isSubmittable,
+        hasExpiredMandatoryDocuments,
+        rejectionReason,
+        reapplyAllowed,
+        submittedAt,
+        reviewedAt,
+      ];
 }

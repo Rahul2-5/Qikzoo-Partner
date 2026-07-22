@@ -13,7 +13,17 @@ class ApiEndpoints {
       '/rider/kyc/documents/government-id';
   static const riderKycDrivingLicenseDocument =
       '/rider/kyc/documents/driving-license';
+  static const riderVehicles = '/rider/vehicles';
+  static String riderVehicleActivate(String vehicleId) =>
+      '/rider/vehicles/$vehicleId/activate';
+  static String riderVehicleInsuranceDocument(String vehicleId) =>
+      '/rider/vehicles/$vehicleId/documents/insurance';
+  static String riderVehicleRcDocument(String vehicleId) =>
+      '/rider/vehicles/$vehicleId/documents/rc';
+
   static const riderOnboarding = '/rider/onboarding';
+  static const riderOnboardingSubmit = '/rider/onboarding/submit';
+  static const riderOnboardingReapply = '/rider/onboarding/reapply';
   static const riderAvailability = '/rider/availability';
   static const riderOrders = '/rider/orders';
   static const riderEarnings = '/rider/earnings';

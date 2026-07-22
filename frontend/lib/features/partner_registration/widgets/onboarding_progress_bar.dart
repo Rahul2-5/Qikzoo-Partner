@@ -15,7 +15,7 @@ const onboardingStepLabels = [
   'Address',
   'KYC',
   'Vehicle',
-  'Bank',
+  'Emergency Contact',
   'Review',
 ];
 

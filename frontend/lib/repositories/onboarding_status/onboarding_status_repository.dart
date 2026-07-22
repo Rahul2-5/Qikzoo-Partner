@@ -7,6 +7,24 @@ import '../../providers/core/api_providers.dart';
 
 abstract class OnboardingStatusRepository {
   Future<OnboardingStatusModel> getStatus();
+
+  /// `POST /rider/onboarding/submit` — idempotent; calling again after a
+  /// successful submit just returns the current (already-SUBMITTED/
+  /// UNDER_REVIEW) state rather than erroring. Returns nothing meaningful
+  /// to route on: the endpoint responds with the raw `RiderOnboarding` row,
+  /// not the computed [OnboardingStatusModel] shape (no `accountStatus`/
+  /// `currentStep`/etc.) — callers must fetch [getStatus] again afterward
+  /// for routing, same as every other section save in this app.
+  Future<void> submitOnboarding({
+    required String termsVersion,
+    required String privacyPolicyVersion,
+  });
+
+  /// `POST /rider/onboarding/reapply` — only valid when
+  /// `onboardingStatus == rejected && reapplyAllowed`; resets to
+  /// IN_PROGRESS without wiping existing KYC/vehicle data. Same raw-row
+  /// caveat as [submitOnboarding] — call [getStatus] again afterward.
+  Future<void> reapply();
 }
 
 class MockOnboardingStatusRepository implements OnboardingStatusRepository {
@@ -17,6 +35,19 @@ class MockOnboardingStatusRepository implements OnboardingStatusRepository {
       accountStatus: RiderAccountStatus.active,
       onboardingStatus: RiderOnboardingStatus.approved,
     );
+  }
+
+  @override
+  Future<void> submitOnboarding({
+    required String termsVersion,
+    required String privacyPolicyVersion,
+  }) async {
+    await Future.delayed(AppConstants.mockNetworkDelay);
+  }
+
+  @override
+  Future<void> reapply() async {
+    await Future.delayed(AppConstants.mockNetworkDelay);
   }
 }
 
@@ -31,7 +62,33 @@ class DioOnboardingStatusRepository implements OnboardingStatusRepository {
     final response = await _apiClient.get<Map<String, dynamic>>(
       ApiEndpoints.riderOnboarding,
     );
-    final body = response.data;
+    return _parse(response.data);
+  }
+
+  @override
+  Future<void> submitOnboarding({
+    required String termsVersion,
+    required String privacyPolicyVersion,
+  }) async {
+    await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.riderOnboardingSubmit,
+      data: {
+        'acceptTerms': true,
+        'acceptPrivacyPolicy': true,
+        'termsVersion': termsVersion,
+        'privacyPolicyVersion': privacyPolicyVersion,
+      },
+    );
+  }
+
+  @override
+  Future<void> reapply() async {
+    await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.riderOnboardingReapply,
+    );
+  }
+
+  OnboardingStatusModel _parse(Map<String, dynamic>? body) {
     final nested = body?['data'];
     final payload = nested is Map<String, dynamic> ? nested : body;
     return OnboardingStatusModel.fromJson(payload ?? const {});

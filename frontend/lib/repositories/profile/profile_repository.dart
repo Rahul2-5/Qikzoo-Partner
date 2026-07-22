@@ -49,6 +49,15 @@ abstract class ProfileRepository {
     double? addressLat,
     double? addressLng,
   });
+
+  /// Updates the rider's emergency contact (same `PATCH /rider/profile`
+  /// endpoint as the other profile fields — the backend has no separate
+  /// emergency-contact endpoint). Rejected with 400 if the phone number
+  /// normalizes to the rider's own registered number.
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  });
 }
 
 class MockProfileRepository implements ProfileRepository {
@@ -98,6 +107,8 @@ class MockProfileRepository implements ProfileRepository {
       pincode: _current.pincode,
       addressLat: _current.addressLat,
       addressLng: _current.addressLng,
+      emergencyContactName: _current.emergencyContactName,
+      emergencyContactPhone: _current.emergencyContactPhone,
     );
     return _current;
   }
@@ -128,6 +139,8 @@ class MockProfileRepository implements ProfileRepository {
       pincode: _current.pincode,
       addressLat: _current.addressLat,
       addressLng: _current.addressLng,
+      emergencyContactName: _current.emergencyContactName,
+      emergencyContactPhone: _current.emergencyContactPhone,
     );
     return _current;
   }
@@ -162,6 +175,38 @@ class MockProfileRepository implements ProfileRepository {
       pincode: pincode,
       addressLat: addressLat,
       addressLng: addressLng,
+      emergencyContactName: _current.emergencyContactName,
+      emergencyContactPhone: _current.emergencyContactPhone,
+    );
+    return _current;
+  }
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) async {
+    await Future.delayed(AppConstants.mockNetworkDelay);
+    _current = PartnerProfileModel(
+      id: _current.id,
+      name: _current.name,
+      phone: _current.phone,
+      photoUrl: _current.photoUrl,
+      vehicleType: _current.vehicleType,
+      joinedDate: _current.joinedDate,
+      email: _current.email,
+      dateOfBirth: _current.dateOfBirth,
+      gender: _current.gender,
+      addressLine1: _current.addressLine1,
+      addressLine2: _current.addressLine2,
+      landmark: _current.landmark,
+      city: _current.city,
+      state: _current.state,
+      pincode: _current.pincode,
+      addressLat: _current.addressLat,
+      addressLng: _current.addressLng,
+      emergencyContactName: emergencyContactName,
+      emergencyContactPhone: emergencyContactPhone,
     );
     return _current;
   }
@@ -267,6 +312,21 @@ class DioProfileRepository implements ProfileRepository {
     return _parseProfile(_unwrap(response.data));
   }
 
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) async {
+    final response = await _apiClient.patch<Map<String, dynamic>>(
+      ApiEndpoints.riderProfile,
+      data: {
+        'emergencyContactName': emergencyContactName.trim(),
+        'emergencyContactPhone': emergencyContactPhone.trim(),
+      },
+    );
+    return _parseProfile(_unwrap(response.data));
+  }
+
   Future<Map<String, dynamic>> _fetchProfile() async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       ApiEndpoints.riderProfile,
@@ -298,6 +358,8 @@ class DioProfileRepository implements ProfileRepository {
       pincode: _readString(payload, ['pincode']),
       addressLat: _readDouble(payload, ['addressLat']),
       addressLng: _readDouble(payload, ['addressLng']),
+      emergencyContactName: _readString(payload, ['emergencyContactName']),
+      emergencyContactPhone: _readString(payload, ['emergencyContactPhone']),
     );
   }
 

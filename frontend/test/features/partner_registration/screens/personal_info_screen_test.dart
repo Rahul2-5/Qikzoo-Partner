@@ -88,6 +88,13 @@ class FakeProfileRepository implements ProfileRepository {
     double? addressLng,
   }) =>
       throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) =>
+      throw UnimplementedError();
 }
 
 /// Fails the first [getProfile] call (simulating a transient/offline
@@ -141,6 +148,13 @@ class FlakyProfileRepository implements ProfileRepository {
     double? addressLng,
   }) =>
       throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) =>
+      throw UnimplementedError();
 }
 
 class FakeAuthRepository implements AuthRepository {
@@ -179,6 +193,16 @@ class FakeOnboardingStatusRepository implements OnboardingStatusRepository {
     if (error != null) throw error!;
     return status!;
   }
+
+  @override
+  Future<void> submitOnboarding({
+    required String termsVersion,
+    required String privacyPolicyVersion,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> reapply() => throw UnimplementedError();
 }
 
 PartnerProfileModel mockProfile({
@@ -232,6 +256,10 @@ Widget buildApp({
         GetPage(
           name: AppRoutes.vehicleSelection,
           page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
+        ),
+        GetPage(
+          name: AppRoutes.vehicleRegistration,
+          page: () => const Scaffold(body: Text('Vehicle Registration Screen')),
         ),
         GetPage(
           name: AppRoutes.dashboard,
@@ -345,7 +373,7 @@ void main() {
   });
 
   testWidgets(
-      'navigation after save is backend-driven: VEHICLE as the next step goes to Vehicle Selection',
+      'navigation after save is backend-driven: VEHICLE as the next step goes to Vehicle Registration',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
@@ -370,7 +398,7 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+    expect(find.text('Vehicle Registration Screen'), findsOneWidget);
   });
 
   testWidgets(
