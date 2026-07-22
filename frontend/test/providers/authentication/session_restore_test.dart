@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -9,6 +10,7 @@ import 'package:delivery_partner_app/models/authentication/auth_session_model.da
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/authentication/session_restore_outcome.dart';
 import 'package:delivery_partner_app/models/onboarding_status/onboarding_status_model.dart';
+import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
 import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
 import 'package:delivery_partner_app/models/profile/rating_model.dart';
 import 'package:delivery_partner_app/providers/authentication/auth_provider.dart';
@@ -60,6 +62,23 @@ class FakeProfileRepository implements ProfileRepository {
   @override
   Future<RatingModel> getRating() async =>
       const RatingModel(average: 0, totalRatings: 0);
+
+  @override
+  Future<PartnerProfileModel> updatePersonalDetails({
+    required String name,
+    String? email,
+    required DateTime dateOfBirth,
+    required Gender gender,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> uploadProfilePhoto(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) =>
+      throw UnimplementedError();
 }
 
 class FakeOnboardingStatusRepository implements OnboardingStatusRepository {

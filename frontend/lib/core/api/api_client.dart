@@ -25,6 +25,8 @@ class ApiClient {
     Object? data,
     Map<String, dynamic>? queryParameters,
     Options? options,
+    ProgressCallback? onSendProgress,
+    CancelToken? cancelToken,
   }) =>
       _send(
         () => _dio.post<T>(
@@ -32,6 +34,8 @@ class ApiClient {
           data: data,
           queryParameters: queryParameters,
           options: options,
+          onSendProgress: onSendProgress,
+          cancelToken: cancelToken,
         ),
       );
 
