@@ -37,25 +37,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   /// loop if the backend is down.
   Future<void> _bootstrap() async {
     final delay = Future.delayed(const Duration(milliseconds: 2200));
-    final outcome = await ref.read(authSessionProvider.notifier).restoreSession();
+    final result = await ref.read(authSessionProvider.notifier).restoreSession();
     await delay;
     if (!mounted) return;
-    _handleOutcome(outcome);
+    _handleResult(result);
   }
 
   Future<void> _retry() async {
     setState(() => _showRetry = false);
-    final outcome = await ref.read(authSessionProvider.notifier).restoreSession();
+    final result = await ref.read(authSessionProvider.notifier).restoreSession();
     if (!mounted) return;
-    _handleOutcome(outcome);
+    _handleResult(result);
   }
 
-  void _handleOutcome(SessionRestoreOutcome outcome) {
-    switch (outcome) {
+  /// Active/needsOnboarding both carry a [SessionRestoreResult.route]
+  /// already resolved through `NextOnboardingStepResolver` inside
+  /// `restoreSession()` — this screen never derives a destination itself,
+  /// so there is exactly one place in the app that maps onboarding status
+  /// to a route. loggedOut/offline never reach that resolver (no status
+  /// was fetched), so they keep their own fixed handling here.
+  void _handleResult(SessionRestoreResult result) {
+    switch (result.outcome) {
       case SessionRestoreOutcome.active:
-        _navigateTo(AppRoutes.dashboard);
       case SessionRestoreOutcome.needsOnboarding:
-        _navigateTo(AppRoutes.verificationStatus);
+        _navigateTo(result.route ?? AppRoutes.verificationStatus);
       case SessionRestoreOutcome.loggedOut:
         _navigateTo(AppRoutes.welcome);
       case SessionRestoreOutcome.offline:

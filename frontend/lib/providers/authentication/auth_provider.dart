@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/dio_service.dart';
+import '../../core/navigation/next_onboarding_step_resolver.dart';
 import '../../repositories/authentication/auth_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/onboarding_status/onboarding_status_repository.dart';
@@ -33,13 +34,18 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
   /// updates [state] so the rest of the app sees an authenticated session
   /// without ever showing the login screen again. Never throws — every
   /// outcome (including no/expired token and network failure) is reported
-  /// through the returned [SessionRestoreOutcome] instead.
-  Future<SessionRestoreOutcome> restoreSession() async {
+  /// through the returned [SessionRestoreResult] instead.
+  ///
+  /// The onboarding status is fetched exactly once here and immediately
+  /// resolved to a concrete route via [NextOnboardingStepResolver] — the
+  /// same resolver every onboarding screen uses — so the caller (the
+  /// splash screen) never re-fetches it or re-implements its own routing.
+  Future<SessionRestoreResult> restoreSession() async {
     final storage = ref.read(secureTokenStorageProvider);
     final hasRefreshToken = await storage.getRefreshToken();
     if (hasRefreshToken == null || hasRefreshToken.isEmpty) {
       state = const AsyncData(AuthSessionModel.empty);
-      return SessionRestoreOutcome.loggedOut;
+      return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
     }
 
     final dioService = ref.read(dioServiceProvider);
@@ -47,10 +53,10 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
 
     switch (refreshResult) {
       case SessionRefreshResult.networkError:
-        return SessionRestoreOutcome.offline;
+        return const SessionRestoreResult(SessionRestoreOutcome.offline);
       case SessionRefreshResult.invalidToken:
         state = const AsyncData(AuthSessionModel.empty);
-        return SessionRestoreOutcome.loggedOut;
+        return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
       case SessionRefreshResult.success:
         break;
     }
@@ -68,20 +74,23 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
           isAuthenticated: true,
         ),
       );
-      return onboarding.isActive
-          ? SessionRestoreOutcome.active
-          : SessionRestoreOutcome.needsOnboarding;
+      return SessionRestoreResult(
+        onboarding.isActive
+            ? SessionRestoreOutcome.active
+            : SessionRestoreOutcome.needsOnboarding,
+        route: NextOnboardingStepResolver.resolve(onboarding),
+      );
     } on ApiException catch (error) {
       if (error.statusCode == 401) {
         await ref.read(authRepositoryProvider).logout();
         state = const AsyncData(AuthSessionModel.empty);
-        return SessionRestoreOutcome.loggedOut;
+        return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
       }
       // Any other failure (timeout, no connection, 5xx, ...) fetching
       // profile/onboarding after a *successful* token refresh is a
       // connectivity problem, not a session problem — leave the stored
       // tokens alone so a retry can pick up where this left off.
-      return SessionRestoreOutcome.offline;
+      return const SessionRestoreResult(SessionRestoreOutcome.offline);
     }
   }
 

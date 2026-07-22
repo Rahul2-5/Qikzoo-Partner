@@ -8,29 +8,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-/// Returns a scripted sequence of outcomes — one per call to
+/// Returns a scripted sequence of results — one per call to
 /// restoreSession(), holding on the last entry once exhausted — so a test
 /// can simulate "offline, then retry succeeds" without any real network.
 class FakeAuthSessionNotifier extends AuthSessionNotifier {
-  FakeAuthSessionNotifier(this._outcomes);
+  FakeAuthSessionNotifier(this._results);
 
-  final List<SessionRestoreOutcome> _outcomes;
+  final List<SessionRestoreResult> _results;
   int callCount = 0;
 
   @override
   Future<AuthSessionModel> build() async => AuthSessionModel.empty;
 
   @override
-  Future<SessionRestoreOutcome> restoreSession() async {
-    final index = callCount < _outcomes.length ? callCount : _outcomes.length - 1;
+  Future<SessionRestoreResult> restoreSession() async {
+    final index = callCount < _results.length ? callCount : _results.length - 1;
     callCount++;
-    return _outcomes[index];
+    return _results[index];
   }
 }
 
-Widget buildApp(List<SessionRestoreOutcome> outcomes) => ProviderScope(
+Widget buildApp(List<SessionRestoreResult> results) => ProviderScope(
       overrides: [
-        authSessionProvider.overrideWith(() => FakeAuthSessionNotifier(outcomes)),
+        authSessionProvider.overrideWith(() => FakeAuthSessionNotifier(results)),
       ],
       child: GetMaterialApp(
         initialRoute: AppRoutes.splash,
@@ -43,6 +43,14 @@ Widget buildApp(List<SessionRestoreOutcome> outcomes) => ProviderScope(
               name: AppRoutes.verificationStatus,
               page: () =>
                   const Scaffold(body: Text('Verification Status Screen'))),
+          GetPage(
+              name: AppRoutes.personalInfo,
+              page: () =>
+                  const Scaffold(body: Text('Personal Details Screen'))),
+          GetPage(
+              name: AppRoutes.vehicleSelection,
+              page: () =>
+                  const Scaffold(body: Text('Vehicle Selection Screen'))),
           GetPage(
               name: AppRoutes.welcome,
               page: () => const Scaffold(body: Text('Welcome Screen'))),
@@ -69,7 +77,10 @@ void main() {
 
   testWidgets('active session restore navigates straight to the dashboard, no login',
       (tester) async {
-    await tester.pumpWidget(buildApp([SessionRestoreOutcome.active]));
+    await tester.pumpWidget(buildApp([
+      const SessionRestoreResult(SessionRestoreOutcome.active,
+          route: AppRoutes.dashboard),
+    ]));
     await settleBootstrap(tester);
     await settleTransition(tester);
     await tester.pumpAndSettle();
@@ -78,9 +89,14 @@ void main() {
     expect(find.text('Welcome Screen'), findsNothing);
   });
 
-  testWidgets('pending onboarding restores to the verification status screen',
+  testWidgets(
+      'pending onboarding navigates to whatever route restoreSession already resolved — '
+      'splash never derives its own destination',
       (tester) async {
-    await tester.pumpWidget(buildApp([SessionRestoreOutcome.needsOnboarding]));
+    await tester.pumpWidget(buildApp([
+      const SessionRestoreResult(SessionRestoreOutcome.needsOnboarding,
+          route: AppRoutes.verificationStatus),
+    ]));
     await settleBootstrap(tester);
     await settleTransition(tester);
     await tester.pumpAndSettle();
@@ -88,9 +104,39 @@ void main() {
     expect(find.text('Verification Status Screen'), findsOneWidget);
   });
 
+  testWidgets(
+      'pending onboarding with a PROFILE route resumes exactly on Personal Details',
+      (tester) async {
+    await tester.pumpWidget(buildApp([
+      const SessionRestoreResult(SessionRestoreOutcome.needsOnboarding,
+          route: AppRoutes.personalInfo),
+    ]));
+    await settleBootstrap(tester);
+    await settleTransition(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Personal Details Screen'), findsOneWidget);
+  });
+
+  testWidgets(
+      'pending onboarding with a VEHICLE route resumes exactly on Vehicle Selection',
+      (tester) async {
+    await tester.pumpWidget(buildApp([
+      const SessionRestoreResult(SessionRestoreOutcome.needsOnboarding,
+          route: AppRoutes.vehicleSelection),
+    ]));
+    await settleBootstrap(tester);
+    await settleTransition(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+  });
+
   testWidgets('no/expired session restores to the welcome (login) screen',
       (tester) async {
-    await tester.pumpWidget(buildApp([SessionRestoreOutcome.loggedOut]));
+    await tester.pumpWidget(buildApp([
+      const SessionRestoreResult(SessionRestoreOutcome.loggedOut),
+    ]));
     await settleBootstrap(tester);
     await settleTransition(tester);
     await tester.pumpAndSettle();
@@ -100,7 +146,9 @@ void main() {
 
   testWidgets('offline keeps the rider on the splash screen with a retry action, no login shown',
       (tester) async {
-    await tester.pumpWidget(buildApp([SessionRestoreOutcome.offline]));
+    await tester.pumpWidget(buildApp([
+      const SessionRestoreResult(SessionRestoreOutcome.offline),
+    ]));
     await settleBootstrap(tester);
 
     expect(find.text('Retry'), findsOneWidget);
@@ -111,7 +159,11 @@ void main() {
   testWidgets('retry after offline navigates once connectivity is restored',
       (tester) async {
     await tester.pumpWidget(
-      buildApp([SessionRestoreOutcome.offline, SessionRestoreOutcome.active]),
+      buildApp([
+        const SessionRestoreResult(SessionRestoreOutcome.offline),
+        const SessionRestoreResult(SessionRestoreOutcome.active,
+            route: AppRoutes.dashboard),
+      ]),
     );
     await settleBootstrap(tester);
     expect(find.text('Retry'), findsOneWidget);

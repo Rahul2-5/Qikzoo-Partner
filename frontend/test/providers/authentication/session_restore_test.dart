@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/api/dio_service.dart';
+import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/core/storage/secure_storage.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
@@ -112,11 +113,24 @@ class RecordingAuthRepository implements AuthRepository {
 const activeStatus = OnboardingStatusModel(
   accountStatus: RiderAccountStatus.active,
   onboardingStatus: RiderOnboardingStatus.approved,
+  currentStep: 'REVIEW',
 );
 
 const pendingStatus = OnboardingStatusModel(
   accountStatus: RiderAccountStatus.pendingKyc,
   onboardingStatus: RiderOnboardingStatus.inProgress,
+);
+
+const pendingProfileStatus = OnboardingStatusModel(
+  accountStatus: RiderAccountStatus.pendingKyc,
+  onboardingStatus: RiderOnboardingStatus.inProgress,
+  currentStep: 'PROFILE',
+);
+
+const pendingVehicleStatus = OnboardingStatusModel(
+  accountStatus: RiderAccountStatus.pendingKyc,
+  onboardingStatus: RiderOnboardingStatus.inProgress,
+  currentStep: 'VEHICLE',
 );
 
 final testProfile = PartnerProfileModel(
@@ -168,10 +182,11 @@ void main() {
     });
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.loggedOut);
+    expect(result.outcome, SessionRestoreOutcome.loggedOut);
+    expect(result.route, isNull);
     expect(refreshCalled, isFalse);
     expect(container.read(authSessionProvider).value, AuthSessionModel.empty);
   });
@@ -195,10 +210,14 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.active);
+    expect(result.outcome, SessionRestoreOutcome.active);
+    expect(result.route, AppRoutes.dashboard,
+        reason: 'active accounts always resolve to the dashboard, '
+            'regardless of currentStep — same rule NextOnboardingStepResolver '
+            'applies everywhere else');
     final session = container.read(authSessionProvider).value!;
     expect(session.isAuthenticated, isTrue);
     expect(session.partnerId, 'rider_1');
@@ -223,10 +242,69 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.needsOnboarding);
+    expect(result.outcome, SessionRestoreOutcome.needsOnboarding);
+    expect(result.route, AppRoutes.verificationStatus,
+        reason: 'no currentStep on this fixture — falls back to the status '
+            'screen, same as NextOnboardingStepResolver would for any '
+            'unbuilt/unknown step');
+  });
+
+  test(
+      'pending onboarding with currentStep PROFILE resumes exactly on Personal Details — '
+      'same NextOnboardingStepResolver every onboarding screen uses, no separate switch here',
+      () async {
+    final storage = SecureTokenStorage();
+    await storage.saveTokens(accessToken: 'old', refreshToken: 'refresh-1');
+    final dioService = DioService(storage);
+    dioService.dio.httpClientAdapter = FakeHttpClientAdapter((options) {
+      return jsonResponse('{"data":{"accessToken":"new-access"}}', 200);
+    });
+
+    final container = ProviderContainer(overrides: [
+      secureTokenStorageProvider.overrideWithValue(storage),
+      dioServiceProvider.overrideWithValue(dioService),
+      profileRepositoryProvider
+          .overrideWithValue(FakeProfileRepository(profile: testProfile)),
+      onboardingStatusRepositoryProvider.overrideWithValue(
+          FakeOnboardingStatusRepository(status: pendingProfileStatus)),
+    ]);
+    addTearDown(container.dispose);
+
+    final result =
+        await container.read(authSessionProvider.notifier).restoreSession();
+
+    expect(result.outcome, SessionRestoreOutcome.needsOnboarding);
+    expect(result.route, AppRoutes.personalInfo);
+  });
+
+  test(
+      'pending onboarding with currentStep VEHICLE resumes exactly on Vehicle Selection',
+      () async {
+    final storage = SecureTokenStorage();
+    await storage.saveTokens(accessToken: 'old', refreshToken: 'refresh-1');
+    final dioService = DioService(storage);
+    dioService.dio.httpClientAdapter = FakeHttpClientAdapter((options) {
+      return jsonResponse('{"data":{"accessToken":"new-access"}}', 200);
+    });
+
+    final container = ProviderContainer(overrides: [
+      secureTokenStorageProvider.overrideWithValue(storage),
+      dioServiceProvider.overrideWithValue(dioService),
+      profileRepositoryProvider
+          .overrideWithValue(FakeProfileRepository(profile: testProfile)),
+      onboardingStatusRepositoryProvider.overrideWithValue(
+          FakeOnboardingStatusRepository(status: pendingVehicleStatus)),
+    ]);
+    addTearDown(container.dispose);
+
+    final result =
+        await container.read(authSessionProvider.notifier).restoreSession();
+
+    expect(result.outcome, SessionRestoreOutcome.needsOnboarding);
+    expect(result.route, AppRoutes.vehicleSelection);
   });
 
   test('an expired/invalid refresh token restores to loggedOut and clears storage', () async {
@@ -243,10 +321,10 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.loggedOut);
+    expect(result.outcome, SessionRestoreOutcome.loggedOut);
     expect(await storage.getAccessToken(), isNull);
     expect(await storage.getRefreshToken(), isNull);
     expect(container.read(authSessionProvider).value, AuthSessionModel.empty);
@@ -267,10 +345,10 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.offline);
+    expect(result.outcome, SessionRestoreOutcome.offline);
     expect(await storage.getAccessToken(), 'old-access');
     expect(await storage.getRefreshToken(), 'refresh-1');
   });
@@ -290,10 +368,10 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.offline);
+    expect(result.outcome, SessionRestoreOutcome.offline);
     expect(await storage.getAccessToken(), 'old-access');
   });
 
@@ -319,10 +397,10 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.loggedOut);
+    expect(result.outcome, SessionRestoreOutcome.loggedOut);
     expect(authRepository.loggedOut, isTrue);
   });
 
@@ -348,10 +426,10 @@ void main() {
     ]);
     addTearDown(container.dispose);
 
-    final outcome =
+    final result =
         await container.read(authSessionProvider.notifier).restoreSession();
 
-    expect(outcome, SessionRestoreOutcome.offline);
+    expect(result.outcome, SessionRestoreOutcome.offline);
     expect(authRepository.loggedOut, isFalse);
     expect(await storage.getAccessToken(), 'new-access');
   });
