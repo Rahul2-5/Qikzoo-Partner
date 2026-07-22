@@ -10,6 +10,11 @@ import '../../providers/core/api_providers.dart';
 abstract class AuthRepository {
   Future<OtpModel> requestOtp(String phoneNumber);
   Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp);
+
+  /// Ends the current session. Always clears local tokens, even if the
+  /// server-side revocation call fails (offline, server down) — a rider
+  /// pressing "Log out" must never be stuck logged in on their own device.
+  Future<void> logout();
 }
 
 class MockAuthRepository implements AuthRepository {
@@ -38,6 +43,11 @@ class MockAuthRepository implements AuthRepository {
       token: 'mock_token_abc123',
       isAuthenticated: true,
     );
+  }
+
+  @override
+  Future<void> logout() async {
+    await Future.delayed(AppConstants.mockNetworkDelay);
   }
 }
 
@@ -106,6 +116,24 @@ class DioAuthRepository implements AuthRepository {
       token: accessToken,
       isAuthenticated: true,
     );
+  }
+
+  @override
+  Future<void> logout() async {
+    final refreshToken = await _storage.getRefreshToken();
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      try {
+        await _apiClient.post<void>(
+          ApiEndpoints.riderLogout,
+          data: {'refreshToken': refreshToken},
+        );
+      } catch (_) {
+        // Best-effort server-side revocation — a rider must still be able
+        // to log out locally even if the request fails (offline, server
+        // down). The clearTokens() below always runs regardless.
+      }
+    }
+    await _storage.clearTokens();
   }
 
   Map<String, dynamic> _responseData(Map<String, dynamic>? body) {

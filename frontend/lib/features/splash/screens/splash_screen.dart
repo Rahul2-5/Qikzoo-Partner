@@ -9,6 +9,9 @@ import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../models/authentication/session_restore_outcome.dart';
+import '../../../providers/authentication/auth_provider.dart';
+import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -19,16 +22,51 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
   bool _exiting = false;
+  bool _showRetry = false;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 2200), () {
-      if (!mounted) return;
-      setState(() => _exiting = true);
-      Future.delayed(AppMotion.duration(context, AppMotion.standard), () {
-        if (mounted) Get.offAllNamed(AppRoutes.welcome);
-      });
+    _bootstrap();
+  }
+
+  /// Minimum time the brand animation stays on screen before acting on the
+  /// session-restore result, so a fast/cached restore never reads as a
+  /// flicker. Session restore itself has no artificial delay or retry
+  /// loop beyond this — a single attempt per tap, so there's no splash
+  /// loop if the backend is down.
+  Future<void> _bootstrap() async {
+    final delay = Future.delayed(const Duration(milliseconds: 2200));
+    final outcome = await ref.read(authSessionProvider.notifier).restoreSession();
+    await delay;
+    if (!mounted) return;
+    _handleOutcome(outcome);
+  }
+
+  Future<void> _retry() async {
+    setState(() => _showRetry = false);
+    final outcome = await ref.read(authSessionProvider.notifier).restoreSession();
+    if (!mounted) return;
+    _handleOutcome(outcome);
+  }
+
+  void _handleOutcome(SessionRestoreOutcome outcome) {
+    switch (outcome) {
+      case SessionRestoreOutcome.active:
+        _navigateTo(AppRoutes.dashboard);
+      case SessionRestoreOutcome.needsOnboarding:
+        _navigateTo(AppRoutes.verificationStatus);
+      case SessionRestoreOutcome.loggedOut:
+        _navigateTo(AppRoutes.welcome);
+      case SessionRestoreOutcome.offline:
+        setState(() => _showRetry = true);
+    }
+  }
+
+  void _navigateTo(String route) {
+    setState(() => _exiting = true);
+    Future.delayed(AppMotion.duration(context, AppMotion.standard), () {
+      if (mounted) Get.offAllNamed(route);
     });
   }
 
@@ -139,11 +177,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                         curve: Curves.easeOut,
                       ),
                 const SizedBox(height: AppSpacing.xl),
-                _PulsingDots(
-                  activeColor: logoRed,
-                  idleColor: logoBlue,
-                  motionEnabled: !reduceMotion,
-                ),
+                if (_showRetry)
+                  _ConnectionRetry(onRetry: _retry)
+                else
+                  _PulsingDots(
+                    activeColor: logoRed,
+                    idleColor: logoBlue,
+                    motionEnabled: !reduceMotion,
+                  ),
               ],
             ),
           ),
@@ -189,6 +230,34 @@ class _PulsingDots extends StatelessWidget {
             .scaleXY(begin: 0.6, end: 1.2, duration: 500.ms)
             .fadeIn(begin: 0.4, duration: 500.ms);
       }),
+    );
+  }
+}
+
+/// Shown in place of the pulsing dots when session restore can't reach the
+/// network/server — keeps the rider on the splash screen with a manual
+/// retry instead of silently looping or bouncing them to login.
+class _ConnectionRetry extends StatelessWidget {
+  const _ConnectionRetry({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          "Couldn't connect. Check your internet and try again.",
+          textAlign: TextAlign.center,
+          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          width: 160,
+          child: OutlinedButtonCustom(label: 'Retry', onPressed: onRetry),
+        ),
+      ],
     );
   }
 }

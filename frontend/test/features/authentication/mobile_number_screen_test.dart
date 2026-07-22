@@ -27,6 +27,9 @@ class FakeAuthRepository implements AuthRepository {
   Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> logout() => throw UnimplementedError();
 }
 
 void setPhoneSurface(WidgetTester tester) {

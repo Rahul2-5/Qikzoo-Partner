@@ -7,6 +7,7 @@ class ApiEndpoints {
   static const riderLogout = '/rider/auth/logout';
 
   static const riderProfile = '/rider/profile';
+  static const riderOnboarding = '/rider/onboarding';
   static const riderAvailability = '/rider/availability';
   static const riderOrders = '/rider/orders';
   static const riderEarnings = '/rider/earnings';

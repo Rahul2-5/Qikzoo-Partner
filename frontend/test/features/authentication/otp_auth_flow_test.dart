@@ -23,6 +23,9 @@ class SuccessfulAuthRepository implements AuthRepository {
       isAuthenticated: true,
     );
   }
+
+  @override
+  Future<void> logout() => throw UnimplementedError();
 }
 
 Widget buildFlow(AuthFlow flow) {

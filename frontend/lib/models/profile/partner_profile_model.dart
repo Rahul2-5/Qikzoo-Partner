@@ -5,7 +5,7 @@ class PartnerProfileModel extends Equatable {
   final String name;
   final String phone;
   final String? photoUrl;
-  final String vehicleType;
+  final String? vehicleType;
   final DateTime joinedDate;
 
   const PartnerProfileModel({
@@ -13,7 +13,7 @@ class PartnerProfileModel extends Equatable {
     required this.name,
     required this.phone,
     this.photoUrl,
-    required this.vehicleType,
+    this.vehicleType,
     required this.joinedDate,
   });
 

@@ -1,8 +1,28 @@
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/profile/screens/profile_screen.dart';
+import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
+import 'package:delivery_partner_app/models/authentication/otp_model.dart';
+import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+
+class FakeAuthRepository implements AuthRepository {
+  bool loggedOut = false;
+
+  @override
+  Future<OtpModel> requestOtp(String phoneNumber) => throw UnimplementedError();
+
+  @override
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> logout() async {
+    loggedOut = true;
+  }
+}
 
 void setTallSurface(WidgetTester tester) {
   tester.view.physicalSize = const Size(400, 2600);
@@ -11,26 +31,32 @@ void setTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Widget buildApp() => GetMaterialApp(
-      initialRoute: AppRoutes.profile,
-      getPages: [
-        GetPage(name: AppRoutes.profile, page: () => const ProfileScreen()),
-        GetPage(
-            name: AppRoutes.dashboard,
-            page: () => const Scaffold(body: Text('Dashboard Screen'))),
-        GetPage(
-            name: AppRoutes.earnings,
-            page: () => const Scaffold(body: Text('Earnings Screen'))),
-        GetPage(
-            name: AppRoutes.orders,
-            page: () => const Scaffold(body: Text('Orders Screen'))),
-        GetPage(
-            name: AppRoutes.settings,
-            page: () => const Scaffold(body: Text('Settings Screen'))),
-        GetPage(
-            name: AppRoutes.welcome,
-            page: () => const Scaffold(body: Text('Welcome Screen'))),
+Widget buildApp({AuthRepository? authRepository}) => ProviderScope(
+      overrides: [
+        authRepositoryProvider
+            .overrideWithValue(authRepository ?? FakeAuthRepository()),
       ],
+      child: GetMaterialApp(
+        initialRoute: AppRoutes.profile,
+        getPages: [
+          GetPage(name: AppRoutes.profile, page: () => const ProfileScreen()),
+          GetPage(
+              name: AppRoutes.dashboard,
+              page: () => const Scaffold(body: Text('Dashboard Screen'))),
+          GetPage(
+              name: AppRoutes.earnings,
+              page: () => const Scaffold(body: Text('Earnings Screen'))),
+          GetPage(
+              name: AppRoutes.orders,
+              page: () => const Scaffold(body: Text('Orders Screen'))),
+          GetPage(
+              name: AppRoutes.settings,
+              page: () => const Scaffold(body: Text('Settings Screen'))),
+          GetPage(
+              name: AppRoutes.welcome,
+              page: () => const Scaffold(body: Text('Welcome Screen'))),
+        ],
+      ),
     );
 
 void main() {
@@ -88,7 +114,8 @@ void main() {
   testWidgets('Log Out opens confirmation and returns to welcome on confirm',
       (tester) async {
     setTallSurface(tester);
-    await tester.pumpWidget(buildApp());
+    final fakeAuth = FakeAuthRepository();
+    await tester.pumpWidget(buildApp(authRepository: fakeAuth));
     await tester.tap(find.text('Log Out'));
     await tester.pumpAndSettle();
 
@@ -97,5 +124,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Welcome Screen'), findsOneWidget);
+    expect(fakeAuth.loggedOut, isTrue);
+  });
+
+  testWidgets('Log Out cancel keeps the rider signed in', (tester) async {
+    setTallSurface(tester);
+    final fakeAuth = FakeAuthRepository();
+    await tester.pumpWidget(buildApp(authRepository: fakeAuth));
+    await tester.tap(find.text('Log Out'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome Screen'), findsNothing);
+    expect(fakeAuth.loggedOut, isFalse);
   });
 }

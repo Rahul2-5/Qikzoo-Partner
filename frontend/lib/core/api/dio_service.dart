@@ -4,6 +4,12 @@ import '../config/app_config.dart';
 import '../storage/secure_storage.dart';
 import 'api_endpoints.dart';
 
+/// Outcome of an explicit [DioService.refreshSession] call — distinct from a
+/// plain bool so callers (e.g. session restore) can tell "the refresh token
+/// is invalid/expired, log the rider out" apart from "the network/server is
+/// unavailable, leave the stored session alone and let the rider retry".
+enum SessionRefreshResult { success, invalidToken, networkError }
+
 class DioService {
   DioService(this._storage) : dio = Dio(_baseOptions) {
     dio.interceptors.add(_authInterceptor());
@@ -46,16 +52,16 @@ class DioService {
           return;
         }
 
-        final refreshed = await _refreshAccessToken();
-        if (refreshed == null) {
-          await _storage.clearTokens();
+        final result = await refreshSession();
+        if (result != SessionRefreshResult.success) {
           handler.next(error);
           return;
         }
 
+        final newToken = await _readAccessToken();
         final retryOptions = error.requestOptions;
         retryOptions.extra['retried'] = true;
-        retryOptions.headers['Authorization'] = 'Bearer $refreshed';
+        retryOptions.headers['Authorization'] = 'Bearer $newToken';
 
         try {
           final response = await dio.fetch<dynamic>(retryOptions);
@@ -82,30 +88,59 @@ class DioService {
     }
   }
 
-  Future<String?> _refreshAccessToken() async {
+  /// Rotates the stored refresh token for a new access/refresh pair.
+  ///
+  /// Reuses [dio] itself rather than a second client: the refresh endpoint
+  /// is already excluded from both the request-time Bearer attachment and
+  /// the error-time refresh trigger above, so there is no recursion risk,
+  /// and every call goes through the one configured client (base URL,
+  /// timeouts, interceptors) instead of a second instance that could drift.
+  Future<SessionRefreshResult> refreshSession() async {
     final refreshToken = await _storage.getRefreshToken();
-    if (refreshToken == null || refreshToken.isEmpty) return null;
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await _storage.clearTokens();
+      return SessionRefreshResult.invalidToken;
+    }
 
     try {
-      final refreshDio = Dio(_baseOptions);
-      final response = await refreshDio.post<Map<String, dynamic>>(
+      final response = await dio.post<Map<String, dynamic>>(
         ApiEndpoints.riderRefresh,
         data: {'refreshToken': refreshToken},
       );
-      final data = response.data;
-      if (data == null) return null;
 
-      final accessToken = data['accessToken'] ?? data['token'];
-      final newRefreshToken = data['refreshToken'];
-      if (accessToken is! String || accessToken.isEmpty) return null;
+      // Every backend response is enveloped as `{ data, meta }` (see
+      // ResponseInterceptor on the backend) — unwrap it the same way
+      // DioAuthRepository does for verify-otp.
+      final body = response.data;
+      final nested = body?['data'];
+      final payload = nested is Map<String, dynamic> ? nested : body;
+      if (payload == null) {
+        await _storage.clearTokens();
+        return SessionRefreshResult.invalidToken;
+      }
+
+      final accessToken = payload['accessToken'] ?? payload['token'];
+      final newRefreshToken = payload['refreshToken'];
+      if (accessToken is! String || accessToken.isEmpty) {
+        await _storage.clearTokens();
+        return SessionRefreshResult.invalidToken;
+      }
 
       await _storage.saveTokens(
         accessToken: accessToken,
         refreshToken: newRefreshToken is String ? newRefreshToken : null,
       );
-      return accessToken;
-    } on DioException {
-      return null;
+      return SessionRefreshResult.success;
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      // No response at all (timeout/connection error) or a 5xx means the
+      // network/server is the problem, not the token — don't clear the
+      // session or treat that as "log the rider out".
+      if (statusCode == null || statusCode >= 500) {
+        return SessionRefreshResult.networkError;
+      }
+      await _storage.clearTokens();
+      return SessionRefreshResult.invalidToken;
     }
   }
 }

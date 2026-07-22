@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/routes/app_routes.dart';
@@ -7,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../models/profile/profile_summary.dart';
+import '../../../providers/authentication/auth_provider.dart';
 import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
@@ -21,7 +23,7 @@ import '../widgets/personal_information_sheet.dart';
 import '../widgets/verification_banner.dart';
 import '../widgets/wallet_balance_card.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   ProfileSummary get summary => ProfileSummary.mock();
@@ -40,13 +42,15 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _logOut(BuildContext context) async {
+  Future<void> _logOut(BuildContext context, WidgetRef ref) async {
     final confirmed = await ConfirmationDialog.show(
       context,
       title: 'Log out?',
       message: 'You will need to sign in again to access your partner account.',
     );
-    if (confirmed == true) Get.offAllNamed(AppRoutes.welcome);
+    if (confirmed != true) return;
+    await ref.read(authSessionProvider.notifier).logout();
+    if (context.mounted) Get.offAllNamed(AppRoutes.welcome);
   }
 
   List<
@@ -56,7 +60,7 @@ class ProfileScreen extends StatelessWidget {
         String subtitle,
         VoidCallback onTap,
         bool destructive
-      })> _menuItems(BuildContext context) {
+      })> _menuItems(BuildContext context, WidgetRef ref) {
     return [
       (
         icon: LucideIcons.user,
@@ -111,16 +115,16 @@ class ProfileScreen extends StatelessWidget {
         icon: LucideIcons.logOut,
         title: 'Log Out',
         subtitle: 'Log out from your account',
-        onTap: () => _logOut(context),
+        onTap: () => _logOut(context, ref),
         destructive: true,
       ),
     ];
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final profile = summary;
-    final menuItems = _menuItems(context);
+    final menuItems = _menuItems(context, ref);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -228,4 +232,5 @@ class ProfileScreen extends StatelessWidget {
 }
 
 @Preview(name: 'Profile Screen', group: 'Profile', size: Size(390, 844))
-Widget profileScreenPreview() => const ProfileScreen();
+Widget profileScreenPreview() =>
+    const ProviderScope(child: MaterialApp(home: ProfileScreen()));
