@@ -33,6 +33,22 @@ abstract class ProfileRepository {
     void Function(int sent, int total)? onSendProgress,
     CancelToken? cancelToken,
   });
+
+  /// Updates the rider's single residential address (same `PATCH
+  /// /rider/profile` endpoint and PROFILE section lock as
+  /// [updatePersonalDetails] — the backend has no separate address
+  /// endpoint and no permanent/current address split). Only sends address
+  /// fields, never touching name/email/DOB/gender.
+  Future<PartnerProfileModel> updateAddress({
+    required String addressLine1,
+    String? addressLine2,
+    String? landmark,
+    required String city,
+    required String state,
+    required String pincode,
+    double? addressLat,
+    double? addressLng,
+  });
 }
 
 class MockProfileRepository implements ProfileRepository {
@@ -74,6 +90,14 @@ class MockProfileRepository implements ProfileRepository {
       email: email,
       dateOfBirth: dateOfBirth,
       gender: gender,
+      addressLine1: _current.addressLine1,
+      addressLine2: _current.addressLine2,
+      landmark: _current.landmark,
+      city: _current.city,
+      state: _current.state,
+      pincode: _current.pincode,
+      addressLat: _current.addressLat,
+      addressLng: _current.addressLng,
     );
     return _current;
   }
@@ -96,6 +120,48 @@ class MockProfileRepository implements ProfileRepository {
       email: _current.email,
       dateOfBirth: _current.dateOfBirth,
       gender: _current.gender,
+      addressLine1: _current.addressLine1,
+      addressLine2: _current.addressLine2,
+      landmark: _current.landmark,
+      city: _current.city,
+      state: _current.state,
+      pincode: _current.pincode,
+      addressLat: _current.addressLat,
+      addressLng: _current.addressLng,
+    );
+    return _current;
+  }
+
+  @override
+  Future<PartnerProfileModel> updateAddress({
+    required String addressLine1,
+    String? addressLine2,
+    String? landmark,
+    required String city,
+    required String state,
+    required String pincode,
+    double? addressLat,
+    double? addressLng,
+  }) async {
+    await Future.delayed(AppConstants.mockNetworkDelay);
+    _current = PartnerProfileModel(
+      id: _current.id,
+      name: _current.name,
+      phone: _current.phone,
+      photoUrl: _current.photoUrl,
+      vehicleType: _current.vehicleType,
+      joinedDate: _current.joinedDate,
+      email: _current.email,
+      dateOfBirth: _current.dateOfBirth,
+      gender: _current.gender,
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      landmark: landmark,
+      city: city,
+      state: state,
+      pincode: pincode,
+      addressLat: addressLat,
+      addressLng: addressLng,
     );
     return _current;
   }
@@ -170,6 +236,37 @@ class DioProfileRepository implements ProfileRepository {
     return _parseProfile(_unwrap(response.data));
   }
 
+  @override
+  Future<PartnerProfileModel> updateAddress({
+    required String addressLine1,
+    String? addressLine2,
+    String? landmark,
+    required String city,
+    required String state,
+    required String pincode,
+    double? addressLat,
+    double? addressLng,
+  }) async {
+    final trimmedLine2 = addressLine2?.trim();
+    final trimmedLandmark = landmark?.trim();
+    final response = await _apiClient.patch<Map<String, dynamic>>(
+      ApiEndpoints.riderProfile,
+      data: {
+        'addressLine1': addressLine1.trim(),
+        if (trimmedLine2 != null && trimmedLine2.isNotEmpty)
+          'addressLine2': trimmedLine2,
+        if (trimmedLandmark != null && trimmedLandmark.isNotEmpty)
+          'landmark': trimmedLandmark,
+        'city': city.trim(),
+        'state': state.trim(),
+        'pincode': pincode.trim(),
+        if (addressLat != null) 'addressLat': addressLat,
+        if (addressLng != null) 'addressLng': addressLng,
+      },
+    );
+    return _parseProfile(_unwrap(response.data));
+  }
+
   Future<Map<String, dynamic>> _fetchProfile() async {
     final response = await _apiClient.get<Map<String, dynamic>>(
       ApiEndpoints.riderProfile,
@@ -193,6 +290,14 @@ class DioProfileRepository implements ProfileRepository {
       email: _readString(payload, ['email']),
       dateOfBirth: _readDateTime(payload, ['dateOfBirth']),
       gender: _genderFromBackend(payload['gender']),
+      addressLine1: _readString(payload, ['addressLine1']),
+      addressLine2: _readString(payload, ['addressLine2']),
+      landmark: _readString(payload, ['landmark']),
+      city: _readString(payload, ['city']),
+      state: _readString(payload, ['state']),
+      pincode: _readString(payload, ['pincode']),
+      addressLat: _readDouble(payload, ['addressLat']),
+      addressLng: _readDouble(payload, ['addressLng']),
     );
   }
 
@@ -200,6 +305,14 @@ class DioProfileRepository implements ProfileRepository {
     for (final key in keys) {
       final value = data[key];
       if (value is String && value.trim().isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  double? _readDouble(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value is num) return value.toDouble();
     }
     return null;
   }

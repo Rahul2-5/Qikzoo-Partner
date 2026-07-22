@@ -4,12 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
-import 'package:delivery_partner_app/features/partner_registration/screens/personal_info_screen.dart';
+import 'package:delivery_partner_app/features/partner_registration/screens/address_screen.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/onboarding_status/onboarding_status_model.dart';
@@ -17,7 +16,6 @@ import 'package:delivery_partner_app/models/partner_registration/personal_info_m
 import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
 import 'package:delivery_partner_app/models/profile/rating_model.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
-import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
 import 'package:delivery_partner_app/repositories/onboarding_status/onboarding_status_repository.dart';
 import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
 import 'package:delivery_partner_app/shared/widgets/buttons/primary_cta_button.dart';
@@ -27,9 +25,7 @@ class FakeProfileRepository implements ProfileRepository {
 
   PartnerProfileModel _profile;
   Object? updateError;
-  Object? uploadError;
   int updateCalls = 0;
-  int uploadCalls = 0;
 
   @override
   Future<PartnerProfileModel> getProfile() async => _profile;
@@ -44,37 +40,16 @@ class FakeProfileRepository implements ProfileRepository {
     String? email,
     required DateTime dateOfBirth,
     required Gender gender,
-  }) async {
-    updateCalls++;
-    if (updateError != null) throw updateError!;
-    _profile = PartnerProfileModel(
-      id: _profile.id,
-      name: name,
-      phone: _profile.phone,
-      photoUrl: _profile.photoUrl,
-      joinedDate: _profile.joinedDate,
-      email: email,
-      dateOfBirth: dateOfBirth,
-      gender: gender,
-    );
-    return _profile;
-  }
+  }) =>
+      throw UnimplementedError();
 
   @override
   Future<PartnerProfileModel> uploadProfilePhoto(
     File file, {
     void Function(int sent, int total)? onSendProgress,
     CancelToken? cancelToken,
-  }) async {
-    uploadCalls++;
-    onSendProgress?.call(1, 1);
-    if (uploadError != null) throw uploadError!;
-    // Deliberately keep photoUrl as-is (not the local file path): a real
-    // backend always returns an https signed URL, and CachedNetworkImage
-    // trying to fetch a bogus "URL" here would hang the test on a network
-    // call that never resolves. Uploads are asserted via [uploadCalls].
-    return _profile;
-  }
+  }) =>
+      throw UnimplementedError();
 
   @override
   Future<PartnerProfileModel> updateAddress({
@@ -86,12 +61,31 @@ class FakeProfileRepository implements ProfileRepository {
     required String pincode,
     double? addressLat,
     double? addressLng,
-  }) =>
-      throw UnimplementedError();
+  }) async {
+    updateCalls++;
+    if (updateError != null) throw updateError!;
+    _profile = PartnerProfileModel(
+      id: _profile.id,
+      name: _profile.name,
+      phone: _profile.phone,
+      photoUrl: _profile.photoUrl,
+      joinedDate: _profile.joinedDate,
+      email: _profile.email,
+      dateOfBirth: _profile.dateOfBirth,
+      gender: _profile.gender,
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      landmark: landmark,
+      city: city,
+      state: state,
+      pincode: pincode,
+      addressLat: addressLat,
+      addressLng: addressLng,
+    );
+    return _profile;
+  }
 }
 
-/// Fails the first [getProfile] call (simulating a transient/offline
-/// failure) then succeeds, so Retry can be exercised end-to-end.
 class FlakyProfileRepository implements ProfileRepository {
   FlakyProfileRepository(this._profile);
   final PartnerProfileModel _profile;
@@ -161,14 +155,6 @@ class FakeAuthRepository implements AuthRepository {
   }
 }
 
-class FakeDocumentImagePicker implements DocumentImagePicker {
-  FakeDocumentImagePicker(this.path);
-  final String? path;
-
-  @override
-  Future<String?> pickImage(ImageSource source) async => path;
-}
-
 class FakeOnboardingStatusRepository implements OnboardingStatusRepository {
   FakeOnboardingStatusRepository({this.status, this.error});
   final OnboardingStatusModel? status;
@@ -182,21 +168,26 @@ class FakeOnboardingStatusRepository implements OnboardingStatusRepository {
 }
 
 PartnerProfileModel mockProfile({
-  String name = 'Ravi Kumar',
-  String? email,
-  DateTime? dateOfBirth,
-  Gender? gender,
-  String? photoUrl,
+  String? addressLine1,
+  String? addressLine2,
+  String? landmark,
+  String? city,
+  String? state,
+  String? pincode,
 }) =>
     PartnerProfileModel(
       id: 'rider_1',
-      name: name,
+      name: 'Ravi Kumar',
       phone: '9876543210',
-      photoUrl: photoUrl,
+      photoUrl: 'https://cdn.example.com/photo.jpg',
       joinedDate: DateTime(2026, 1, 1),
-      email: email,
-      dateOfBirth: dateOfBirth,
-      gender: gender,
+      dateOfBirth: DateTime(1998, 4, 12),
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      landmark: landmark,
+      city: city,
+      state: state,
+      pincode: pincode,
     );
 
 void setTallSurface(WidgetTester tester) {
@@ -209,7 +200,6 @@ void setTallSurface(WidgetTester tester) {
 Widget buildApp({
   required ProfileRepository profileRepository,
   FakeAuthRepository? authRepository,
-  FakeDocumentImagePicker? imagePicker,
   FakeOnboardingStatusRepository? onboardingStatusRepository,
 }) {
   return ProviderScope(
@@ -217,18 +207,14 @@ Widget buildApp({
       profileRepositoryProvider.overrideWithValue(profileRepository),
       if (authRepository != null)
         authRepositoryProvider.overrideWithValue(authRepository),
-      if (imagePicker != null)
-        documentImagePickerProvider.overrideWithValue(imagePicker),
       if (onboardingStatusRepository != null)
         onboardingStatusRepositoryProvider
             .overrideWithValue(onboardingStatusRepository),
     ],
     child: GetMaterialApp(
-      initialRoute: AppRoutes.personalInfo,
+      initialRoute: AppRoutes.address,
       getPages: [
-        GetPage(
-            name: AppRoutes.personalInfo,
-            page: () => const PersonalInfoScreen()),
+        GetPage(name: AppRoutes.address, page: () => const AddressScreen()),
         GetPage(
           name: AppRoutes.vehicleSelection,
           page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
@@ -236,11 +222,6 @@ Widget buildApp({
         GetPage(
           name: AppRoutes.dashboard,
           page: () => const Scaffold(body: Text('Dashboard Screen')),
-        ),
-        GetPage(
-          name: AppRoutes.verificationStatus,
-          page: () =>
-              const Scaffold(body: Text('Verification Status Screen')),
         ),
         GetPage(
           name: AppRoutes.welcome,
@@ -252,30 +233,52 @@ Widget buildApp({
 }
 
 void main() {
-  setUp(() {
-    Get.testMode = true;
-    // The photo-upload test uses tester.runAsync (real dart:io File I/O),
-    // which exposes the real HTTP client instead of flutter_test's fake
-    // one — without this, google_fonts' runtime font fetch fails loudly
-    // against real network access this sandbox doesn't have.
-    GoogleFonts.config.allowRuntimeFetching = false;
-  });
+  setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  testWidgets(
-      'auto-loads existing values and keeps Save disabled when unchanged',
+  group('addressLine1FromPlacemark', () {
+    test('prefers street when present', () {
+      const placemark = Placemark(
+        street: '221B Baker Street',
+        name: 'Some POI',
+        subLocality: 'Marylebone',
+      );
+      expect(addressLine1FromPlacemark(placemark), '221B Baker Street');
+    });
+
+    test('falls back to name when street is blank', () {
+      const placemark = Placemark(street: '', name: 'Central Park');
+      expect(addressLine1FromPlacemark(placemark), 'Central Park');
+    });
+
+    test('falls back to subLocality when both street and name are blank', () {
+      const placemark = Placemark(subLocality: 'Koramangala');
+      expect(addressLine1FromPlacemark(placemark), 'Koramangala');
+    });
+
+    test('returns empty string when nothing usable is present', () {
+      const placemark = Placemark();
+      expect(addressLine1FromPlacemark(placemark), '');
+    });
+  });
+
+  testWidgets('auto-loads existing address and keeps Save disabled when unchanged',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
-      email: 'ravi@example.com',
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
     ));
     await tester.pumpWidget(buildApp(profileRepository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ravi Kumar'), findsOneWidget);
-    expect(find.text('ravi@example.com'), findsOneWidget);
+    expect(find.text('221B Baker Street'), findsOneWidget);
+    expect(find.text('Bengaluru'), findsOneWidget);
+    expect(find.text('Karnataka'), findsOneWidget);
+    expect(find.text('560001'), findsOneWidget);
+    expect(find.text('India'), findsOneWidget);
 
     final button = tester.widget<PrimaryCtaButton>(
       find.byType(PrimaryCtaButton),
@@ -284,49 +287,67 @@ void main() {
   });
 
   testWidgets(
-      'shows required captions for a brand-new rider with no DOB/gender yet',
+      'shows a required caption once Address Line 1 is touched and left empty',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile());
     await tester.pumpWidget(buildApp(profileRepository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Date of birth is required'), findsOneWidget);
-    expect(find.text('Please select a gender'), findsOneWidget);
-  });
-
-  testWidgets('an invalid name keeps Save disabled even once other fields are set',
-      (tester) async {
-    setTallSurface(tester);
-    final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    await tester.pumpWidget(buildApp(profileRepository: repo));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).first, 'R');
+    final line1Field = find.byType(TextField).first;
+    await tester.enterText(line1Field, 'x');
+    await tester.enterText(line1Field, '');
     await tester.pump();
+
+    expect(find.text('Address Line 1 is required'), findsOneWidget);
 
     final button = tester.widget<PrimaryCtaButton>(
       find.byType(PrimaryCtaButton),
     );
     expect(button.onPressed, isNull);
-    expect(find.text('Enter 2-60 characters, no emoji'), findsOneWidget);
   });
 
-  testWidgets(
-      'editing the name to a valid, dirty value enables Save and saves it',
+  testWidgets('invalid PIN code keeps Save disabled and shows an inline error',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
     ));
     await tester.pumpWidget(buildApp(profileRepository: repo));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).first, 'Suresh Kumar');
+    final pincodeField = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '560001',
+    );
+    await tester.enterText(pincodeField, '12AB56');
+    await tester.pump();
+
+    expect(find.text('Enter a valid 6-digit PIN code'), findsOneWidget);
+    final button = tester.widget<PrimaryCtaButton>(
+      find.byType(PrimaryCtaButton),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  testWidgets('editing to a valid, dirty address enables Save and saves it',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+    ));
+    await tester.pumpWidget(buildApp(profileRepository: repo));
+    await tester.pumpAndSettle();
+
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    await tester.enterText(line1Field, '221C Baker Street');
     await tester.pump();
 
     final button = tester.widget<PrimaryCtaButton>(
@@ -338,39 +359,194 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.updateCalls, 1);
-    // No onboardingStatusRepository override was supplied, so the resolver
-    // fails to fetch a fresh status and falls back to the pre-refactor
-    // default rather than stranding the rider after a successful save.
     expect(find.text('Vehicle Selection Screen'), findsOneWidget);
   });
 
   testWidgets(
-      'navigation after save is backend-driven: VEHICLE as the next step goes to Vehicle Selection',
+      'trims and collapses duplicate spaces before saving (dirty-check ignores whitespace-only edits)',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
     ));
-    final onboardingStatusRepo = FakeOnboardingStatusRepository(
-      status: const OnboardingStatusModel(
-        accountStatus: RiderAccountStatus.pendingKyc,
-        onboardingStatus: RiderOnboardingStatus.inProgress,
-        currentStep: 'VEHICLE',
-      ),
-    );
-    await tester.pumpWidget(buildApp(
-      profileRepository: repo,
-      onboardingStatusRepository: onboardingStatusRepo,
-    ));
+    await tester.pumpWidget(buildApp(profileRepository: repo));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).first, 'Suresh Kumar');
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    // Trailing/extra whitespace only — normalizes back to the original,
+    // so this should NOT be considered dirty.
+    await tester.enterText(line1Field, '221B   Baker Street  ');
+    await tester.pump();
+
+    final button = tester.widget<PrimaryCtaButton>(
+      find.byType(PrimaryCtaButton),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  testWidgets('a locked (403) section shows a banner and does not navigate',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+    ));
+    repo.updateError = const ApiException(
+      message:
+          'Onboarding has already been submitted — this section can no longer be edited.',
+      statusCode: 403,
+    );
+    await tester.pumpWidget(buildApp(profileRepository: repo));
+    await tester.pumpAndSettle();
+
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    await tester.enterText(line1Field, 'Changed Address');
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+    expect(find.textContaining('can no longer be edited'), findsWidgets);
+    expect(find.text('Vehicle Selection Screen'), findsNothing);
+  });
+
+  testWidgets('a hard 401 logs the rider out and navigates to welcome',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+    ));
+    repo.updateError =
+        const ApiException(message: 'Unauthorized', statusCode: 401);
+    final authRepo = FakeAuthRepository();
+    await tester.pumpWidget(
+      buildApp(profileRepository: repo, authRepository: authRepo),
+    );
+    await tester.pumpAndSettle();
+
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    await tester.enterText(line1Field, 'Changed Address');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(authRepo.loggedOut, isTrue);
+    expect(find.text('Welcome Screen'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a server failure on save shows the message with a Retry action',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+    ));
+    repo.updateError = const ApiException(
+      message:
+          'Verification failed due to a server issue. Please try again later.',
+      statusCode: 500,
+    );
+    await tester.pumpWidget(buildApp(profileRepository: repo));
+    await tester.pumpAndSettle();
+
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    await tester.enterText(line1Field, 'Changed Address');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('server issue'), findsWidgets);
+    expect(find.text('Retry'), findsWidgets);
+    expect(repo.updateCalls, 1);
+  });
+
+  testWidgets(
+      'an offline failure on save shows a persistent offline banner with Retry',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+    ));
+    repo.updateError = const ApiException(
+      message: 'Unable to connect. Check your internet connection.',
+      code: 'connectionError',
+    );
+    await tester.pumpWidget(buildApp(profileRepository: repo));
+    await tester.pumpAndSettle();
+
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    await tester.enterText(line1Field, 'Changed Address');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining("You're offline"), findsOneWidget);
+  });
+
+  testWidgets('an initial load failure shows Retry, which re-fetches successfully',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FlakyProfileRepository(mockProfile(
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+    ));
+    await tester.pumpWidget(buildApp(profileRepository: repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not load your address'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('221B Baker Street'), findsOneWidget);
+    expect(repo.getProfileCalls, 2);
+  });
+
+  testWidgets('back navigation pops without saving anything', (tester) async {
+    setTallSurface(tester);
+    final repo = FakeProfileRepository(mockProfile(
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
+    ));
+    await tester.pumpWidget(buildApp(profileRepository: repo));
+    await tester.pumpAndSettle();
+
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    await tester.enterText(line1Field, 'Changed Address');
+    await tester.pump();
+    Get.back();
+    await tester.pumpAndSettle();
+
+    expect(repo.updateCalls, 0);
   });
 
   testWidgets(
@@ -378,8 +554,10 @@ void main() {
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
+      addressLine1: '221B Baker Street',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      pincode: '560001',
     ));
     final onboardingStatusRepo = FakeOnboardingStatusRepository(
       status: const OnboardingStatusModel(
@@ -393,186 +571,14 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).first, 'Suresh Kumar');
+    final line1Field = find.byWidgetPredicate(
+      (w) => w is TextField && w.controller?.text == '221B Baker Street',
+    );
+    await tester.enterText(line1Field, 'Changed Address');
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     expect(find.text('Dashboard Screen'), findsOneWidget);
-    expect(find.text('Vehicle Selection Screen'), findsNothing);
-  });
-
-  testWidgets(
-      'falls back to Vehicle Selection when the post-save status fetch fails',
-      (tester) async {
-    setTallSurface(tester);
-    final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    final onboardingStatusRepo = FakeOnboardingStatusRepository(
-      error: Exception('network unavailable'),
-    );
-    await tester.pumpWidget(buildApp(
-      profileRepository: repo,
-      onboardingStatusRepository: onboardingStatusRepo,
-    ));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).first, 'Suresh Kumar');
-    await tester.pump();
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
-  });
-
-  testWidgets('a locked (403) section shows a banner and does not navigate',
-      (tester) async {
-    setTallSurface(tester);
-    final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    repo.updateError = const ApiException(
-      message:
-          'Onboarding has already been submitted — this section can no longer be edited.',
-      statusCode: 403,
-    );
-    await tester.pumpWidget(buildApp(profileRepository: repo));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).first, 'Changed Name');
-    await tester.pump();
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('can no longer be edited'), findsWidgets);
-    expect(find.text('Vehicle Selection Screen'), findsNothing);
-  });
-
-  testWidgets('a hard 401 logs the rider out and navigates to welcome',
-      (tester) async {
-    setTallSurface(tester);
-    final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    repo.updateError =
-        const ApiException(message: 'Unauthorized', statusCode: 401);
-    final authRepo = FakeAuthRepository();
-    await tester.pumpWidget(
-      buildApp(profileRepository: repo, authRepository: authRepo),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).first, 'Changed Name');
-    await tester.pump();
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
-
-    expect(authRepo.loggedOut, isTrue);
-    expect(find.text('Welcome Screen'), findsOneWidget);
-  });
-
-  testWidgets(
-      'a server/network failure on save shows the message with a Retry action',
-      (tester) async {
-    setTallSurface(tester);
-    final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    repo.updateError = const ApiException(
-      message: 'Verification failed due to a server issue. Please try again later.',
-      statusCode: 500,
-    );
-    await tester.pumpWidget(buildApp(profileRepository: repo));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).first, 'Changed Name');
-    await tester.pump();
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('server issue'), findsWidgets);
-    expect(find.text('Retry'), findsWidgets);
-    expect(repo.updateCalls, 1);
-  });
-
-  testWidgets('an initial load failure shows Retry, which re-fetches successfully',
-      (tester) async {
-    setTallSurface(tester);
-    final repo = FlakyProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    await tester.pumpWidget(buildApp(profileRepository: repo));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Could not load your details'), findsOneWidget);
-
-    await tester.tap(find.text('Retry'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Ravi Kumar'), findsOneWidget);
-    expect(repo.getProfileCalls, 2);
-  });
-
-  testWidgets('back navigation pops without saving anything',
-      (tester) async {
-    setTallSurface(tester);
-    final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    await tester.pumpWidget(buildApp(
-      profileRepository: repo,
-    ));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).first, 'Changed Name');
-    await tester.pump();
-    Get.back();
-    await tester.pumpAndSettle();
-
-    expect(repo.updateCalls, 0);
-  });
-
-  testWidgets('picking a photo uploads it and refreshes the avatar',
-      (tester) async {
-    setTallSurface(tester);
-    // Reuse an existing on-disk file (the package's own pubspec.yaml,
-    // relative to `flutter test`'s working directory) so the upload
-    // path's real `File.length()` call has something to read — `runAsync`
-    // below is what actually lets that real dart:io Future resolve;
-    // widget tests otherwise run on a fake clock that never drives real
-    // async I/O to completion.
-    final existingFile = File('pubspec.yaml').absolute;
-    expect(existingFile.existsSync(), isTrue,
-        reason: 'test assumes cwd is the frontend package root');
-
-    final repo = FakeProfileRepository(mockProfile(
-      dateOfBirth: DateTime(1998, 4, 12),
-      gender: Gender.male,
-    ));
-    await tester.pumpWidget(buildApp(
-      profileRepository: repo,
-      imagePicker: FakeDocumentImagePicker(existingFile.path),
-    ));
-    await tester.pumpAndSettle();
-
-    await tester.runAsync(() async {
-      await tester.tap(find.byKey(const Key('personal_details_photo_picker')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Choose from Gallery'));
-      // A real Future.delayed (not just tester.pump) is what actually lets
-      // the real dart:io File.length()/upload Future resolve here.
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
-    });
-    await tester.pumpAndSettle();
-
-    expect(repo.uploadCalls, 1);
   });
 }

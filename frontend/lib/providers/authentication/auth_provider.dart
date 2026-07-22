@@ -78,7 +78,7 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
         onboarding.isActive
             ? SessionRestoreOutcome.active
             : SessionRestoreOutcome.needsOnboarding,
-        route: NextOnboardingStepResolver.resolve(onboarding),
+        route: NextOnboardingStepResolver.resolve(onboarding, profile: profile),
       );
     } on ApiException catch (error) {
       if (error.statusCode == 401) {

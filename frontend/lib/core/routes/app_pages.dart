@@ -7,6 +7,7 @@ import '../../features/onboarding_welcome/screens/partner_benefits_screen.dart';
 import '../../features/authentication/screens/mobile_number_screen.dart';
 import '../../features/authentication/screens/otp_verification_screen.dart';
 import '../../features/authentication/screens/set_password_screen.dart';
+import '../../features/partner_registration/screens/address_screen.dart';
 import '../../features/partner_registration/screens/personal_info_screen.dart';
 import '../../features/partner_registration/screens/select_city_screen.dart';
 import '../../features/partner_registration/screens/vehicle_selection_screen.dart';
@@ -51,6 +52,7 @@ class AppPages {
     GetPage(name: AppRoutes.setPassword, page: () => const SetPasswordScreen()),
     GetPage(
         name: AppRoutes.personalInfo, page: () => const PersonalInfoScreen()),
+    GetPage(name: AppRoutes.address, page: () => const AddressScreen()),
     GetPage(
         name: AppRoutes.vehicleSelection,
         page: () => const VehicleSelectionScreen()),

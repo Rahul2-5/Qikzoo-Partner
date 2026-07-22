@@ -1,6 +1,7 @@
 import 'package:delivery_partner_app/core/navigation/next_onboarding_step_resolver.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/models/onboarding_status/onboarding_status_model.dart';
+import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 OnboardingStatusModel status({
@@ -14,66 +15,140 @@ OnboardingStatusModel status({
       currentStep: currentStep,
     );
 
+PartnerProfileModel profile({
+  String name = '',
+  DateTime? dateOfBirth,
+  String? photoUrl,
+  String? addressLine1,
+  String? city,
+  String? state,
+  String? pincode,
+}) =>
+    PartnerProfileModel(
+      id: 'rider_1',
+      name: name,
+      phone: '9876543210',
+      joinedDate: DateTime(2026, 1, 1),
+      dateOfBirth: dateOfBirth,
+      photoUrl: photoUrl,
+      addressLine1: addressLine1,
+      city: city,
+      state: state,
+      pincode: pincode,
+    );
+
+final emptyProfile = profile();
+
+final personalDetailsCompleteProfile = profile(
+  name: 'Ravi Kumar',
+  dateOfBirth: DateTime(1998, 4, 12),
+  photoUrl: 'https://cdn.example.com/photo.jpg',
+);
+
+final fullyCompleteProfile = profile(
+  name: 'Ravi Kumar',
+  dateOfBirth: DateTime(1998, 4, 12),
+  photoUrl: 'https://cdn.example.com/photo.jpg',
+  addressLine1: '221B Baker Street',
+  city: 'Bengaluru',
+  state: 'Karnataka',
+  pincode: '560001',
+);
+
 void main() {
   group('NextOnboardingStepResolver', () {
     test('an active account always goes to the dashboard, regardless of currentStep', () {
-      final result = NextOnboardingStepResolver.resolve(status(
-        accountStatus: RiderAccountStatus.active,
-        onboardingStatus: RiderOnboardingStatus.approved,
-        currentStep: 'REVIEW',
-      ));
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.active,
+          onboardingStatus: RiderOnboardingStatus.approved,
+          currentStep: 'REVIEW',
+        ),
+        profile: fullyCompleteProfile,
+      );
 
       expect(result, AppRoutes.dashboard);
     });
 
-    test('PROFILE as the current step resolves to Personal Details', () {
-      final result = NextOnboardingStepResolver.resolve(status(
-        accountStatus: RiderAccountStatus.pendingKyc,
-        onboardingStatus: RiderOnboardingStatus.inProgress,
-        currentStep: 'PROFILE',
-      ));
+    test('PROFILE with no personal details yet resolves to Personal Details', () {
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.inProgress,
+          currentStep: 'PROFILE',
+        ),
+        profile: emptyProfile,
+      );
 
       expect(result, AppRoutes.personalInfo);
     });
 
+    test(
+        'PROFILE with personal details already complete but address still missing '
+        'resolves to Address, not back to Personal Details',
+        () {
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.inProgress,
+          currentStep: 'PROFILE',
+        ),
+        profile: personalDetailsCompleteProfile,
+      );
+
+      expect(result, AppRoutes.address);
+    });
+
     test('VEHICLE as the current step resolves to Vehicle Selection', () {
-      final result = NextOnboardingStepResolver.resolve(status(
-        accountStatus: RiderAccountStatus.pendingKyc,
-        onboardingStatus: RiderOnboardingStatus.inProgress,
-        currentStep: 'VEHICLE',
-      ));
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.inProgress,
+          currentStep: 'VEHICLE',
+        ),
+        profile: fullyCompleteProfile,
+      );
 
       expect(result, AppRoutes.vehicleSelection);
     });
 
     test('NOT_STARTED with no currentStep falls back to the status screen', () {
-      final result = NextOnboardingStepResolver.resolve(status(
-        accountStatus: RiderAccountStatus.pendingKyc,
-        onboardingStatus: RiderOnboardingStatus.notStarted,
-        currentStep: null,
-      ));
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.notStarted,
+          currentStep: null,
+        ),
+        profile: emptyProfile,
+      );
 
       expect(result, AppRoutes.verificationStatus);
     });
 
     for (final step in ['KYC', 'EMERGENCY_CONTACT', 'REVIEW', 'SOMETHING_UNKNOWN']) {
       test('$step has no dedicated screen yet, so it falls back to the status screen', () {
-        final result = NextOnboardingStepResolver.resolve(status(
-          accountStatus: RiderAccountStatus.pendingKyc,
-          onboardingStatus: RiderOnboardingStatus.inProgress,
-          currentStep: step,
-        ));
+        final result = NextOnboardingStepResolver.resolve(
+          status(
+            accountStatus: RiderAccountStatus.pendingKyc,
+            onboardingStatus: RiderOnboardingStatus.inProgress,
+            currentStep: step,
+          ),
+          profile: fullyCompleteProfile,
+        );
 
         expect(result, AppRoutes.verificationStatus);
       });
     }
 
     test('CLARIFICATION_REQUIRED is still editable and resolves by currentStep', () {
-      final result = NextOnboardingStepResolver.resolve(status(
-        accountStatus: RiderAccountStatus.pendingKyc,
-        onboardingStatus: RiderOnboardingStatus.clarificationRequired,
-        currentStep: 'PROFILE',
-      ));
+      final result = NextOnboardingStepResolver.resolve(
+        status(
+          accountStatus: RiderAccountStatus.pendingKyc,
+          onboardingStatus: RiderOnboardingStatus.clarificationRequired,
+          currentStep: 'PROFILE',
+        ),
+        profile: emptyProfile,
+      );
 
       expect(result, AppRoutes.personalInfo);
     });
@@ -85,11 +160,14 @@ void main() {
       RiderOnboardingStatus.rejected,
     ]) {
       test('$terminal (account still not ACTIVE) locks the form to the status screen', () {
-        final result = NextOnboardingStepResolver.resolve(status(
-          accountStatus: RiderAccountStatus.pendingKyc,
-          onboardingStatus: terminal,
-          currentStep: 'PROFILE',
-        ));
+        final result = NextOnboardingStepResolver.resolve(
+          status(
+            accountStatus: RiderAccountStatus.pendingKyc,
+            onboardingStatus: terminal,
+            currentStep: 'PROFILE',
+          ),
+          profile: emptyProfile,
+        );
 
         expect(result, AppRoutes.verificationStatus);
       });

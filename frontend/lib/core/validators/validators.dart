@@ -6,6 +6,7 @@ class Validators {
   static final _ifscRegex = RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$');
   static final _panRegex = RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$');
   static final _aadhaarRegex = RegExp(r'^\d{12}$');
+  static final _pincodeRegex = RegExp(r'^\d{6}$');
 
   static bool isValidPhone(String value) => _phoneRegex.hasMatch(value.trim());
 
@@ -42,6 +43,16 @@ class Validators {
 
   static bool isValidAadhaar(String value) =>
       _aadhaarRegex.hasMatch(value.trim());
+
+  /// Indian PIN code: exactly 6 digits.
+  static bool isValidPincode(String value) =>
+      _pincodeRegex.hasMatch(value.trim());
+
+  /// Trims and collapses any run of internal whitespace to a single space
+  /// — applied to address fields before validation/save so "123  Main
+  /// St." and stray leading/trailing spaces don't reach the backend.
+  static String normalizeWhitespace(String value) =>
+      value.trim().replaceAll(RegExp(r'\s+'), ' ');
 
   static final _specialCharRegex =
       RegExp(r'[!@#$%^&*(),.?":{}|<>_\-\[\]\\/;+=~`]');

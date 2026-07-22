@@ -80,6 +80,19 @@ class FakeProfileRepository implements ProfileRepository {
     CancelToken? cancelToken,
   }) =>
       throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateAddress({
+    required String addressLine1,
+    String? addressLine2,
+    String? landmark,
+    required String city,
+    required String state,
+    required String pincode,
+    double? addressLat,
+    double? addressLng,
+  }) =>
+      throw UnimplementedError();
 }
 
 class FakeOnboardingStatusRepository implements OnboardingStatusRepository {

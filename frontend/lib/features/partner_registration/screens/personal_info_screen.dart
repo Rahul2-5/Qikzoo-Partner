@@ -137,13 +137,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
   /// Asks the backend where the rider belongs next rather than hardcoding
   /// the following onboarding screen — see [NextOnboardingStepResolver].
-  /// Falls back to the pre-refactor default if the status fetch itself
-  /// fails; the profile save already succeeded, so the rider shouldn't be
-  /// stranded over a second, unrelated network call.
-  Future<String> _resolveNextRoute() async {
+  /// [profile] is the just-saved profile returned by [updatePersonalDetails]
+  /// so this needs no extra fetch. Falls back to the pre-refactor default
+  /// if the status fetch itself fails; the profile save already succeeded,
+  /// so the rider shouldn't be stranded over a second, unrelated network
+  /// call.
+  Future<String> _resolveNextRoute(PartnerProfileModel profile) async {
     try {
       final status = await ref.read(onboardingStatusRepositoryProvider).getStatus();
-      return NextOnboardingStepResolver.resolve(status);
+      return NextOnboardingStepResolver.resolve(status, profile: profile);
     } catch (_) {
       return AppRoutes.vehicleSelection;
     }
@@ -156,16 +158,17 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       _isOffline = false;
     });
     try {
-      await ref.read(profileRepositoryProvider).updatePersonalDetails(
-            name: _nameController.text.trim(),
-            email: _emailController.text.trim().isEmpty
-                ? null
-                : _emailController.text.trim(),
-            dateOfBirth: _dateOfBirth!,
-            gender: _gender!,
-          );
+      final updatedProfile =
+          await ref.read(profileRepositoryProvider).updatePersonalDetails(
+                name: _nameController.text.trim(),
+                email: _emailController.text.trim().isEmpty
+                    ? null
+                    : _emailController.text.trim(),
+                dateOfBirth: _dateOfBirth!,
+                gender: _gender!,
+              );
       if (!mounted) return;
-      Get.toNamed(await _resolveNextRoute());
+      Get.toNamed(await _resolveNextRoute(updatedProfile));
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 401) {

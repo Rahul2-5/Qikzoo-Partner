@@ -8,6 +8,7 @@ class AppRoutes {
   static const otpVerification = '/otp/verify';
   static const setPassword = '/set-password';
   static const personalInfo = '/registration/personal-info';
+  static const address = '/registration/address';
   static const vehicleSelection = '/registration/vehicle-selection';
   static const vehicleDetails = '/registration/vehicle-details';
   static const deliveryZone = '/registration/delivery-zone';
