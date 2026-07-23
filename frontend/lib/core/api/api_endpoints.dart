@@ -25,7 +25,10 @@ class ApiEndpoints {
   static const riderOnboardingSubmit = '/rider/onboarding/submit';
   static const riderOnboardingReapply = '/rider/onboarding/reapply';
   static const riderAvailability = '/rider/availability';
+  static const riderAvailabilityOnline = '/rider/availability/online';
+  static const riderAvailabilityOffline = '/rider/availability/offline';
   static const riderOrders = '/rider/orders';
   static const riderEarnings = '/rider/earnings';
+  static const riderEarningsSummary = '/rider/earnings/summary';
   static const riderWallet = '/rider/wallet';
 }

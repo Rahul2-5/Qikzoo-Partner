@@ -1,0 +1,253 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:delivery_partner_app/core/api/api_exception.dart';
+import 'package:delivery_partner_app/core/routes/app_routes.dart';
+import 'package:delivery_partner_app/features/dashboard/screens/dashboard_home_screen.dart';
+import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
+import 'package:delivery_partner_app/models/authentication/otp_model.dart';
+import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
+import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
+
+class FakeDashboardRepository implements DashboardRepository {
+  FakeDashboardRepository({required this.initial});
+  final DashboardStatsModel initial;
+  DashboardStatsModel? current;
+  Object? getStatsError;
+  Object? toggleError;
+  int getStatsCalls = 0;
+  int goOnlineCalls = 0;
+  int goOfflineCalls = 0;
+
+  @override
+  Future<DashboardStatsModel> getStats() async {
+    getStatsCalls++;
+    if (getStatsError != null) throw getStatsError!;
+    return current ??= initial;
+  }
+
+  @override
+  Future<DashboardStatsModel> goOnline() async {
+    goOnlineCalls++;
+    if (toggleError != null) throw toggleError!;
+    current = (current ?? initial)
+        .copyWith(availabilityStatus: RiderAvailabilityStatus.online);
+    return current!;
+  }
+
+  @override
+  Future<DashboardStatsModel> goOffline() async {
+    goOfflineCalls++;
+    if (toggleError != null) throw toggleError!;
+    current = (current ?? initial)
+        .copyWith(availabilityStatus: RiderAvailabilityStatus.offline);
+    return current!;
+  }
+}
+
+class FakeAuthRepository implements AuthRepository {
+  bool loggedOut = false;
+
+  @override
+  Future<OtpModel> requestOtp(String phoneNumber) => throw UnimplementedError();
+
+  @override
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp,
+          {String? name}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> logout() async {
+    loggedOut = true;
+  }
+}
+
+DashboardStatsModel mockStats({
+  RiderAvailabilityStatus availabilityStatus = RiderAvailabilityStatus.offline,
+  double? acceptanceRatePercent = 92,
+  double? completionRatePercent = 96,
+  String? workingZone = 'Bengaluru, Karnataka',
+}) =>
+    DashboardStatsModel(
+      riderName: 'Ravi Kumar',
+      availabilityStatus: availabilityStatus,
+      todaysEarningsPaise: 84200,
+      todaysDeliveries: 14,
+      walletBalancePaise: 312000,
+      acceptanceRatePercent: acceptanceRatePercent,
+      completionRatePercent: completionRatePercent,
+      rating: 4.7,
+      workingZone: workingZone,
+    );
+
+void setTallSurface(WidgetTester tester) {
+  tester.view.physicalSize = const Size(400, 2200);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
+Widget buildApp({
+  required FakeDashboardRepository dashboardRepository,
+  FakeAuthRepository? authRepository,
+}) {
+  return ProviderScope(
+    overrides: [
+      dashboardRepositoryProvider.overrideWithValue(dashboardRepository),
+      if (authRepository != null)
+        authRepositoryProvider.overrideWithValue(authRepository),
+    ],
+    child: GetMaterialApp(
+      initialRoute: AppRoutes.dashboard,
+      getPages: [
+        GetPage(
+            name: AppRoutes.dashboard, page: () => const DashboardHomeScreen()),
+        GetPage(
+          name: AppRoutes.welcome,
+          page: () => const Scaffold(body: Text('Welcome Screen')),
+        ),
+      ],
+    ),
+  );
+}
+
+void main() {
+  setUp(() => Get.testMode = true);
+  tearDown(Get.reset);
+
+  testWidgets('loads and displays greeting, status, earnings, and every stat tile',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(initial: mockStats());
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ravi Kumar'), findsOneWidget);
+    expect(find.text('Offline'), findsWidgets);
+    expect(find.textContaining('842'), findsOneWidget);
+    expect(find.text('14'), findsOneWidget);
+    expect(find.textContaining('3120'), findsOneWidget);
+    expect(find.text('92%'), findsOneWidget);
+    expect(find.text('96%'), findsOneWidget);
+    expect(find.text('4.7'), findsOneWidget);
+    expect(find.text('Bengaluru, Karnataka'), findsOneWidget);
+  });
+
+  testWidgets('shows — for acceptance/completion rate and zone when null',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(
+      initial: mockStats(
+        acceptanceRatePercent: null,
+        completionRatePercent: null,
+        workingZone: null,
+      ),
+    );
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('—'), findsNWidgets(3));
+  });
+
+  testWidgets('tapping the toggle while offline goes online and updates the chip',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(
+        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline));
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('availability-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(repo.goOnlineCalls, 1);
+    expect(find.text('Online'), findsWidgets);
+  });
+
+  testWidgets('tapping the toggle while online goes offline', (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(
+        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.online));
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('availability-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(repo.goOfflineCalls, 1);
+    expect(find.text('Offline'), findsWidgets);
+  });
+
+  testWidgets('a hard 401 on toggle logs the rider out and navigates to welcome',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(initial: mockStats())
+      ..toggleError = const ApiException(message: 'Unauthorized', statusCode: 401);
+    final authRepo = FakeAuthRepository();
+    await tester.pumpWidget(
+        buildApp(dashboardRepository: repo, authRepository: authRepo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('availability-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(authRepo.loggedOut, isTrue);
+    expect(find.text('Welcome Screen'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a non-401 error on toggle shows a snackbar and keeps existing stats visible',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(initial: mockStats())
+      ..toggleError = const ApiException(
+        message: 'Unable to connect. Check your internet connection.',
+      );
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('availability-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining("You're offline") , findsNothing);
+    expect(find.textContaining('Unable to connect'), findsOneWidget);
+    // The toggle failed, so status stays exactly as it was — no data lost.
+    expect(find.text('Ravi Kumar'), findsOneWidget);
+    expect(find.text('Offline'), findsWidgets);
+  });
+
+  testWidgets('a load failure shows Retry, which succeeds on retry', (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(initial: mockStats())
+      ..getStatsError = const ApiException(
+        message: 'Unable to connect. Check your internet connection.',
+      );
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not load your dashboard'), findsOneWidget);
+
+    repo.getStatsError = null;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ravi Kumar'), findsOneWidget);
+  });
+
+  testWidgets('pull-to-refresh reloads the dashboard', (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(initial: mockStats());
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    final initialCalls = repo.getStatsCalls;
+    final refreshIndicator =
+        tester.widget<RefreshIndicator>(find.byType(RefreshIndicator));
+    await refreshIndicator.onRefresh();
+    await tester.pumpAndSettle();
+
+    expect(repo.getStatsCalls, greaterThan(initialCalls));
+  });
+}

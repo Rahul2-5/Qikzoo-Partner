@@ -21,7 +21,7 @@ import '../../features/partner_registration/screens/document_upload_screen.dart'
 import '../../features/partner_registration/screens/selfie_verification_screen.dart';
 import '../../features/partner_registration/screens/welcome_kit_screen.dart';
 import '../../features/partner_registration/screens/application_submitted_screen.dart';
-import '../../features/dashboard/screens/dashboard_screen.dart';
+import '../../features/dashboard/screens/dashboard_home_screen.dart';
 import '../../features/earnings/screens/earnings_screen.dart';
 import '../../features/orders/screens/orders_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
@@ -98,7 +98,7 @@ class AppPages {
         page: () => const PlaceholderScreen(title: 'Approval')),
     GetPage(
       name: AppRoutes.dashboard,
-      page: () => DashboardScreen(showSignupBonus: Get.arguments == true),
+      page: () => const DashboardHomeScreen(),
     ),
     GetPage(name: AppRoutes.earnings, page: () => const EarningsScreen()),
     GetPage(name: AppRoutes.orders, page: () => const OrdersScreen()),
