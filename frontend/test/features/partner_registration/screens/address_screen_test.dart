@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/partner_registration/screens/address_screen.dart';
@@ -155,8 +156,7 @@ class FakeAuthRepository implements AuthRepository {
   bool loggedOut = false;
 
   @override
-  Future<OtpModel> requestOtp(String phoneNumber) =>
-      throw UnimplementedError();
+  Future<OtpModel> requestOtp(String phoneNumber) => throw UnimplementedError();
 
   @override
   Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp,
@@ -240,6 +240,10 @@ Widget buildApp({
       getPages: [
         GetPage(name: AppRoutes.address, page: () => const AddressScreen()),
         GetPage(
+          name: AppRoutes.personalInfo,
+          page: () => const Scaffold(body: Text('Personal Info Screen')),
+        ),
+        GetPage(
           name: AppRoutes.vehicleSelection,
           page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
         ),
@@ -286,7 +290,8 @@ void main() {
     });
   });
 
-  testWidgets('auto-loads existing address and keeps Save disabled when unchanged',
+  testWidgets(
+      'auto-loads existing address and keeps Save disabled when unchanged',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
@@ -471,8 +476,7 @@ void main() {
     expect(find.text('Welcome Screen'), findsOneWidget);
   });
 
-  testWidgets(
-      'a server failure on save shows the message with a Retry action',
+  testWidgets('a server failure on save shows the message with a Retry action',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
@@ -530,7 +534,8 @@ void main() {
     expect(find.textContaining("You're offline"), findsOneWidget);
   });
 
-  testWidgets('an initial load failure shows Retry, which re-fetches successfully',
+  testWidgets(
+      'an initial load failure shows Retry, which re-fetches successfully',
       (tester) async {
     setTallSurface(tester);
     final repo = FlakyProfileRepository(mockProfile(
@@ -551,7 +556,8 @@ void main() {
     expect(repo.getProfileCalls, 2);
   });
 
-  testWidgets('back navigation pops without saving anything', (tester) async {
+  testWidgets('back navigation returns to personal info without saving',
+      (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
       addressLine1: '221B Baker Street',
@@ -567,10 +573,11 @@ void main() {
     );
     await tester.enterText(line1Field, 'Changed Address');
     await tester.pump();
-    Get.back();
+    await tester.tap(find.byIcon(LucideIcons.arrowLeft));
     await tester.pumpAndSettle();
 
     expect(repo.updateCalls, 0);
+    expect(find.text('Personal Info Screen'), findsOneWidget);
   });
 
   testWidgets(

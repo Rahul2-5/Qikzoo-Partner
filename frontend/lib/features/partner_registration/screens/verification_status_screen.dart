@@ -141,41 +141,38 @@ class _VerificationStatusScreenState
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics()),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.xxxl,
+        ),
         children: [
           Center(
             child: Container(
-              width: 88,
-              height: 88,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
                 color: content.color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(content.icon, color: content.color, size: 40),
+              child: Icon(content.icon, color: content.color, size: 44),
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             content.title,
             textAlign: TextAlign.center,
-            style: AppTypography.h1.copyWith(fontSize: 22),
+            style: AppTypography.h1.copyWith(fontSize: 26),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Text(
-              content.message,
-              textAlign: TextAlign.center,
-              style:
-                  AppTypography.body.copyWith(color: AppColors.textSecondary),
-            ),
+          Text(
+            content.message,
+            textAlign: TextAlign.center,
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
           if (status.onboardingStatus == RiderOnboardingStatus.rejected &&
               status.rejectionReason != null) ...[
             const SizedBox(height: AppSpacing.lg),
             Container(
-              margin:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: AppColors.error.withValues(alpha: 0.08),
@@ -210,13 +207,10 @@ class _VerificationStatusScreenState
           if (status.onboardingStatus == RiderOnboardingStatus.rejected &&
               status.reapplyAllowed) ...[
             const SizedBox(height: AppSpacing.lg),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: PrimaryCtaButton(
-                label: 'Reapply',
-                isLoading: _isReapplying,
-                onPressed: _isReapplying ? null : _onReapply,
-              ),
+            PrimaryCtaButton(
+              label: 'Reapply',
+              isLoading: _isReapplying,
+              onPressed: _isReapplying ? null : _onReapply,
             ),
           ],
         ],

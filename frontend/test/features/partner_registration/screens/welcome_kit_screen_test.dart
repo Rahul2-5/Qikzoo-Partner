@@ -16,8 +16,8 @@ Widget buildApp({WelcomeKitPaymentHandler? onPay}) {
     home: WelcomeKitScreen(onPay: onPay),
     getPages: [
       GetPage(
-        name: AppRoutes.applicationSubmitted,
-        page: () => const Scaffold(body: Text('Submitted Screen')),
+        name: AppRoutes.paymentComingSoon,
+        page: () => const Scaffold(body: Text('Coming Soon Screen')),
       ),
     ],
   );
@@ -54,7 +54,7 @@ void main() {
     );
   });
 
-  testWidgets('successful card payment opens Application Submitted',
+  testWidgets('successful card payment opens the Coming Soon screen',
       (tester) async {
     setTallSurface(tester);
     WelcomeKitPlan? paidPlan;
@@ -78,6 +78,6 @@ void main() {
 
     expect(paidPlan, WelcomeKitPlan.fullPayment);
     expect(paidMethod, WelcomeKitPaymentMethod.card);
-    expect(find.text('Submitted Screen'), findsOneWidget);
+    expect(find.text('Coming Soon Screen'), findsOneWidget);
   });
 }

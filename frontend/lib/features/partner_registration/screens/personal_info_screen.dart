@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,6 +10,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../../core/navigation/onboarding_back_navigation.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -38,14 +40,15 @@ class PersonalInfoScreen extends ConsumerStatefulWidget {
   const PersonalInfoScreen({super.key});
 
   @override
-  ConsumerState<PersonalInfoScreen> createState() =>
-      _PersonalInfoScreenState();
+  ConsumerState<PersonalInfoScreen> createState() => _PersonalInfoScreenState();
 }
 
 class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   /// Mirrors the backend's `MAX_IMAGE_SIZE_BYTES` (image-validation.ts) so
   /// an oversized photo is rejected locally before spending an upload.
   static const _maxPhotoBytes = 5 * 1024 * 1024;
+  static const _saveTimeout = Duration(seconds: 15);
+  static const _statusLookupTimeout = Duration(seconds: 5);
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -138,16 +141,23 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   /// Asks the backend where the rider belongs next rather than hardcoding
   /// the following onboarding screen — see [NextOnboardingStepResolver].
   /// [profile] is the just-saved profile returned by [updatePersonalDetails]
-  /// so this needs no extra fetch. Falls back to the pre-refactor default
-  /// if the status fetch itself fails; the profile save already succeeded,
-  /// so the rider shouldn't be stranded over a second, unrelated network
-  /// call.
+  /// so this needs no extra fetch. If the status lookup is unavailable, the
+  /// saved profile tells us whether Address is still needed, preventing an
+  /// unrelated request from stranding the rider on the loading state.
   Future<String> _resolveNextRoute(PartnerProfileModel profile) async {
     try {
-      final status = await ref.read(onboardingStatusRepositoryProvider).getStatus();
+      final status = await ref
+          .read(onboardingStatusRepositoryProvider)
+          .getStatus()
+          .timeout(_statusLookupTimeout);
       return NextOnboardingStepResolver.resolve(status, profile: profile);
     } catch (_) {
-      return AppRoutes.vehicleSelection;
+      // Personal details have already been saved. Continue through the
+      // predictable next onboarding step rather than leaving the rider on a
+      // loading button while an independent status request is unavailable.
+      return profile.hasCompleteAddress
+          ? AppRoutes.vehicleSelection
+          : AppRoutes.address;
     }
   }
 
@@ -166,9 +176,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     : _emailController.text.trim(),
                 dateOfBirth: _dateOfBirth!,
                 gender: _gender!,
-              );
+              ).timeout(_saveTimeout);
       if (!mounted) return;
-      Get.toNamed(await _resolveNextRoute(updatedProfile));
+      final nextRoute = await _resolveNextRoute(updatedProfile);
+      if (!mounted) return;
+      // Clear the busy state before pushing. If route configuration is ever
+      // incomplete, the rider remains on an actionable form rather than a
+      // permanently spinning Save button.
+      setState(() => _isSaving = false);
+      Get.toNamed(nextRoute);
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 401) {
@@ -191,6 +207,13 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           onAction: e.statusCode == 403 ? null : _onSave,
         );
       }
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      AppSnackBar.error(
+        context,
+        'Saving is taking too long. Check your connection and try again.',
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSaving = false);
@@ -198,12 +221,13 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     }
   }
 
+  Future<void> _goBack() => popOnboardingOrGoTo(context, AppRoutes.welcome);
+
   Future<void> _pickPhoto() async {
     if (_sectionLocked || _photoStatus == _PhotoStatus.uploading) return;
     final source = await showImageSourceSheet(context);
     if (source == null) return;
-    final path =
-        await ref.read(documentImagePickerProvider).pickImage(source);
+    final path = await ref.read(documentImagePickerProvider).pickImage(source);
     if (path == null) return;
     await _uploadPhoto(path);
   }
@@ -232,13 +256,13 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     try {
       final updated =
           await ref.read(profileRepositoryProvider).uploadProfilePhoto(
-                file,
-                cancelToken: cancelToken,
-                onSendProgress: (sent, total) {
-                  if (!mounted || total <= 0) return;
-                  setState(() => _photoProgress = sent / total);
-                },
-              );
+        file,
+        cancelToken: cancelToken,
+        onSendProgress: (sent, total) {
+          if (!mounted || total <= 0) return;
+          setState(() => _photoProgress = sent / total);
+        },
+      );
       if (!mounted) return;
       setState(() {
         _photoUrl = updated.photoUrl;
@@ -283,8 +307,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(
-                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: _goBack),
               const SizedBox(height: AppSpacing.lg),
               const OnboardingProgressBar(currentStep: 0),
               const SizedBox(height: AppSpacing.lg),
@@ -345,8 +368,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                   text: 'about yourself',
                   style: TextStyle(
                     foreground: Paint()
-                      ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                          .createShader(const Rect.fromLTWH(0, 0, 220, 26)),
+                      ..shader =
+                          const LinearGradient(colors: AppColors.ctaGradient)
+                              .createShader(const Rect.fromLTWH(0, 0, 220, 26)),
                   ),
                 ),
               ],

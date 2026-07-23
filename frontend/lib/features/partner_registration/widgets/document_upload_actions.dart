@@ -189,29 +189,39 @@ Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) {
   );
 }
 
-Future<void> pickAndConfirmSelfie(BuildContext context, WidgetRef ref) async {
+/// Returns true only after the chosen selfie has been uploaded successfully.
+/// When [cameraOnly] is true, the rider cannot choose an existing gallery
+/// image, which is used for the selfie required to begin a delivery shift.
+Future<bool> pickAndConfirmSelfie(
+  BuildContext context,
+  WidgetRef ref, {
+  bool cameraOnly = false,
+}) async {
   while (true) {
-    if (!context.mounted) return;
-    final source = await showImageSourceSheet(context);
-    if (source == null) return;
+    if (!context.mounted) return false;
+    final source = cameraOnly
+        ? ImageSource.camera
+        : await showImageSourceSheet(context);
+    if (source == null) return false;
 
     final path = await ref.read(documentImagePickerProvider).pickImage(source);
-    if (path == null) return;
+    if (path == null) return false;
 
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
     final useThisPhoto = await showSelfieConfirmSheet(context, path);
-    if (useThisPhoto == null) return;
+    if (useThisPhoto == null) return false;
     if (useThisPhoto == false) continue;
 
     try {
       await ref
           .read(documentsProvider.notifier)
           .upload(DocumentType.profilePhoto, path);
+      return true;
     } catch (_) {
       if (context.mounted) {
         AppSnackBar.error(context, 'Upload failed, please try again');
       }
+      return false;
     }
-    return;
   }
 }

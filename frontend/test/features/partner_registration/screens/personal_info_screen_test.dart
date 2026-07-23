@@ -258,6 +258,10 @@ Widget buildApp({
           page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
         ),
         GetPage(
+          name: AppRoutes.address,
+          page: () => const Scaffold(body: Text('Address Screen')),
+        ),
+        GetPage(
           name: AppRoutes.vehicleRegistration,
           page: () => const Scaffold(body: Text('Vehicle Registration Screen')),
         ),
@@ -366,10 +370,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.updateCalls, 1);
-    // No onboardingStatusRepository override was supplied, so the resolver
-    // fails to fetch a fresh status and falls back to the pre-refactor
-    // default rather than stranding the rider after a successful save.
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+    // If the status lookup is unavailable, progress to the known next step
+    // rather than leaving the primary action in a loading state.
+    expect(find.text('Address Screen'), findsOneWidget);
   });
 
   testWidgets(
@@ -431,7 +434,7 @@ void main() {
   });
 
   testWidgets(
-      'falls back to Vehicle Selection when the post-save status fetch fails',
+      'falls back to Address when the post-save status fetch fails',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeProfileRepository(mockProfile(
@@ -452,7 +455,7 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+    expect(find.text('Address Screen'), findsOneWidget);
   });
 
   testWidgets('a locked (403) section shows a banner and does not navigate',

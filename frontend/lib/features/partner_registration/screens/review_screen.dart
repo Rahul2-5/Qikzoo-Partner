@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/helpers/date_helper.dart';
 import '../../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../../core/navigation/onboarding_back_navigation.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -158,6 +159,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     }
   }
 
+  Future<void> _goBack() =>
+      popOnboardingOrGoTo(context, AppRoutes.emergencyContact);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,8 +173,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(
-                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: _goBack),
               const SizedBox(height: AppSpacing.lg),
               const OnboardingProgressBar(currentStep: 5),
               const SizedBox(height: AppSpacing.lg),
@@ -244,8 +247,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   text: 'Submit',
                   style: TextStyle(
                     foreground: Paint()
-                      ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                          .createShader(const Rect.fromLTWH(0, 0, 140, 26)),
+                      ..shader =
+                          const LinearGradient(colors: AppColors.ctaGradient)
+                              .createShader(const Rect.fromLTWH(0, 0, 140, 26)),
                   ),
                 ),
               ],
@@ -293,7 +297,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             rows: [
               _Row('Name', profile.name),
               if (profile.dateOfBirth != null)
-                _Row('Date of Birth', DateHelper.formatShort(profile.dateOfBirth!)),
+                _Row('Date of Birth',
+                    DateHelper.formatShort(profile.dateOfBirth!)),
               if (profile.gender != null) _Row('Gender', profile.gender!.name),
               _Row('Photo', profile.photoUrl != null ? 'Uploaded' : 'Missing'),
             ],
@@ -315,11 +320,17 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             onEdit: () => _editSection(AppRoutes.kyc),
             rows: [
               _Row('Government ID', _kyc?.governmentIdType?.label ?? '—'),
-              _Row('ID Document',
-                  (_kyc?.hasGovernmentIdDocument ?? false) ? 'Uploaded' : 'Missing'),
+              _Row(
+                  'ID Document',
+                  (_kyc?.hasGovernmentIdDocument ?? false)
+                      ? 'Uploaded'
+                      : 'Missing'),
               _Row('Driving Licence', _kyc?.drivingLicenseNumber ?? '—'),
-              _Row('Licence Document',
-                  (_kyc?.hasDrivingLicenseDocument ?? false) ? 'Uploaded' : 'Missing'),
+              _Row(
+                  'Licence Document',
+                  (_kyc?.hasDrivingLicenseDocument ?? false)
+                      ? 'Uploaded'
+                      : 'Missing'),
               _Row('Bank Account', _kyc?.bankAccountNumberMasked ?? '—'),
             ],
           ),
@@ -328,10 +339,18 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             title: 'Vehicle',
             onEdit: () => _editSection(AppRoutes.vehicleRegistration),
             rows: [
-              _Row('Type', vehicle.registrationNumber.isEmpty ? '—' : vehicle.type.label),
-              _Row('Registration Number',
-                  vehicle.registrationNumber.isEmpty ? '—' : vehicle.registrationNumber),
-              _Row('RC Document', vehicle.hasRcDocument ? 'Uploaded' : 'Missing'),
+              _Row(
+                  'Type',
+                  vehicle.registrationNumber.isEmpty
+                      ? '—'
+                      : vehicle.type.label),
+              _Row(
+                  'Registration Number',
+                  vehicle.registrationNumber.isEmpty
+                      ? '—'
+                      : vehicle.registrationNumber),
+              _Row('RC Document',
+                  vehicle.hasRcDocument ? 'Uploaded' : 'Missing'),
               _Row('Insurance Document',
                   vehicle.hasInsuranceDocument ? 'Uploaded' : 'Missing'),
             ],

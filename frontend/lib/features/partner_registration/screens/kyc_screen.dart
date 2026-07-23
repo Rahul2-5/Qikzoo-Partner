@@ -11,6 +11,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/helpers/date_helper.dart';
 import '../../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../../core/navigation/onboarding_back_navigation.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -253,28 +254,24 @@ class _KycScreenState extends ConsumerState<KycScreen> {
         final updated = await ref.read(kycRepositoryProvider).submit(
               governmentIdType:
                   _govIdType != o?.governmentIdType ? _govIdType : null,
-              governmentIdNumber:
-                  _govIdNumberController.text.trim() !=
-                          (o?.governmentIdNumber ?? '')
-                      ? _govIdNumberController.text.trim()
-                      : null,
-              drivingLicenseNumber:
-                  _dlNumberController.text.trim() !=
-                          (o?.drivingLicenseNumber ?? '')
-                      ? _dlNumberController.text.trim()
-                      : null,
+              governmentIdNumber: _govIdNumberController.text.trim() !=
+                      (o?.governmentIdNumber ?? '')
+                  ? _govIdNumberController.text.trim()
+                  : null,
+              drivingLicenseNumber: _dlNumberController.text.trim() !=
+                      (o?.drivingLicenseNumber ?? '')
+                  ? _dlNumberController.text.trim()
+                  : null,
               drivingLicenseExpiry:
                   _dlExpiry != o?.drivingLicenseExpiry ? _dlExpiry : null,
-              bankAccountHolderName:
-                  _holderController.text.trim() !=
-                          (o?.bankAccountHolderName ?? '')
-                      ? _holderController.text.trim()
-                      : null,
+              bankAccountHolderName: _holderController.text.trim() !=
+                      (o?.bankAccountHolderName ?? '')
+                  ? _holderController.text.trim()
+                  : null,
               bankAccountNumber:
                   accountTyped ? _accountController.text.trim() : null,
-              confirmBankAccountNumber: accountTyped
-                  ? _confirmAccountController.text.trim()
-                  : null,
+              confirmBankAccountNumber:
+                  accountTyped ? _confirmAccountController.text.trim() : null,
               bankIfsc: _ifscController.text.trim().toUpperCase() !=
                       (o?.bankIfsc ?? '')
                   ? _ifscController.text.trim().toUpperCase()
@@ -403,13 +400,13 @@ class _KycScreenState extends ConsumerState<KycScreen> {
     try {
       final updated =
           await ref.read(kycRepositoryProvider).uploadGovernmentIdDocument(
-                file,
-                cancelToken: cancelToken,
-                onSendProgress: (sent, total) {
-                  if (!mounted || total <= 0) return;
-                  setState(() => _govIdProgress = sent / total);
-                },
-              );
+        file,
+        cancelToken: cancelToken,
+        onSendProgress: (sent, total) {
+          if (!mounted || total <= 0) return;
+          setState(() => _govIdProgress = sent / total);
+        },
+      );
       if (!mounted) return;
       setState(() {
         _original = updated;
@@ -477,13 +474,13 @@ class _KycScreenState extends ConsumerState<KycScreen> {
     try {
       final updated =
           await ref.read(kycRepositoryProvider).uploadDrivingLicenseDocument(
-                file,
-                cancelToken: cancelToken,
-                onSendProgress: (sent, total) {
-                  if (!mounted || total <= 0) return;
-                  setState(() => _dlProgress = sent / total);
-                },
-              );
+        file,
+        cancelToken: cancelToken,
+        onSendProgress: (sent, total) {
+          if (!mounted || total <= 0) return;
+          setState(() => _dlProgress = sent / total);
+        },
+      );
       if (!mounted) return;
       setState(() {
         _original = updated;
@@ -575,7 +572,7 @@ class _KycScreenState extends ConsumerState<KycScreen> {
 
   Future<void> _handleBackPressed() async {
     if (!_isTextDirty || await _confirmDiscardChanges()) {
-      if (mounted) Get.back();
+      if (mounted) await popOnboardingOrGoTo(context, AppRoutes.address);
     }
   }
 
@@ -659,8 +656,9 @@ class _KycScreenState extends ConsumerState<KycScreen> {
                   text: 'identity',
                   style: TextStyle(
                     foreground: Paint()
-                      ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                          .createShader(const Rect.fromLTWH(0, 0, 140, 26)),
+                      ..shader =
+                          const LinearGradient(colors: AppColors.ctaGradient)
+                              .createShader(const Rect.fromLTWH(0, 0, 140, 26)),
                   ),
                 ),
               ],
@@ -825,8 +823,8 @@ class _KycScreenState extends ConsumerState<KycScreen> {
         if (_dlExpiry != null && !_isDlExpiryValid) ...[
           const SizedBox(height: 4),
           Text('Expiry date must be in the future',
-              style:
-                  AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary)),
         ],
         const SizedBox(height: AppSpacing.md),
         _DocumentUploadRow(
@@ -988,8 +986,8 @@ class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: AppTypography.bodyMedium
-                  .copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+              style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
           const SizedBox(height: AppSpacing.md),
           ...children,
         ],
@@ -1043,8 +1041,7 @@ class _DocumentUploadRow extends StatelessWidget {
                 Text(title, style: AppTypography.bodyMedium),
                 const SizedBox(height: 2),
                 Text(_statusLabel,
-                    style: AppTypography.caption
-                        .copyWith(color: _statusColor)),
+                    style: AppTypography.caption.copyWith(color: _statusColor)),
                 if (state == _DocState.uploading) ...[
                   const SizedBox(height: 4),
                   ClipRRect(
@@ -1102,7 +1099,8 @@ class _DocumentUploadRow extends StatelessWidget {
   Color get _statusColor => switch (state) {
         _DocState.uploading => AppColors.secondary,
         _DocState.error => AppColors.error,
-        _DocState.idle => isUploaded ? AppColors.success : AppColors.textSecondary,
+        _DocState.idle =>
+          isUploaded ? AppColors.success : AppColors.textSecondary,
       };
 
   Widget _buildAction() {

@@ -9,6 +9,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../../core/navigation/onboarding_back_navigation.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -231,6 +232,9 @@ class _AddressScreenState extends ConsumerState<AddressScreen> {
     }
   }
 
+  Future<void> _goBack() =>
+      popOnboardingOrGoTo(context, AppRoutes.personalInfo);
+
   Future<void> _useCurrentLocation() async {
     if (_sectionLocked || _isLocating) return;
     setState(() {
@@ -329,8 +333,7 @@ class _AddressScreenState extends ConsumerState<AddressScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(
-                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: _goBack),
               const SizedBox(height: AppSpacing.lg),
               const OnboardingProgressBar(currentStep: 1),
               const SizedBox(height: AppSpacing.lg),
@@ -391,8 +394,9 @@ class _AddressScreenState extends ConsumerState<AddressScreen> {
                   text: 'Address',
                   style: TextStyle(
                     foreground: Paint()
-                      ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                          .createShader(const Rect.fromLTWH(0, 0, 120, 26)),
+                      ..shader =
+                          const LinearGradient(colors: AppColors.ctaGradient)
+                              .createShader(const Rect.fromLTWH(0, 0, 120, 26)),
                   ),
                 ),
               ],
@@ -405,8 +409,7 @@ class _AddressScreenState extends ConsumerState<AddressScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.card),
@@ -510,8 +513,9 @@ class _AddressScreenState extends ConsumerState<AddressScreen> {
                     showFloatingLabel: false,
                     hint: 'Enter your city',
                     readOnly: _sectionLocked,
-                    errorText:
-                        _cityTouched && !_isCityValid ? 'City is required' : null,
+                    errorText: _cityTouched && !_isCityValid
+                        ? 'City is required'
+                        : null,
                     prefixIcon: const Icon(LucideIcons.building,
                         color: AppColors.secondary, size: 20),
                     onChanged: (_) => setState(() => _cityTouched = true),

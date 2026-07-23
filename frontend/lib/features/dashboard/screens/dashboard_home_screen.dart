@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -19,8 +20,11 @@ import '../../../providers/authentication/auth_provider.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
 import '../../../providers/orders/dispatch_offer_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
+import '../../../shared/widgets/buttons/primary_cta_button.dart';
+import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
+import '../../partner_registration/screens/selfie_verification_screen.dart';
 import '../widgets/todays_earnings_card.dart';
 
 /// Rider dashboard home — reached once onboarding is APPROVED and the
@@ -89,7 +93,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
     return 'Good evening';
   }
 
-  Future<void> _onToggleAvailability(RiderAvailabilityStatus current) async {
+  Future<void> _setAvailability(RiderAvailabilityStatus current) async {
     if (_isTogglingAvailability) return;
     setState(() => _isTogglingAvailability = true);
     try {
@@ -112,6 +116,30 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
       AppSnackBar.error(context, 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _isTogglingAvailability = false);
+    }
+  }
+
+  Future<void> _onToggleAvailability(RiderAvailabilityStatus current) async {
+    if (current.isOnlineFacing) {
+      await _setAvailability(current);
+      return;
+    }
+
+    final approved = await ConfirmationDialog.show(
+      context,
+      title: 'Go online?',
+      message:
+          'Confirm that you are ready to accept deliveries. A quick selfie is required before your shift starts.',
+    );
+    if (approved != true || !mounted) return;
+
+    final selfieCaptured = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => const SelfieVerificationScreen(isOnlineCheck: true),
+      ),
+    );
+    if (selfieCaptured == true && mounted) {
+      await _setAvailability(current);
     }
   }
 
@@ -168,6 +196,13 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                         const SizedBox(height: AppSpacing.lg),
                         TodaysEarningsCard(
                             amount: stats.todaysEarningsPaise / 100.0),
+                        const SizedBox(height: AppSpacing.lg),
+                        _AvailabilityActionCard(
+                          isOnline: stats.availabilityStatus.isOnlineFacing,
+                          isBusy: _isTogglingAvailability,
+                          onPressed: () =>
+                              _onToggleAvailability(stats.availabilityStatus),
+                        ),
                         const SizedBox(height: AppSpacing.lg),
                         _StatGrid(stats: stats),
                         const SizedBox(height: AppSpacing.lg),
@@ -352,14 +387,15 @@ class _StatGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 480 ? 3 : 2;
         return GridView.count(
-          crossAxisCount: columns,
+          // Keep the dashboard's at-a-glance information in the familiar
+          // two-column rhythm shown in the partner app reference.
+          crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: AppSpacing.sm,
           crossAxisSpacing: AppSpacing.sm,
-          childAspectRatio: 1.05,
+          mainAxisExtent: 148,
           children: tiles,
         );
       },
@@ -433,6 +469,75 @@ class _StatTile extends StatelessWidget {
   }
 }
 
+class _AvailabilityActionCard extends StatelessWidget {
+  final bool isOnline;
+  final bool isBusy;
+  final VoidCallback onPressed;
+
+  const _AvailabilityActionCard({
+    required this.isOnline,
+    required this.isBusy,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isOnline ? AppColors.success : AppColors.secondary;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                ),
+                child: Icon(
+                  isOnline ? LucideIcons.radioTower : LucideIcons.power,
+                  color: color,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  isOnline ? 'You are online' : 'Ready to start delivering?',
+                  style: AppTypography.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            isOnline
+                ? 'You can now receive delivery requests in your working zone.'
+                : 'Go online when you are ready to accept delivery requests.',
+            style: AppTypography.caption,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          PrimaryCtaButton(
+            label: isOnline ? 'Go Offline' : 'Go Online',
+            isLoading: isBusy,
+            trailingIcon: isOnline ? LucideIcons.powerOff : LucideIcons.power,
+            onPressed: isBusy ? null : onPressed,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -463,3 +568,10 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
+
+@Preview(
+  name: 'Home dashboard',
+  group: 'Dashboard',
+  size: Size(390, 844),
+)
+Widget dashboardHomeScreenPreview() => const DashboardHomeScreen();

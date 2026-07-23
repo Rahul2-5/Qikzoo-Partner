@@ -20,6 +20,7 @@ import '../../features/partner_registration/screens/vehicle_details_screen.dart'
 import '../../features/partner_registration/screens/document_upload_screen.dart';
 import '../../features/partner_registration/screens/selfie_verification_screen.dart';
 import '../../features/partner_registration/screens/welcome_kit_screen.dart';
+import '../../features/partner_registration/screens/payment_status_screens.dart';
 import '../../features/partner_registration/screens/application_submitted_screen.dart';
 import '../../features/dashboard/screens/dashboard_home_screen.dart';
 import '../../features/earnings/screens/earnings_screen.dart';
@@ -83,6 +84,14 @@ class AppPages {
         name: AppRoutes.selfieVerification,
         page: () => const SelfieVerificationScreen()),
     GetPage(name: AppRoutes.welcomeKit, page: () => const WelcomeKitScreen()),
+    GetPage(
+      name: AppRoutes.paymentComingSoon,
+      page: () => const PaymentComingSoonScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.applicationUnderReview,
+      page: () => ApplicationUnderReviewScreen(),
+    ),
     GetPage(
         name: AppRoutes.applicationSubmitted,
         page: () => const ApplicationSubmittedScreen()),

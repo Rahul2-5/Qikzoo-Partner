@@ -17,7 +17,24 @@ import '../widgets/document_upload_actions.dart';
 import '../widgets/selfie_preview_frame.dart';
 
 class SelfieVerificationScreen extends ConsumerWidget {
-  const SelfieVerificationScreen({super.key});
+  /// True when a rider must verify their face immediately before a shift.
+  final bool isOnlineCheck;
+
+  const SelfieVerificationScreen({
+    super.key,
+    this.isOnlineCheck = false,
+  });
+
+  Future<void> _captureOnlineSelfie(BuildContext context, WidgetRef ref) async {
+    final uploaded = await pickAndConfirmSelfie(
+      context,
+      ref,
+      cameraOnly: true,
+    );
+    if (uploaded && context.mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,18 +65,19 @@ class SelfieVerificationScreen extends ConsumerWidget {
               IconButtonCustom(
                   icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
               const SizedBox(height: AppSpacing.lg),
-              const StepProgressIndicator(totalSteps: 6, currentStep: 5),
+              if (!isOnlineCheck)
+                const StepProgressIndicator(totalSteps: 6, currentStep: 5),
               const SizedBox(height: AppSpacing.lg),
               Text.rich(
                 TextSpan(
                   style: AppTypography.h1.copyWith(fontSize: 26),
                   children: [
-                    const TextSpan(
-                      text: 'Take a ',
+                    TextSpan(
+                      text: isOnlineCheck ? 'Quick ' : 'Take a ',
                       style: TextStyle(color: AppColors.textPrimary),
                     ),
                     TextSpan(
-                      text: 'Selfie',
+                      text: isOnlineCheck ? 'selfie check' : 'Selfie',
                       style: TextStyle(
                         foreground: Paint()
                           ..shader = const LinearGradient(
@@ -72,7 +90,9 @@ class SelfieVerificationScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Take a clear selfie for verification',
+                isOnlineCheck
+                    ? 'Take a clear selfie to start receiving delivery requests.'
+                    : 'Take a clear selfie for verification',
                 style:
                     AppTypography.body.copyWith(color: AppColors.textSecondary),
               ),
@@ -105,12 +125,18 @@ class SelfieVerificationScreen extends ConsumerWidget {
                 ),
               ),
               PrimaryCtaButton(
-                label: isUploaded ? 'Continue' : 'Capture',
+                label: isOnlineCheck
+                    ? 'Take selfie'
+                    : (isUploaded ? 'Continue' : 'Capture'),
                 trailingIcon:
-                    isUploaded ? LucideIcons.arrowRight : LucideIcons.camera,
-                onPressed: () => isUploaded
-                    ? Get.toNamed(AppRoutes.welcomeKit)
-                    : pickAndConfirmSelfie(context, ref),
+                    isOnlineCheck || !isUploaded
+                        ? LucideIcons.camera
+                        : LucideIcons.arrowRight,
+                onPressed: isOnlineCheck
+                    ? () => _captureOnlineSelfie(context, ref)
+                    : (isUploaded
+                        ? () => Get.toNamed(AppRoutes.welcomeKit)
+                        : () => pickAndConfirmSelfie(context, ref)),
               ),
               const SizedBox(height: AppSpacing.md),
             ],

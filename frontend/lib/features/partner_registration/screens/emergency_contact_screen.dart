@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../../core/navigation/onboarding_back_navigation.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -173,6 +174,9 @@ class _EmergencyContactScreenState
     }
   }
 
+  Future<void> _goBack() =>
+      popOnboardingOrGoTo(context, AppRoutes.vehicleRegistration);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,8 +188,7 @@ class _EmergencyContactScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(
-                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: _goBack),
               const SizedBox(height: AppSpacing.lg),
               const OnboardingProgressBar(currentStep: 4),
               const SizedBox(height: AppSpacing.lg),
@@ -247,8 +250,9 @@ class _EmergencyContactScreenState
                   text: 'Contact',
                   style: TextStyle(
                     foreground: Paint()
-                      ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                          .createShader(const Rect.fromLTWH(0, 0, 140, 26)),
+                      ..shader =
+                          const LinearGradient(colors: AppColors.ctaGradient)
+                              .createShader(const Rect.fromLTWH(0, 0, 140, 26)),
                   ),
                 ),
               ],
@@ -328,8 +332,7 @@ class _EmergencyContactScreenState
                     maxLength: 10,
                     readOnly: _sectionLocked,
                     errorText: _phoneTouched && !_isPhoneValid
-                        ? (Validators.isValidPhone(
-                                _phoneController.text.trim())
+                        ? (Validators.isValidPhone(_phoneController.text.trim())
                             ? 'Cannot be the same as your own number'
                             : 'Enter a valid 10-digit phone number')
                         : null,

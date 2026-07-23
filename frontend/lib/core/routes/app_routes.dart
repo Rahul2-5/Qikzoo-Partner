@@ -19,6 +19,8 @@ class AppRoutes {
   static const documentUpload = '/documents';
   static const selfieVerification = '/registration/selfie-verification';
   static const welcomeKit = '/registration/welcome-kit';
+  static const paymentComingSoon = '/registration/payment-coming-soon';
+  static const applicationUnderReview = '/registration/application-under-review';
   static const applicationSubmitted = '/registration/application-submitted';
   static const bankDetails = '/bank-details';
   static const verificationStatus = '/verification-status';

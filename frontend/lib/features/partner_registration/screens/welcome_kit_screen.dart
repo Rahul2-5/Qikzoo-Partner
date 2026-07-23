@@ -60,7 +60,7 @@ class _WelcomeKitScreenState extends State<WelcomeKitScreen> {
       if (!mounted) return;
 
       if (isSuccessful) {
-        Get.offNamed(AppRoutes.applicationSubmitted);
+        Get.offNamed(AppRoutes.paymentComingSoon);
         return;
       }
 

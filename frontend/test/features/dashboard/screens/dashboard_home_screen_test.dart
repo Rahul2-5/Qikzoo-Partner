@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/dashboard/screens/dashboard_home_screen.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/document_verification/document_model.dart';
 import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
+import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
+import 'package:delivery_partner_app/repositories/document_verification/document_repository.dart';
 import 'package:delivery_partner_app/repositories/orders/dispatch_repository.dart';
 
 class FakeDashboardRepository implements DashboardRepository {
@@ -65,6 +69,35 @@ class FakeDispatchRepository implements DispatchRepository {
 
   @override
   Future<void> reject(String attemptId) => throw UnimplementedError();
+}
+
+class FakeDocumentRepository implements DocumentRepository {
+  List<DocumentModel> documents = const [
+    DocumentModel(
+      type: DocumentType.profilePhoto,
+      status: DocumentStatus.notUploaded,
+    ),
+  ];
+
+  @override
+  Future<List<DocumentModel>> getDocuments() async => documents;
+
+  @override
+  Future<DocumentModel> uploadDocument(
+      DocumentType type, String filePath) async {
+    final uploaded = DocumentModel(
+      type: type,
+      status: DocumentStatus.pendingVerification,
+      fileUrl: filePath,
+    );
+    documents = [uploaded];
+    return uploaded;
+  }
+}
+
+class FakeDocumentImagePicker implements DocumentImagePicker {
+  @override
+  Future<String?> pickImage(ImageSource source) async => '/tmp/selfie.jpg';
 }
 
 DispatchOfferModel mockOffer() => DispatchOfferModel(
@@ -126,6 +159,7 @@ Widget buildApp({
   FakeAuthRepository? authRepository,
   FakeDispatchRepository? dispatchRepository,
 }) {
+  final documentRepository = FakeDocumentRepository();
   return ProviderScope(
     overrides: [
       dashboardRepositoryProvider.overrideWithValue(dashboardRepository),
@@ -133,6 +167,8 @@ Widget buildApp({
           .overrideWithValue(dispatchRepository ?? FakeDispatchRepository()),
       if (authRepository != null)
         authRepositoryProvider.overrideWithValue(authRepository),
+      documentRepositoryProvider.overrideWithValue(documentRepository),
+      documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
     ],
     child: GetMaterialApp(
       initialRoute: AppRoutes.dashboard,
@@ -190,7 +226,7 @@ void main() {
     expect(find.text('—'), findsNWidgets(3));
   });
 
-  testWidgets('tapping the toggle while offline goes online and updates the chip',
+  testWidgets('going online requires approval and a selfie before updating the chip',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(
@@ -199,6 +235,18 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('availability-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Go online?'), findsOneWidget);
+    expect(repo.goOnlineCalls, 0);
+
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    expect(find.text('Quick selfie check'), findsOneWidget);
+
+    await tester.tap(find.text('Take selfie'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use Photo'));
     await tester.pumpAndSettle();
 
     expect(repo.goOnlineCalls, 1);
@@ -232,6 +280,13 @@ void main() {
     await tester.tap(find.byKey(const Key('availability-toggle')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take selfie'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use Photo'));
+    await tester.pumpAndSettle();
+
     expect(authRepo.loggedOut, isTrue);
     expect(find.text('Welcome Screen'), findsOneWidget);
   });
@@ -248,6 +303,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('availability-toggle')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take selfie'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use Photo'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining("You're offline") , findsNothing);

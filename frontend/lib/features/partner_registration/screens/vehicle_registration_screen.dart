@@ -11,6 +11,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/helpers/date_helper.dart';
 import '../../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../../core/navigation/onboarding_back_navigation.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -130,8 +131,7 @@ class _VehicleRegistrationScreenState
     }
   }
 
-  bool get _isRegNumberValid =>
-      _regNumberController.text.trim().length >= 4;
+  bool get _isRegNumberValid => _regNumberController.text.trim().length >= 4;
 
   bool get _isInsuranceExpiryValid =>
       _insuranceExpiryController.text.trim().isEmpty ||
@@ -301,15 +301,16 @@ class _VehicleRegistrationScreenState
     final cancelToken = CancelToken();
     _rcCancelToken = cancelToken;
     try {
-      final updated = await ref.read(vehicleRepositoryProvider).uploadRcDocument(
-            vehicle.id,
-            file,
-            cancelToken: cancelToken,
-            onSendProgress: (sent, total) {
-              if (!mounted || total <= 0) return;
-              setState(() => _rcProgress = sent / total);
-            },
-          );
+      final updated =
+          await ref.read(vehicleRepositoryProvider).uploadRcDocument(
+        vehicle.id,
+        file,
+        cancelToken: cancelToken,
+        onSendProgress: (sent, total) {
+          if (!mounted || total <= 0) return;
+          setState(() => _rcProgress = sent / total);
+        },
+      );
       if (!mounted) return;
       setState(() {
         _vehicles = _replaceVehicle(updated);
@@ -379,14 +380,14 @@ class _VehicleRegistrationScreenState
     try {
       final updated =
           await ref.read(vehicleRepositoryProvider).uploadInsuranceDocument(
-                vehicle.id,
-                file,
-                cancelToken: cancelToken,
-                onSendProgress: (sent, total) {
-                  if (!mounted || total <= 0) return;
-                  setState(() => _insuranceProgress = sent / total);
-                },
-              );
+        vehicle.id,
+        file,
+        cancelToken: cancelToken,
+        onSendProgress: (sent, total) {
+          if (!mounted || total <= 0) return;
+          setState(() => _insuranceProgress = sent / total);
+        },
+      );
       if (!mounted) return;
       setState(() {
         _vehicles = _replaceVehicle(updated);
@@ -451,6 +452,8 @@ class _VehicleRegistrationScreenState
     Get.toNamed(route);
   }
 
+  Future<void> _goBack() => popOnboardingOrGoTo(context, AppRoutes.kyc);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -462,8 +465,7 @@ class _VehicleRegistrationScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.sm),
-              IconButtonCustom(
-                  icon: LucideIcons.arrowLeft, onPressed: () => Get.back()),
+              IconButtonCustom(icon: LucideIcons.arrowLeft, onPressed: _goBack),
               const SizedBox(height: AppSpacing.lg),
               const OnboardingProgressBar(currentStep: 3),
               const SizedBox(height: AppSpacing.lg),
@@ -473,8 +475,9 @@ class _VehicleRegistrationScreenState
                   label: 'Continue',
                   trailingIcon: LucideIcons.arrowRight,
                   isLoading: _isNavigating,
-                  onPressed:
-                      _isSectionComplete && !_sectionLocked ? _onContinue : null,
+                  onPressed: _isSectionComplete && !_sectionLocked
+                      ? _onContinue
+                      : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
               ],
@@ -525,8 +528,9 @@ class _VehicleRegistrationScreenState
                   text: 'Vehicle',
                   style: TextStyle(
                     foreground: Paint()
-                      ..shader = const LinearGradient(colors: AppColors.ctaGradient)
-                          .createShader(const Rect.fromLTWH(0, 0, 120, 26)),
+                      ..shader =
+                          const LinearGradient(colors: AppColors.ctaGradient)
+                              .createShader(const Rect.fromLTWH(0, 0, 120, 26)),
                   ),
                 ),
               ],
@@ -647,9 +651,8 @@ class _VehicleRegistrationScreenState
               FilterChipCustom(
                 label: type.label,
                 selected: _type == type,
-                onTap: _sectionLocked
-                    ? () {}
-                    : () => setState(() => _type = type),
+                onTap:
+                    _sectionLocked ? () {} : () => setState(() => _type = type),
               ),
           ],
         ),
@@ -707,8 +710,8 @@ class _VehicleRegistrationScreenState
         if (!_isInsuranceExpiryValid) ...[
           const SizedBox(height: 4),
           Text('Expiry date must be in the future',
-              style:
-                  AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary)),
         ],
         const SizedBox(height: AppSpacing.md),
         LabeledField(
@@ -749,7 +752,8 @@ class _SummaryRow extends StatelessWidget {
   final String value;
   final Color? valueColor;
 
-  const _SummaryRow({required this.label, required this.value, this.valueColor});
+  const _SummaryRow(
+      {required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
@@ -796,8 +800,8 @@ class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: AppTypography.bodyMedium
-                  .copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+              style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
           const SizedBox(height: AppSpacing.md),
           ...children,
         ],
@@ -851,8 +855,7 @@ class _DocumentUploadRow extends StatelessWidget {
                 Text(title, style: AppTypography.bodyMedium),
                 const SizedBox(height: 2),
                 Text(_statusLabel,
-                    style: AppTypography.caption
-                        .copyWith(color: _statusColor)),
+                    style: AppTypography.caption.copyWith(color: _statusColor)),
                 if (state == _DocState.uploading) ...[
                   const SizedBox(height: 4),
                   ClipRRect(
@@ -910,7 +913,8 @@ class _DocumentUploadRow extends StatelessWidget {
   Color get _statusColor => switch (state) {
         _DocState.uploading => AppColors.secondary,
         _DocState.error => AppColors.error,
-        _DocState.idle => isUploaded ? AppColors.success : AppColors.textSecondary,
+        _DocState.idle =>
+          isUploaded ? AppColors.success : AppColors.textSecondary,
       };
 
   Widget _buildAction() {
