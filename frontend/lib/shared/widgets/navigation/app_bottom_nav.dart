@@ -4,9 +4,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/routes/app_routes.dart';
 import 'floating_bottom_nav.dart';
 
+// Wallet/Earnings are a later phase (not linked from nav yet) — only the
+// three screens with a real, production implementation are visible tabs.
 const _tabRoutes = [
   AppRoutes.dashboard,
-  AppRoutes.earnings,
   AppRoutes.orders,
   AppRoutes.profile,
 ];
@@ -30,10 +31,6 @@ class AppBottomNav extends StatelessWidget {
               icon: LucideIcons.home,
               activeIcon: LucideIcons.home,
               label: 'Home'),
-          NavItem(
-              icon: LucideIcons.indianRupee,
-              activeIcon: LucideIcons.indianRupee,
-              label: 'Earnings'),
           NavItem(
               icon: LucideIcons.receipt,
               activeIcon: LucideIcons.receipt,

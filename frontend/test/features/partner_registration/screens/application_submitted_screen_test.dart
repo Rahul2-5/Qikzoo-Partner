@@ -1,6 +1,4 @@
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
-import 'package:delivery_partner_app/features/authentication/widgets/signup_bonus_dialog.dart';
-import 'package:delivery_partner_app/features/dashboard/screens/dashboard_screen.dart';
 import 'package:delivery_partner_app/features/partner_registration/screens/application_submitted_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,9 +19,13 @@ Widget buildApp() {
         name: AppRoutes.applicationSubmitted,
         page: () => const ApplicationSubmittedScreen(),
       ),
+      // Placeholder landing target — the real dashboard route builds
+      // DashboardHomeScreen, which (like every other screen) never reads
+      // Get.arguments; this test only needs to confirm the auto-redirect
+      // itself fires, not any dashboard-specific content.
       GetPage(
         name: AppRoutes.dashboard,
-        page: () => DashboardScreen(showSignupBonus: Get.arguments == true),
+        page: () => const Scaffold(body: Text('Dashboard Screen')),
       ),
     ],
   );
@@ -48,7 +50,7 @@ void main() {
     expect(find.text('Go to Home'), findsNothing);
   });
 
-  testWidgets('shows signup bonus on first Home after application submission',
+  testWidgets('auto-redirects to the dashboard after the countdown',
       (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
@@ -56,7 +58,7 @@ void main() {
 
     await tester.pump(const Duration(seconds: 4));
     expect(find.text('Application Submitted'), findsOneWidget);
-    expect(find.byType(DashboardScreen), findsNothing);
+    expect(find.text('Dashboard Screen'), findsNothing);
 
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(milliseconds: 400));
@@ -64,17 +66,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Application Submitted'), findsNothing);
-    expect(find.byType(DashboardScreen), findsOneWidget);
-    expect(find.byType(SignupBonusDialog), findsOneWidget);
-
-    await tester.tap(find.text('Start earning'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    expect(find.byType(SignupBonusDialog), findsNothing);
-    expect(find.byType(DashboardScreen), findsOneWidget);
-
-    await tester.pump();
-    expect(find.byType(SignupBonusDialog), findsNothing);
+    expect(find.text('Dashboard Screen'), findsOneWidget);
   });
 }

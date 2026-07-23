@@ -23,6 +23,9 @@ import '../../features/partner_registration/screens/welcome_kit_screen.dart';
 import '../../features/partner_registration/screens/application_submitted_screen.dart';
 import '../../features/dashboard/screens/dashboard_home_screen.dart';
 import '../../features/earnings/screens/earnings_screen.dart';
+import '../../features/orders/screens/active_order_screen.dart';
+import '../../features/orders/screens/incoming_offer_screen.dart';
+import '../../features/orders/screens/order_details_screen.dart';
 import '../../features/orders/screens/orders_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/bank_details/screens/bank_details_screen.dart';
@@ -102,6 +105,13 @@ class AppPages {
     ),
     GetPage(name: AppRoutes.earnings, page: () => const EarningsScreen()),
     GetPage(name: AppRoutes.orders, page: () => const OrdersScreen()),
+    GetPage(
+        name: AppRoutes.incomingOffer, page: () => const IncomingOfferScreen()),
+    GetPage(name: AppRoutes.activeOrder, page: () => const ActiveOrderScreen()),
+    GetPage(
+      name: AppRoutes.orderDetails,
+      page: () => OrderDetailsScreen(riderOrderId: Get.arguments as String),
+    ),
     GetPage(
         name: AppRoutes.wallet,
         page: () => const PlaceholderScreen(title: 'Wallet')),

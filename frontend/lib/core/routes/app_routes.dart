@@ -28,6 +28,9 @@ class AppRoutes {
   static const dashboard = '/dashboard';
   static const earnings = '/earnings';
   static const orders = '/orders';
+  static const incomingOffer = '/orders/offer';
+  static const activeOrder = '/orders/active';
+  static const orderDetails = '/orders/details';
   static const wallet = '/wallet';
   static const support = '/support';
   static const profile = '/profile';

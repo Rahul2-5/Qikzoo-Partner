@@ -1,133 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../models/orders/order_list_entry.dart';
-import '../../../shared/widgets/feedback/app_snack_bar.dart';
-import '../../../shared/widgets/layout/responsive_frame.dart';
-import '../../../shared/widgets/misc/empty_state.dart';
-import '../../../shared/widgets/motion/app_motion_widgets.dart';
-import '../../../shared/widgets/navigation/app_bottom_nav.dart';
-import '../widgets/date_group_header.dart';
-import '../widgets/order_filter_sheet.dart';
-import '../widgets/order_list_card.dart';
-import '../widgets/orders_header.dart';
-import '../widgets/orders_support_banner.dart';
-import '../widgets/orders_tab_bar.dart';
 
-class OrdersScreen extends StatefulWidget {
+import '../../../core/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../models/orders/order_history_page_model.dart';
+import '../../../providers/orders/active_order_provider.dart';
+import '../../../shared/widgets/chips/filter_chip_custom.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/navigation/app_bottom_nav.dart';
+import '../widgets/order_history_list.dart';
+
+/// The Orders tab's landing screen: a persistent "Active order" banner
+/// (if the rider has one — recovers it via `activeOrderProvider`, backed
+/// by `GET /rider/orders/current`) above the paginated
+/// Active/Completed/Cancelled history tabs.
+class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
 
   @override
-  State<OrdersScreen> createState() => _OrdersScreenState();
+  ConsumerState<OrdersScreen> createState() => _OrdersScreenState();
 }
 
-class _OrdersScreenState extends State<OrdersScreen> {
-  final _all = OrderListEntry.mockList();
-  OrdersTab _tab = OrdersTab.all;
-  String _query = '';
-  bool _searchOpen = false;
-  OrdersSort _sort = OrdersSort.newest;
-  OrdersDateFilter _dateFilter = OrdersDateFilter.all;
+class _OrdersScreenState extends ConsumerState<OrdersScreen> {
+  OrderHistoryFilter _filter = OrderHistoryFilter.active;
 
-  void _toggleSearch() {
-    setState(() {
-      _searchOpen = !_searchOpen;
-      if (!_searchOpen) _query = '';
-    });
-  }
-
-  Future<void> _openFilter() async {
-    final result = await OrderFilterSheet.show(
-      context,
-      sort: _sort,
-      dateFilter: _dateFilter,
-    );
-    if (result != null) {
-      setState(() {
-        _sort = result.sort;
-        _dateFilter = result.dateFilter;
-      });
-    }
-  }
-
-  void _openDetails(OrderListEntry entry) {
-    AppSnackBar.info(context, 'Order details coming soon');
+  void _openOrder(String riderOrderId) {
+    Get.toNamed(AppRoutes.orderDetails, arguments: riderOrderId);
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = filterEntries(
-      all: _all,
-      tab: _tab,
-      query: _query,
-      dateFilter: _dateFilter,
-    );
-    final sorted = sortEntries(filtered, _sort);
-    final groups = groupByDate(sorted);
-    var motionIndex = 0;
+    final activeOrderAsync = ref.watch(activeOrderProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: ResponsiveFrame(
-          maxWidth: 520,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          maxWidth: 640,
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppStaggeredReveal(
-                index: 0,
-                child: OrdersHeader(
-                  searchOpen: _searchOpen,
-                  query: _query,
-                  onToggleSearch: _toggleSearch,
-                  onQueryChanged: (q) => setState(() => _query = q),
-                  onOpenFilter: _openFilter,
-                ),
-              ),
+              Text('Orders', style: AppTypography.h1),
               const SizedBox(height: AppSpacing.md),
-              AppStaggeredReveal(
-                index: 1,
-                child: OrdersTabBar(
-                  current: _tab,
-                  onChanged: (t) => setState(() => _tab = t),
-                ),
+              activeOrderAsync.maybeWhen(
+                data: (order) => order == null
+                    ? const SizedBox.shrink()
+                    : _ActiveOrderBanner(
+                        onTap: () => Get.toNamed(AppRoutes.activeOrder),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+              Row(
+                children: [
+                  for (final filter in OrderHistoryFilter.values) ...[
+                    FilterChipCustom(
+                      label: filter.label,
+                      selected: _filter == filter,
+                      onTap: () => setState(() => _filter = filter),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                ],
               ),
               const SizedBox(height: AppSpacing.md),
               Expanded(
-                child: AppAnimatedSwap(
-                  child: sorted.isEmpty
-                      ? const EmptyState(
-                          key: ValueKey('empty-orders'),
-                          icon: LucideIcons.inbox,
-                          message: 'No orders here yet',
-                        )
-                      : ListView(
-                          key: const ValueKey('order-results'),
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            for (final entry in groups.entries) ...[
-                              DateGroupHeader(label: entry.key),
-                              for (final order in entry.value)
-                                AppStaggeredReveal(
-                                  key: ValueKey(order.id),
-                                  index: motionIndex++,
-                                  child: OrderListCard(
-                                    entry: order,
-                                    onTap: () => _openDetails(order),
-                                  ),
-                                ),
-                            ],
-                            const SizedBox(height: AppSpacing.sm),
-                            OrdersSupportBanner(onGetSupport: () {}),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
-                        ),
-                ),
+                child: OrderHistoryList(filter: _filter, onOpen: _openOrder),
               ),
-              const AppBottomNav(currentIndex: 2),
+              const AppBottomNav(currentIndex: 1),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveOrderBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ActiveOrderBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Material(
+        color: AppColors.secondary,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              boxShadow: AppShadows.card,
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.bike, color: Colors.white),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'You have an order in progress',
+                    style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+                  ),
+                ),
+                const Icon(LucideIcons.chevronRight, color: Colors.white),
+              ],
+            ),
           ),
         ),
       ),

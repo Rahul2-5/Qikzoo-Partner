@@ -222,7 +222,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const AppBottomNav(currentIndex: 3),
+              const AppBottomNav(currentIndex: 2),
             ],
           ),
         ),

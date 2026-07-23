@@ -28,6 +28,29 @@ class ApiEndpoints {
   static const riderAvailabilityOnline = '/rider/availability/online';
   static const riderAvailabilityOffline = '/rider/availability/offline';
   static const riderOrders = '/rider/orders';
+  static const riderOrdersCurrent = '/rider/orders/current';
+  static const riderOrdersHistory = '/rider/orders/history';
+  static String riderOrderDetail(String riderOrderId) =>
+      '/rider/orders/$riderOrderId';
+  static String riderOrderArrived(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/arrived';
+  static String riderOrderScanPickupQr(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/scan-pickup-qr';
+  static String riderOrderPickupSuccess(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/pickup-success';
+  static String riderOrderStartDelivery(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/start-delivery';
+  static String riderOrderCompleteDelivery(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/complete-delivery';
+  static String riderOrderCancel(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/cancel';
+
+  static const riderDispatchCurrent = '/rider/dispatch/current';
+  static String riderDispatchAccept(String attemptId) =>
+      '/rider/dispatch/$attemptId/accept';
+  static String riderDispatchReject(String attemptId) =>
+      '/rider/dispatch/$attemptId/reject';
+
   static const riderEarnings = '/rider/earnings';
   static const riderEarningsSummary = '/rider/earnings/summary';
   static const riderWallet = '/rider/wallet';

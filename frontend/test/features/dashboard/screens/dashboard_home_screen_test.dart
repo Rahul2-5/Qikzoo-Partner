@@ -8,8 +8,10 @@ import 'package:delivery_partner_app/features/dashboard/screens/dashboard_home_s
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
+import 'package:delivery_partner_app/repositories/orders/dispatch_repository.dart';
 
 class FakeDashboardRepository implements DashboardRepository {
   FakeDashboardRepository({required this.initial});
@@ -46,6 +48,36 @@ class FakeDashboardRepository implements DashboardRepository {
     return current!;
   }
 }
+
+class FakeDispatchRepository implements DispatchRepository {
+  FakeDispatchRepository({this.offer});
+  DispatchOfferModel? offer;
+  int getCurrentOfferCalls = 0;
+
+  @override
+  Future<DispatchOfferModel?> getCurrentOffer() async {
+    getCurrentOfferCalls++;
+    return offer;
+  }
+
+  @override
+  Future<void> accept(String attemptId) => throw UnimplementedError();
+
+  @override
+  Future<void> reject(String attemptId) => throw UnimplementedError();
+}
+
+DispatchOfferModel mockOffer() => DispatchOfferModel(
+      id: 'attempt-1',
+      jobId: 'job-1',
+      attemptNumber: 1,
+      status: DispatchAttemptStatus.waitingRider,
+      distanceKm: 2.0,
+      searchRadiusKm: 5,
+      broadcast: false,
+      offeredAt: DateTime.now(),
+      expiresAt: DateTime.now().add(const Duration(seconds: 20)),
+    );
 
 class FakeAuthRepository implements AuthRepository {
   bool loggedOut = false;
@@ -92,10 +124,13 @@ void setTallSurface(WidgetTester tester) {
 Widget buildApp({
   required FakeDashboardRepository dashboardRepository,
   FakeAuthRepository? authRepository,
+  FakeDispatchRepository? dispatchRepository,
 }) {
   return ProviderScope(
     overrides: [
       dashboardRepositoryProvider.overrideWithValue(dashboardRepository),
+      dispatchRepositoryProvider
+          .overrideWithValue(dispatchRepository ?? FakeDispatchRepository()),
       if (authRepository != null)
         authRepositoryProvider.overrideWithValue(authRepository),
     ],
@@ -104,6 +139,10 @@ Widget buildApp({
       getPages: [
         GetPage(
             name: AppRoutes.dashboard, page: () => const DashboardHomeScreen()),
+        GetPage(
+          name: AppRoutes.incomingOffer,
+          page: () => const Scaffold(body: Text('Incoming Offer Screen')),
+        ),
         GetPage(
           name: AppRoutes.welcome,
           page: () => const Scaffold(body: Text('Welcome Screen')),
@@ -249,5 +288,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.getStatsCalls, greaterThan(initialCalls));
+  });
+
+  testWidgets('navigates to the incoming offer screen when a dispatch offer appears',
+      (tester) async {
+    setTallSurface(tester);
+    final dashboardRepo = FakeDashboardRepository(initial: mockStats());
+    final dispatchRepo = FakeDispatchRepository(offer: mockOffer());
+    await tester.pumpWidget(buildApp(
+      dashboardRepository: dashboardRepo,
+      dispatchRepository: dispatchRepo,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Incoming Offer Screen'), findsOneWidget);
+  });
+
+  testWidgets('stays on the dashboard when there is no dispatch offer', (tester) async {
+    setTallSurface(tester);
+    final dashboardRepo = FakeDashboardRepository(initial: mockStats());
+    final dispatchRepo = FakeDispatchRepository(offer: null);
+    await tester.pumpWidget(buildApp(
+      dashboardRepository: dashboardRepo,
+      dispatchRepository: dispatchRepo,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ravi Kumar'), findsOneWidget);
+    expect(find.text('Incoming Offer Screen'), findsNothing);
+  });
+
+  testWidgets('resuming the app after being backgrounded re-polls for an offer',
+      (tester) async {
+    setTallSurface(tester);
+    final dashboardRepo = FakeDashboardRepository(initial: mockStats());
+    final dispatchRepo = FakeDispatchRepository(offer: null);
+    await tester.pumpWidget(buildApp(
+      dashboardRepository: dashboardRepo,
+      dispatchRepository: dispatchRepo,
+    ));
+    await tester.pumpAndSettle();
+
+    final before = dispatchRepo.getCurrentOfferCalls;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(dispatchRepo.getCurrentOfferCalls, greaterThan(before));
   });
 }

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -11,17 +14,27 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/dashboard/dashboard_stats_model.dart';
+import '../../../models/orders/dispatch_offer_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
+import '../../../providers/orders/dispatch_offer_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 import '../widgets/todays_earnings_card.dart';
 
 /// Rider dashboard home — reached once onboarding is APPROVED and the
 /// account is ACTIVE (see NextOnboardingStepResolver's `isActive` branch).
 /// Read-only summary of today's shift plus the Go Online/Offline toggle;
-/// Orders/Wallet/Earnings history/Notifications/Live tracking are later
-/// phases and deliberately not linked from here yet.
+/// Wallet/Earnings history/Notifications/Live tracking are later phases
+/// and deliberately not linked from here yet.
+///
+/// Also owns the dispatch-offer poll: this is where a rider is expected to
+/// be watching for work, so it polls `GET /rider/dispatch/current` while
+/// mounted and auto-navigates to the Incoming Offer screen the moment a
+/// WAITING_RIDER attempt appears. Polling unconditionally (not gated on
+/// availability) is safe and correct — a rider who isn't AVAILABLE is
+/// never assigned an attempt server-side (see DispatchEngineService).
 class DashboardHomeScreen extends ConsumerStatefulWidget {
   const DashboardHomeScreen({super.key});
 
@@ -30,8 +43,44 @@ class DashboardHomeScreen extends ConsumerStatefulWidget {
       _DashboardHomeScreenState();
 }
 
-class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
+class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
+    with WidgetsBindingObserver {
   bool _isTogglingAvailability = false;
+  Timer? _offerPollTimer;
+  String? _lastHandledOfferId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startOfferPolling();
+  }
+
+  void _startOfferPolling() {
+    _offerPollTimer?.cancel();
+    _offerPollTimer = Timer.periodic(
+      AppConstants.dispatchOfferPollInterval,
+      (_) => ref.read(dispatchOfferProvider.notifier).refresh(),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(dispatchOfferProvider.notifier).refresh();
+      ref.read(dashboardStatsProvider.notifier).refresh();
+      _startOfferPolling();
+    } else if (state == AppLifecycleState.paused) {
+      _offerPollTimer?.cancel();
+    }
+  }
+
+  @override
+  void dispose() {
+    _offerPollTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   String get _greeting {
     final hour = DateTime.now().hour;
@@ -66,49 +115,70 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     }
   }
 
+  void _onOfferChanged(
+    AsyncValue<DispatchOfferModel?>? previous,
+    AsyncValue<DispatchOfferModel?> next,
+  ) {
+    final offer = next.valueOrNull;
+    if (offer == null) return;
+    if (offer.id == _lastHandledOfferId) return;
+    _lastHandledOfferId = offer.id;
+    Get.toNamed(AppRoutes.incomingOffer);
+  }
+
   @override
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(dashboardStatsProvider);
+    ref.listen(dispatchOfferProvider, _onOfferChanged);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: ResponsiveFrame(
-          maxWidth: 640,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: statsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => _ErrorView(
-              message: error is ApiException
-                  ? error.message
-                  : 'Could not load your dashboard.',
-              onRetry: () => ref.read(dashboardStatsProvider.notifier).refresh(),
-            ),
-            data: (stats) => RefreshIndicator(
-              color: AppColors.secondary,
-              onRefresh: () =>
-                  ref.read(dashboardStatsProvider.notifier).refresh(),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics()),
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                children: [
-                  _GreetingRow(
-                    greeting: _greeting,
-                    riderName: stats.riderName,
-                    status: stats.availabilityStatus,
-                    isToggling: _isTogglingAvailability,
-                    onToggle: () => _onToggleAvailability(stats.availabilityStatus),
+        child: Column(
+          children: [
+            Expanded(
+              child: ResponsiveFrame(
+                maxWidth: 640,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: statsAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => _ErrorView(
+                    message: error is ApiException
+                        ? error.message
+                        : 'Could not load your dashboard.',
+                    onRetry: () => ref.read(dashboardStatsProvider.notifier).refresh(),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  TodaysEarningsCard(amount: stats.todaysEarningsPaise / 100.0),
-                  const SizedBox(height: AppSpacing.lg),
-                  _StatGrid(stats: stats),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
+                  data: (stats) => RefreshIndicator(
+                    color: AppColors.secondary,
+                    onRefresh: () =>
+                        ref.read(dashboardStatsProvider.notifier).refresh(),
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics()),
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      children: [
+                        _GreetingRow(
+                          greeting: _greeting,
+                          riderName: stats.riderName,
+                          status: stats.availabilityStatus,
+                          isToggling: _isTogglingAvailability,
+                          onToggle: () =>
+                              _onToggleAvailability(stats.availabilityStatus),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        TodaysEarningsCard(
+                            amount: stats.todaysEarningsPaise / 100.0),
+                        const SizedBox(height: AppSpacing.lg),
+                        _StatGrid(stats: stats),
+                        const SizedBox(height: AppSpacing.lg),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+            const AppBottomNav(currentIndex: 0),
+          ],
         ),
       ),
     );
