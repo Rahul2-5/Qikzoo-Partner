@@ -221,6 +221,14 @@ class FakeProfileRepository implements ProfileRepository {
       throw UnimplementedError();
 
   @override
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) =>
+      throw UnimplementedError();
+
+  @override
   Future<PartnerProfileModel> updateAddress({
     required String addressLine1,
     String? addressLine2,

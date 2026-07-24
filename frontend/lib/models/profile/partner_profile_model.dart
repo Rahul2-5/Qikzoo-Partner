@@ -7,6 +7,11 @@ class PartnerProfileModel extends Equatable {
   final String name;
   final String phone;
   final String? photoUrl;
+
+  /// The rider's verification/shift-start selfie (`Rider.selfieUrl`) —
+  /// distinct from [photoUrl] and never locked by onboarding review state,
+  /// so it can be re-uploaded on every "Go Online" check.
+  final String? selfieUrl;
   final String? vehicleType;
   final DateTime joinedDate;
   final String? email;
@@ -32,6 +37,7 @@ class PartnerProfileModel extends Equatable {
     required this.name,
     required this.phone,
     this.photoUrl,
+    this.selfieUrl,
     this.vehicleType,
     required this.joinedDate,
     this.email,
@@ -75,6 +81,7 @@ class PartnerProfileModel extends Equatable {
         name,
         phone,
         photoUrl,
+        selfieUrl,
         vehicleType,
         joinedDate,
         email,

@@ -34,4 +34,25 @@ void main() {
     expect(find.text('Application under review'), findsOneWidget);
     expect(find.text('Submitted on 23 Jul 2026'), findsOneWidget);
   });
+
+  testWidgets(
+      '"View application status" leaves the under-review dead end and opens Verification Status',
+      (tester) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: ApplicationUnderReviewScreen(submittedAt: DateTime(2026, 7, 23)),
+        getPages: [
+          GetPage(
+            name: AppRoutes.verificationStatus,
+            page: () => const Scaffold(body: Text('Verification Status Screen')),
+          ),
+        ],
+      ),
+    );
+
+    await tester.tap(find.text('View application status'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verification Status Screen'), findsOneWidget);
+  });
 }

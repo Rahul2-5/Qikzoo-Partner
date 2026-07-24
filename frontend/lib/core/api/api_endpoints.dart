@@ -8,6 +8,7 @@ class ApiEndpoints {
 
   static const riderProfile = '/rider/profile';
   static const riderProfilePhoto = '/rider/profile/photo';
+  static const riderProfileSelfie = '/rider/profile/selfie';
   static const riderKyc = '/rider/kyc';
   static const riderKycGovernmentIdDocument =
       '/rider/kyc/documents/government-id';

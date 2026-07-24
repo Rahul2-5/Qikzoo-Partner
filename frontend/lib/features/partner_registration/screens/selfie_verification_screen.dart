@@ -8,7 +8,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/document_verification/document_model.dart';
-import '../../../providers/document_verification/documents_provider.dart';
+import '../../../providers/profile/profile_provider.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
@@ -36,22 +36,23 @@ class SelfieVerificationScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _captureOnboardingSelfie(
+      BuildContext context, WidgetRef ref) async {
+    final uploaded = await pickAndConfirmSelfie(context, ref);
+    if (uploaded) ref.invalidate(profileProvider);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final documentsAsync = ref.watch(documentsProvider);
-    final documents = documentsAsync.valueOrNull ?? const <DocumentModel>[];
-
-    DocumentModel? profilePhoto;
-    for (final doc in documents) {
-      if (doc.type == DocumentType.profilePhoto) {
-        profilePhoto = doc;
-        break;
-      }
-    }
-
-    final isUploaded = profilePhoto != null &&
-        (profilePhoto.status == DocumentStatus.pendingVerification ||
-            profilePhoto.status == DocumentStatus.verified);
+    final selfieUrl = ref.watch(profileProvider).valueOrNull?.selfieUrl;
+    final profilePhoto = selfieUrl != null
+        ? DocumentModel(
+            type: DocumentType.profilePhoto,
+            status: DocumentStatus.pendingVerification,
+            fileUrl: selfieUrl,
+          )
+        : null;
+    final isUploaded = profilePhoto != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -74,7 +75,7 @@ class SelfieVerificationScreen extends ConsumerWidget {
                   children: [
                     TextSpan(
                       text: isOnlineCheck ? 'Quick ' : 'Take a ',
-                      style: TextStyle(color: AppColors.textPrimary),
+                      style: const TextStyle(color: AppColors.textPrimary),
                     ),
                     TextSpan(
                       text: isOnlineCheck ? 'selfie check' : 'Selfie',
@@ -136,7 +137,7 @@ class SelfieVerificationScreen extends ConsumerWidget {
                     ? () => _captureOnlineSelfie(context, ref)
                     : (isUploaded
                         ? () => Get.toNamed(AppRoutes.welcomeKit)
-                        : () => pickAndConfirmSelfie(context, ref)),
+                        : () => _captureOnboardingSelfie(context, ref)),
               ),
               const SizedBox(height: AppSpacing.md),
             ],

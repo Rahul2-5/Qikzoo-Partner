@@ -1,12 +1,86 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/features/partner_registration/widgets/document_upload_actions.dart';
 import 'package:delivery_partner_app/models/document_verification/document_model.dart';
+import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
+import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
+import 'package:delivery_partner_app/models/profile/rating_model.dart';
 import 'package:delivery_partner_app/providers/document_verification/documents_provider.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_repository.dart';
+import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
+
+class FakeProfileRepository implements ProfileRepository {
+  int uploadSelfieCalls = 0;
+  String? lastSelfiePath;
+  Object? uploadSelfieError;
+
+  @override
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    uploadSelfieCalls++;
+    lastSelfiePath = file.path;
+    if (uploadSelfieError != null) throw uploadSelfieError!;
+    return PartnerProfileModel(
+      id: 'rider-1',
+      name: 'Test Rider',
+      phone: '9876543210',
+      joinedDate: DateTime(2026, 1, 1),
+      selfieUrl: file.path,
+    );
+  }
+
+  @override
+  Future<PartnerProfileModel> getProfile() => throw UnimplementedError();
+
+  @override
+  Future<RatingModel> getRating() => throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updatePersonalDetails({
+    required String name,
+    String? email,
+    required DateTime dateOfBirth,
+    required Gender gender,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> uploadProfilePhoto(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateAddress({
+    required String addressLine1,
+    String? addressLine2,
+    String? landmark,
+    required String city,
+    required String state,
+    required String pincode,
+    double? addressLat,
+    double? addressLng,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) =>
+      throw UnimplementedError();
+}
 
 class FakeDocumentRepository implements DocumentRepository {
   FakeDocumentRepository(this._documents);
@@ -126,19 +200,16 @@ void main() {
     expect(updated.status, DocumentStatus.notUploaded);
   });
 
-  testWidgets('Use Photo uploads the profile photo document', (tester) async {
+  testWidgets('Use Photo uploads the selfie through the real profile API',
+      (tester) async {
+    final profileRepository = FakeProfileRepository();
     final container = ProviderContainer(
       overrides: [
-        documentRepositoryProvider.overrideWithValue(
-          FakeDocumentRepository([
-            const DocumentModel(type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
-          ]),
-        ),
+        profileRepositoryProvider.overrideWithValue(profileRepository),
         documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
       ],
     );
     addTearDown(container.dispose);
-    await container.read(documentsProvider.future);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -165,27 +236,19 @@ void main() {
     await tester.tap(find.text('Use Photo'));
     await tester.pumpAndSettle();
 
-    final updated = container
-        .read(documentsProvider)
-        .value!
-        .firstWhere((doc) => doc.type == DocumentType.profilePhoto);
-    expect(updated.status, DocumentStatus.pendingVerification);
-    expect(updated.fileUrl, '/tmp/picked.jpg');
+    expect(profileRepository.uploadSelfieCalls, 1);
+    expect(profileRepository.lastSelfiePath, '/tmp/picked.jpg');
   });
 
   testWidgets('Retake reopens the source sheet without uploading', (tester) async {
+    final profileRepository = FakeProfileRepository();
     final container = ProviderContainer(
       overrides: [
-        documentRepositoryProvider.overrideWithValue(
-          FakeDocumentRepository([
-            const DocumentModel(type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
-          ]),
-        ),
+        profileRepositoryProvider.overrideWithValue(profileRepository),
         documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
       ],
     );
     addTearDown(container.dispose);
-    await container.read(documentsProvider.future);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -212,10 +275,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Take Photo'), findsOneWidget);
-    final stillNotUploaded = container
-        .read(documentsProvider)
-        .value!
-        .firstWhere((doc) => doc.type == DocumentType.profilePhoto);
-    expect(stillNotUploaded.status, DocumentStatus.notUploaded);
+    expect(profileRepository.uploadSelfieCalls, 0);
   });
 }
