@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,31 +8,78 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/partner_registration/screens/selfie_verification_screen.dart';
-import 'package:delivery_partner_app/models/document_verification/document_model.dart';
+import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
+import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
+import 'package:delivery_partner_app/models/profile/rating_model.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
-import 'package:delivery_partner_app/repositories/document_verification/document_repository.dart';
+import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
 
-class FakeDocumentRepository implements DocumentRepository {
-  FakeDocumentRepository(this._documents);
-  List<DocumentModel> _documents;
+class FakeProfileRepository implements ProfileRepository {
+  FakeProfileRepository({String? selfieUrl}) : _selfieUrl = selfieUrl;
+  String? _selfieUrl;
+  int uploadSelfieCalls = 0;
+
+  PartnerProfileModel _profile() => PartnerProfileModel(
+        id: 'rider-1',
+        name: 'Test Rider',
+        phone: '9876543210',
+        joinedDate: DateTime(2026, 1, 1),
+        selfieUrl: _selfieUrl,
+      );
 
   @override
-  Future<List<DocumentModel>> getDocuments() async => _documents;
+  Future<PartnerProfileModel> getProfile() async => _profile();
 
   @override
-  Future<DocumentModel> uploadDocument(
-      DocumentType type, String filePath) async {
-    final updated = DocumentModel(
-      type: type,
-      status: DocumentStatus.pendingVerification,
-      fileUrl: filePath,
-    );
-    _documents = [
-      for (final doc in _documents)
-        if (doc.type == type) updated else doc,
-    ];
-    return updated;
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    uploadSelfieCalls++;
+    _selfieUrl = file.path;
+    return _profile();
   }
+
+  @override
+  Future<RatingModel> getRating() => throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updatePersonalDetails({
+    required String name,
+    String? email,
+    required DateTime dateOfBirth,
+    required Gender gender,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> uploadProfilePhoto(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateAddress({
+    required String addressLine1,
+    String? addressLine2,
+    String? landmark,
+    required String city,
+    required String state,
+    required String pincode,
+    double? addressLat,
+    double? addressLng,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) =>
+      throw UnimplementedError();
 }
 
 class FakeDocumentImagePicker implements DocumentImagePicker {
@@ -44,11 +94,10 @@ void setTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Widget buildApp(List<DocumentModel> documents) {
+Widget buildApp(FakeProfileRepository profileRepository) {
   return ProviderScope(
     overrides: [
-      documentRepositoryProvider
-          .overrideWithValue(FakeDocumentRepository(documents)),
+      profileRepositoryProvider.overrideWithValue(profileRepository),
       documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
     ],
     child: GetMaterialApp(
@@ -71,10 +120,7 @@ void main() {
   testWidgets('shows Capture initially and the verification tips',
       (tester) async {
     setTallSurface(tester);
-    await tester.pumpWidget(buildApp([
-      const DocumentModel(
-          type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
-    ]));
+    await tester.pumpWidget(buildApp(FakeProfileRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('Capture'), findsOneWidget);
@@ -83,13 +129,11 @@ void main() {
     expect(find.text('No sunglasses or filters'), findsOneWidget);
   });
 
-  testWidgets('capturing and using a photo switches Capture to Continue',
+  testWidgets('capturing and using a photo uploads it and switches Capture to Continue',
       (tester) async {
     setTallSurface(tester);
-    await tester.pumpWidget(buildApp([
-      const DocumentModel(
-          type: DocumentType.profilePhoto, status: DocumentStatus.notUploaded),
-    ]));
+    final repo = FakeProfileRepository();
+    await tester.pumpWidget(buildApp(repo));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Capture'));
@@ -99,6 +143,7 @@ void main() {
     await tester.tap(find.text('Use Photo'));
     await tester.pumpAndSettle();
 
+    expect(repo.uploadSelfieCalls, 1);
     expect(find.text('Continue'), findsOneWidget);
   });
 
@@ -106,13 +151,8 @@ void main() {
       'Continue navigates to Welcome Kit once the selfie is uploaded',
       (tester) async {
     setTallSurface(tester);
-    await tester.pumpWidget(buildApp([
-      const DocumentModel(
-        type: DocumentType.profilePhoto,
-        status: DocumentStatus.pendingVerification,
-        fileUrl: '/tmp/existing.jpg',
-      ),
-    ]));
+    await tester.pumpWidget(
+        buildApp(FakeProfileRepository(selfieUrl: '/tmp/existing.jpg')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Continue'));

@@ -54,6 +54,23 @@ void main() {
     );
   });
 
+  testWidgets(
+      'with no live payment gateway wired up, tapping Pay goes straight to Coming Soon without faking a transaction',
+      (tester) async {
+    setTallSurface(tester);
+    await tester.pumpWidget(buildApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Pay ₹799 securely'));
+    // Advance only far enough for the page-transition animation itself —
+    // nowhere near the old 900ms simulated processing delay — proving
+    // there is no fake payment-processing step in between.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Coming Soon Screen'), findsOneWidget);
+  });
+
   testWidgets('successful card payment opens the Coming Soon screen',
       (tester) async {
     setTallSurface(tester);

@@ -29,17 +29,30 @@ class SelfiePreviewFrame extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: ClipOval(
-            child: _hasPhoto
-                ? Image.file(
-                    File(profilePhoto!.fileUrl!),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(),
-                  )
-                : _placeholder(),
+            child: _hasPhoto ? _photo(profilePhoto!.fileUrl!) : _placeholder(),
           ),
         ),
       ),
     );
+  }
+
+  /// The backend returns a signed HTTPS URL once the selfie has round-tripped
+  /// through the server; a freshly-picked photo not yet confirmed is still a
+  /// local file path. Both are valid values for [fileUrl], so branch on
+  /// scheme rather than assuming one or the other.
+  Widget _photo(String url) {
+    final isRemote = url.startsWith('http://') || url.startsWith('https://');
+    return isRemote
+        ? Image.network(
+            url,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _placeholder(),
+          )
+        : Image.file(
+            File(url),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _placeholder(),
+          );
   }
 
   Widget _placeholder() => Container(

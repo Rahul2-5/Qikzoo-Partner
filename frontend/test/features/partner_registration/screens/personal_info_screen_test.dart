@@ -77,6 +77,14 @@ class FakeProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) =>
+      throw UnimplementedError();
+
+  @override
   Future<PartnerProfileModel> updateAddress({
     required String addressLine1,
     String? addressLine2,
@@ -130,6 +138,14 @@ class FlakyProfileRepository implements ProfileRepository {
 
   @override
   Future<PartnerProfileModel> uploadProfilePhoto(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> uploadSelfie(
     File file, {
     void Function(int sent, int total)? onSendProgress,
     CancelToken? cancelToken,

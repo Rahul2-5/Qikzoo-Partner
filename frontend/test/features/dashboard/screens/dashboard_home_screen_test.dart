@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,13 +12,15 @@ import 'package:delivery_partner_app/features/dashboard/screens/dashboard_home_s
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
-import 'package:delivery_partner_app/models/document_verification/document_model.dart';
 import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
+import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
+import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
+import 'package:delivery_partner_app/models/profile/rating_model.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
-import 'package:delivery_partner_app/repositories/document_verification/document_repository.dart';
 import 'package:delivery_partner_app/repositories/orders/dispatch_repository.dart';
+import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
 
 class FakeDashboardRepository implements DashboardRepository {
   FakeDashboardRepository({required this.initial});
@@ -71,28 +76,71 @@ class FakeDispatchRepository implements DispatchRepository {
   Future<void> reject(String attemptId) => throw UnimplementedError();
 }
 
-class FakeDocumentRepository implements DocumentRepository {
-  List<DocumentModel> documents = const [
-    DocumentModel(
-      type: DocumentType.profilePhoto,
-      status: DocumentStatus.notUploaded,
-    ),
-  ];
+class FakeProfileRepository implements ProfileRepository {
+  int uploadSelfieCalls = 0;
+  String? lastSelfiePath;
+  Object? uploadSelfieError;
 
   @override
-  Future<List<DocumentModel>> getDocuments() async => documents;
-
-  @override
-  Future<DocumentModel> uploadDocument(
-      DocumentType type, String filePath) async {
-    final uploaded = DocumentModel(
-      type: type,
-      status: DocumentStatus.pendingVerification,
-      fileUrl: filePath,
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    uploadSelfieCalls++;
+    lastSelfiePath = file.path;
+    if (uploadSelfieError != null) throw uploadSelfieError!;
+    return PartnerProfileModel(
+      id: 'rider-1',
+      name: 'Ravi Kumar',
+      phone: '9876543210',
+      joinedDate: DateTime(2026, 1, 1),
+      selfieUrl: file.path,
     );
-    documents = [uploaded];
-    return uploaded;
   }
+
+  @override
+  Future<PartnerProfileModel> getProfile() => throw UnimplementedError();
+
+  @override
+  Future<RatingModel> getRating() => throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updatePersonalDetails({
+    required String name,
+    String? email,
+    required DateTime dateOfBirth,
+    required Gender gender,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> uploadProfilePhoto(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateAddress({
+    required String addressLine1,
+    String? addressLine2,
+    String? landmark,
+    required String city,
+    required String state,
+    required String pincode,
+    double? addressLat,
+    double? addressLng,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PartnerProfileModel> updateEmergencyContact({
+    required String emergencyContactName,
+    required String emergencyContactPhone,
+  }) =>
+      throw UnimplementedError();
 }
 
 class FakeDocumentImagePicker implements DocumentImagePicker {
@@ -158,8 +206,8 @@ Widget buildApp({
   required FakeDashboardRepository dashboardRepository,
   FakeAuthRepository? authRepository,
   FakeDispatchRepository? dispatchRepository,
+  FakeProfileRepository? profileRepository,
 }) {
-  final documentRepository = FakeDocumentRepository();
   return ProviderScope(
     overrides: [
       dashboardRepositoryProvider.overrideWithValue(dashboardRepository),
@@ -167,7 +215,8 @@ Widget buildApp({
           .overrideWithValue(dispatchRepository ?? FakeDispatchRepository()),
       if (authRepository != null)
         authRepositoryProvider.overrideWithValue(authRepository),
-      documentRepositoryProvider.overrideWithValue(documentRepository),
+      profileRepositoryProvider
+          .overrideWithValue(profileRepository ?? FakeProfileRepository()),
       documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
     ],
     child: GetMaterialApp(
@@ -231,7 +280,9 @@ void main() {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(
         initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline));
-    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    final profileRepo = FakeProfileRepository();
+    await tester.pumpWidget(
+        buildApp(dashboardRepository: repo, profileRepository: profileRepo));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('availability-toggle')));
@@ -249,8 +300,41 @@ void main() {
     await tester.tap(find.text('Use Photo'));
     await tester.pumpAndSettle();
 
+    // The selfie must actually be uploaded through the real profile API —
+    // not silently faked — before the rider is allowed to go online.
+    expect(profileRepo.uploadSelfieCalls, 1);
+    expect(profileRepo.lastSelfiePath, '/tmp/selfie.jpg');
     expect(repo.goOnlineCalls, 1);
     expect(find.text('Online'), findsWidgets);
+  });
+
+  testWidgets(
+      'a failed selfie upload keeps the rider offline and shows a retry message',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(
+        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline));
+    final profileRepo = FakeProfileRepository()
+      ..uploadSelfieError = Exception('network down');
+    await tester.pumpWidget(
+        buildApp(dashboardRepository: repo, profileRepository: profileRepo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('availability-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take selfie'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use Photo'));
+    await tester.pumpAndSettle();
+
+    expect(profileRepo.uploadSelfieCalls, 1);
+    expect(find.textContaining('Upload failed'), findsOneWidget);
+    // Availability must never be toggled when the selfie upload fails — the
+    // rider stays exactly where the failed upload left them (still on the
+    // selfie screen, free to retry) rather than being bounced online.
+    expect(repo.goOnlineCalls, 0);
   });
 
   testWidgets('tapping the toggle while online goes offline', (tester) async {

@@ -9,10 +9,10 @@ import '../../../core/assets/app_assets.dart';
 import '../../../core/helpers/date_helper.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/app_3d_illustration.dart';
 
@@ -71,7 +71,7 @@ class _PaymentComingSoonScreenState extends State<PaymentComingSoonScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Text(
-                    'Payments are coming soon',
+                    'Payment Gateway Coming Soon',
                     textAlign: TextAlign.center,
                     style: AppTypography.h1.copyWith(fontSize: 26),
                   ),
@@ -159,6 +159,13 @@ class ApplicationUnderReviewScreen extends StatelessWidget {
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w700,
                       ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    PrimaryCtaButton(
+                      label: 'View application status',
+                      trailingIcon: LucideIcons.arrowRight,
+                      onPressed: () =>
+                          Get.offAllNamed(AppRoutes.verificationStatus),
                     ),
                   ],
                 ),

@@ -18,6 +18,18 @@ class DioService {
   final SecureTokenStorage _storage;
   final Dio dio;
 
+  // Refresh tokens are single-use and rotated server-side (see
+  // SessionService.rotateSession) — presenting an already-rotated one burns
+  // *every* session for the account, not just the stale request. Several
+  // authenticated calls can legitimately go out at once (e.g. a dashboard
+  // poll timer firing alongside a manual refresh) and all hit a 401 the
+  // moment the access token expires; without this guard each one would call
+  // the network independently, and every refresh after the first would
+  // present a token the first call already rotated away, revoking the
+  // brand-new session it just created and forcing an unexpected logout.
+  // This makes every concurrent caller share the one in-flight network call.
+  Future<SessionRefreshResult>? _refreshInFlight;
+
   static final BaseOptions _baseOptions = BaseOptions(
     baseUrl: AppConfig.apiBaseUrl,
     // The development API is hosted on a service that can take longer to
@@ -99,7 +111,13 @@ class DioService {
   /// the error-time refresh trigger above, so there is no recursion risk,
   /// and every call goes through the one configured client (base URL,
   /// timeouts, interceptors) instead of a second instance that could drift.
-  Future<SessionRefreshResult> refreshSession() async {
+  Future<SessionRefreshResult> refreshSession() {
+    return _refreshInFlight ??= _doRefreshSession().whenComplete(() {
+      _refreshInFlight = null;
+    });
+  }
+
+  Future<SessionRefreshResult> _doRefreshSession() async {
     final refreshToken = await _storage.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
       await _storage.clearTokens();

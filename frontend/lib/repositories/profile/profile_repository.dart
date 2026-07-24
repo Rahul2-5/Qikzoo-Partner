@@ -34,6 +34,17 @@ abstract class ProfileRepository {
     CancelToken? cancelToken,
   });
 
+  /// Uploads/replaces the rider's verification selfie — `POST
+  /// /rider/profile/selfie` (multipart). Unlike [uploadProfilePhoto], the
+  /// backend never locks this behind onboarding review state, so it can be
+  /// re-uploaded on every "Go Online" shift-start check, not just once
+  /// during onboarding.
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  });
+
   /// Updates the rider's single residential address (same `PATCH
   /// /rider/profile` endpoint and PROFILE section lock as
   /// [updatePersonalDetails] — the backend has no separate address
@@ -94,6 +105,7 @@ class MockProfileRepository implements ProfileRepository {
       name: name,
       phone: _current.phone,
       photoUrl: _current.photoUrl,
+      selfieUrl: _current.selfieUrl,
       vehicleType: _current.vehicleType,
       joinedDate: _current.joinedDate,
       email: email,
@@ -126,6 +138,40 @@ class MockProfileRepository implements ProfileRepository {
       name: _current.name,
       phone: _current.phone,
       photoUrl: file.path,
+      selfieUrl: _current.selfieUrl,
+      vehicleType: _current.vehicleType,
+      joinedDate: _current.joinedDate,
+      email: _current.email,
+      dateOfBirth: _current.dateOfBirth,
+      gender: _current.gender,
+      addressLine1: _current.addressLine1,
+      addressLine2: _current.addressLine2,
+      landmark: _current.landmark,
+      city: _current.city,
+      state: _current.state,
+      pincode: _current.pincode,
+      addressLat: _current.addressLat,
+      addressLng: _current.addressLng,
+      emergencyContactName: _current.emergencyContactName,
+      emergencyContactPhone: _current.emergencyContactPhone,
+    );
+    return _current;
+  }
+
+  @override
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    await Future.delayed(AppConstants.mockNetworkDelay);
+    onSendProgress?.call(1, 1);
+    _current = PartnerProfileModel(
+      id: _current.id,
+      name: _current.name,
+      phone: _current.phone,
+      photoUrl: _current.photoUrl,
+      selfieUrl: file.path,
       vehicleType: _current.vehicleType,
       joinedDate: _current.joinedDate,
       email: _current.email,
@@ -162,6 +208,7 @@ class MockProfileRepository implements ProfileRepository {
       name: _current.name,
       phone: _current.phone,
       photoUrl: _current.photoUrl,
+      selfieUrl: _current.selfieUrl,
       vehicleType: _current.vehicleType,
       joinedDate: _current.joinedDate,
       email: _current.email,
@@ -192,6 +239,7 @@ class MockProfileRepository implements ProfileRepository {
       name: _current.name,
       phone: _current.phone,
       photoUrl: _current.photoUrl,
+      selfieUrl: _current.selfieUrl,
       vehicleType: _current.vehicleType,
       joinedDate: _current.joinedDate,
       email: _current.email,
@@ -282,6 +330,27 @@ class DioProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<PartnerProfileModel> uploadSelfie(
+    File file, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    final fileName = file.uri.pathSegments.isNotEmpty
+        ? file.uri.pathSegments.last
+        : 'selfie.jpg';
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.riderProfileSelfie,
+      data: formData,
+      onSendProgress: onSendProgress,
+      cancelToken: cancelToken,
+    );
+    return _parseProfile(_unwrap(response.data));
+  }
+
+  @override
   Future<PartnerProfileModel> updateAddress({
     required String addressLine1,
     String? addressLine2,
@@ -346,6 +415,7 @@ class DioProfileRepository implements ProfileRepository {
       name: _readString(payload, ['name']) ?? '',
       phone: _readString(payload, ['phone']) ?? '',
       photoUrl: _readString(payload, ['profilePhotoUrl']),
+      selfieUrl: _readString(payload, ['selfieUrl']),
       joinedDate: _readDateTime(payload, ['createdAt']) ?? DateTime.now(),
       email: _readString(payload, ['email']),
       dateOfBirth: _readDateTime(payload, ['dateOfBirth']),

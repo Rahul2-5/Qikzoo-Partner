@@ -41,20 +41,20 @@ class _WelcomeKitScreenState extends State<WelcomeKitScreen> {
 
   int get _amountDue => _selectedPlan == WelcomeKitPlan.fullPayment ? 799 : 267;
 
-  Future<bool> _simulateSuccessfulPayment(
-    WelcomeKitPlan _,
-    WelcomeKitPaymentMethod __,
-  ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    return true;
-  }
-
   Future<void> _pay() async {
     if (_isPaying) return;
 
-    setState(() => _isPaying = true);
-    final paymentHandler = widget.onPay ?? _simulateSuccessfulPayment;
+    final paymentHandler = widget.onPay;
+    if (paymentHandler == null) {
+      // Live payment gateway isn't connected yet — go straight to the
+      // "coming soon" screen rather than simulating a transaction that
+      // never actually happened. [onPay] remains the integration point for
+      // when a real gateway is wired in.
+      Get.offNamed(AppRoutes.paymentComingSoon);
+      return;
+    }
 
+    setState(() => _isPaying = true);
     try {
       final isSuccessful = await paymentHandler(_selectedPlan, _paymentMethod);
       if (!mounted) return;

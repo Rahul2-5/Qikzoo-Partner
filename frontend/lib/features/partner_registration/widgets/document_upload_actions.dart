@@ -11,6 +11,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../models/document_verification/document_model.dart';
 import '../../../providers/document_verification/documents_provider.dart';
 import '../../../repositories/document_verification/document_image_picker.dart';
+import '../../../repositories/profile/profile_repository.dart';
 import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
@@ -213,9 +214,7 @@ Future<bool> pickAndConfirmSelfie(
     if (useThisPhoto == false) continue;
 
     try {
-      await ref
-          .read(documentsProvider.notifier)
-          .upload(DocumentType.profilePhoto, path);
+      await ref.read(profileRepositoryProvider).uploadSelfie(File(path));
       return true;
     } catch (_) {
       if (context.mounted) {
