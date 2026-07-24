@@ -26,7 +26,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Payments are coming soon'), findsOneWidget);
+    expect(find.text('Payment Gateway Coming Soon'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();

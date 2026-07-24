@@ -211,6 +211,51 @@ void main() {
       expect(profileCalls, 2);
     });
 
+    test(
+        'two concurrent 401s share one refresh call and both requests succeed '
+        '(no rotated-token race that would wipe the just-refreshed session)',
+        () async {
+      final storage = SecureTokenStorage();
+      await storage.saveTokens(accessToken: 'expired-access', refreshToken: 'refresh-1');
+      final service = DioService(storage);
+
+      var refreshCalls = 0;
+      final refreshCompleter = Completer<void>();
+      service.dio.httpClientAdapter = FakeHttpClientAdapter((options) async {
+        if (options.path == '/rider/auth/refresh') {
+          refreshCalls++;
+          // Hold the response open just long enough for both 401s to have
+          // already called refreshSession() before either completes —
+          // reproducing the concurrency window that causes the race.
+          await refreshCompleter.future;
+          return jsonResponse(
+            '{"data":{"accessToken":"fresh-access","refreshToken":"refresh-2"}}',
+            200,
+          );
+        }
+        if (options.headers['Authorization'] == 'Bearer expired-access') {
+          return jsonResponse('{"error":{"message":"expired"}}', 401);
+        }
+        expect(options.headers['Authorization'], 'Bearer fresh-access');
+        return jsonResponse('{"data":{"ok":true}}', 200);
+      });
+
+      final first = service.dio.get<Map<String, dynamic>>('/rider/profile');
+      final second = service.dio.get<Map<String, dynamic>>('/rider/orders');
+      // Let both requests reach their 401 and call refreshSession() before
+      // the fake refresh response is allowed to resolve.
+      await Future<void>.delayed(Duration.zero);
+      refreshCompleter.complete();
+
+      final responses = await Future.wait([first, second]);
+
+      expect(responses[0].statusCode, 200);
+      expect(responses[1].statusCode, 200);
+      expect(refreshCalls, 1);
+      expect(await storage.getAccessToken(), 'fresh-access');
+      expect(await storage.getRefreshToken(), 'refresh-2');
+    });
+
     test('a 401 with an invalid refresh token clears storage and does not retry', () async {
       final storage = SecureTokenStorage();
       await storage.saveTokens(accessToken: 'expired-access', refreshToken: 'bad-refresh');

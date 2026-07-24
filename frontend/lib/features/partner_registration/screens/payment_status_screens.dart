@@ -71,7 +71,7 @@ class _PaymentComingSoonScreenState extends State<PaymentComingSoonScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Text(
-                    'Payments are coming soon',
+                    'Payment Gateway Coming Soon',
                     textAlign: TextAlign.center,
                     style: AppTypography.h1.copyWith(fontSize: 26),
                   ),
