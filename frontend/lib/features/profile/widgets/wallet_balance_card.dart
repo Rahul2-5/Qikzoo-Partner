@@ -49,11 +49,17 @@ class WalletBalanceCard extends StatelessWidget {
                       style: AppTypography.numericLg),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text('${summary.bankName} ····${summary.maskedAccount}',
-                    style: AppTypography.caption),
-                const SizedBox(height: 2),
-                Text('Next payout: ${summary.nextPayoutDate}',
-                    style: AppTypography.caption),
+                Text(
+                  summary.bankLabel ?? 'No bank account added',
+                  style: AppTypography.caption,
+                ),
+                if (summary.pendingAmount > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Pending: ${CurrencyFormatter.rupeesPrecise(summary.pendingAmount)}',
+                    style: AppTypography.caption,
+                  ),
+                ],
               ],
             ),
           ),

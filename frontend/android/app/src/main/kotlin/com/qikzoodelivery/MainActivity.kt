@@ -1,4 +1,4 @@
-package com.qikzoo.delivery_partner_app
+package com.qikzoodelivery
 
 import io.flutter.embedding.android.FlutterActivity
 

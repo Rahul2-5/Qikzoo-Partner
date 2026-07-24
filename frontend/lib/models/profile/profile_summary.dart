@@ -1,5 +1,9 @@
 import 'package:equatable/equatable.dart';
 
+/// View-model for the profile screen, assembled from several backend
+/// sources (profile, rating, wallet, bank details, verification steps and
+/// notifications) by `profileSummaryProvider`. Every field maps to real
+/// API data — there is no static/mock content behind it in production.
 class ProfileSummary extends Equatable {
   final String name;
   final String partnerId;
@@ -8,9 +12,11 @@ class ProfileSummary extends Equatable {
   final String deliveriesLabel;
   final bool documentsVerified;
   final double walletBalance;
-  final String bankName;
-  final String maskedAccount;
-  final String nextPayoutDate;
+  final double pendingAmount;
+
+  /// e.g. "HDFC ····1234" derived from the rider's bank account on file, or
+  /// `null` when no bank account has been added yet.
+  final String? bankLabel;
   final int notificationCount;
 
   const ProfileSummary({
@@ -21,24 +27,10 @@ class ProfileSummary extends Equatable {
     required this.deliveriesLabel,
     required this.documentsVerified,
     required this.walletBalance,
-    required this.bankName,
-    required this.maskedAccount,
-    required this.nextPayoutDate,
+    required this.pendingAmount,
+    this.bankLabel,
     required this.notificationCount,
   });
-
-  factory ProfileSummary.mock() => const ProfileSummary(
-        name: 'Rahul Verma',
-        partnerId: 'ZP12345678',
-        ratingAverage: 4.8,
-        deliveriesLabel: '250+ Deliveries',
-        documentsVerified: true,
-        walletBalance: 2345.50,
-        bankName: 'HDFC Bank',
-        maskedAccount: '4321',
-        nextPayoutDate: '15 May 2025',
-        notificationCount: 3,
-      );
 
   @override
   List<Object?> get props => [
@@ -49,9 +41,8 @@ class ProfileSummary extends Equatable {
         deliveriesLabel,
         documentsVerified,
         walletBalance,
-        bankName,
-        maskedAccount,
-        nextPayoutDate,
+        pendingAmount,
+        bankLabel,
         notificationCount,
       ];
 }

@@ -8,10 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../models/profile/profile_summary.dart';
-import '../../../models/training/training_module_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
-import '../../../providers/profile/profile_provider.dart';
-import '../../../providers/training/training_provider.dart';
 import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
@@ -142,12 +139,13 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: summaryAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (_, __) => _ProfileErrorState(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (_, __) => _ProfileError(
                     onRetry: () => ref.invalidate(profileProvider),
                   ),
-                  data: (profile) => _buildContent(context, ref, profile),
+                  data: (profile) => _buildBody(context, ref, profile),
                 ),
               ),
               const AppBottomNav(currentIndex: 2),
@@ -158,137 +156,107 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(
+  Widget _buildBody(
       BuildContext context, WidgetRef ref, ProfileSummary profile) {
     final menuItems = _menuItems(context, ref);
-    final modules = ref.watch(trainingModulesProvider).valueOrNull ??
-        const <TrainingModuleModel>[];
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(profileProvider);
+        ref.invalidate(ratingProvider);
         await ref.read(profileProvider.future);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics()),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppStaggeredReveal(
-              index: 0,
-              child: ProfileHeader(
-                notificationCount: profile.notificationCount,
-                onNotifications: () => Get.toNamed(AppRoutes.notifications),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppStaggeredReveal(
-              index: 1,
-              child: ProfileIdentityCard(
-                summary: profile,
-                onViewStats: () => _showComingSoon(context, 'View Stats'),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppStaggeredReveal(
-              index: 2,
-              child: VerificationBanner(
-                verified: profile.documentsVerified,
-                onTap: () => Get.toNamed(AppRoutes.verificationStatus),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppStaggeredReveal(
-              index: 3,
-              child: WalletBalanceCard(
-                summary: profile,
-                onWithdraw: () => Get.toNamed(AppRoutes.wallet),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppStaggeredReveal(
-              index: 4,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.sheet),
-                ),
-                child: Column(
-                  children: [
-                    for (var i = 0; i < menuItems.length; i++) ...[
-                      ProfileMenuTile(
-                        icon: menuItems[i].icon,
-                        title: menuItems[i].title,
-                        subtitle: menuItems[i].subtitle,
-                        onTap: menuItems[i].onTap,
-                        destructive: menuItems[i].destructive,
-                      ),
-                      if (i < menuItems.length - 1)
-                        const Divider(height: 1, color: AppColors.border),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            const AppStaggeredReveal(
-              index: 5,
-              child: ProfileFooterBanner(),
-            ),
-            if (modules.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.md),
-              AppStaggeredReveal(
-                index: 6,
-                child: ProfileLearningSection(
-                  modules: modules,
-                  onModuleTap: (module) =>
-                      _showComingSoon(context, module.title),
-                ),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.md),
-          ],
+          parent: BouncingScrollPhysics(),
         ),
-      ),
-    );
-  }
-}
-
-class _ProfileErrorState extends StatelessWidget {
-  const _ProfileErrorState({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(LucideIcons.userX,
-                size: 44, color: AppColors.textSecondary),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              "We couldn't load your profile",
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Please check your connection and try again.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(LucideIcons.refreshCw, size: 18),
-              label: const Text('Retry'),
-            ),
-          ],
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppStaggeredReveal(
+                        index: 0,
+                        child: ProfileHeader(
+                          notificationCount: profile.notificationCount,
+                          onNotifications: () =>
+                              Get.toNamed(AppRoutes.notifications),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppStaggeredReveal(
+                        index: 1,
+                        child: ProfileIdentityCard(
+                          summary: profile,
+                          onViewStats: () =>
+                              _showComingSoon(context, 'View Stats'),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppStaggeredReveal(
+                        index: 2,
+                        child: VerificationBanner(
+                          verified: profile.documentsVerified,
+                          onTap: () =>
+                              Get.toNamed(AppRoutes.verificationStatus),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppStaggeredReveal(
+                        index: 3,
+                        child: WalletBalanceCard(
+                          summary: profile,
+                          onWithdraw: () => Get.toNamed(AppRoutes.wallet),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppStaggeredReveal(
+                        index: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.sheet),
+                          ),
+                          child: Column(
+                            children: [
+                              for (var i = 0; i < menuItems.length; i++) ...[
+                                ProfileMenuTile(
+                                  icon: menuItems[i].icon,
+                                  title: menuItems[i].title,
+                                  subtitle: menuItems[i].subtitle,
+                                  onTap: menuItems[i].onTap,
+                                  destructive: menuItems[i].destructive,
+                                ),
+                                if (i < menuItems.length - 1)
+                                  const Divider(
+                                      height: 1, color: AppColors.border),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      const AppStaggeredReveal(
+                        index: 5,
+                        child: ProfileFooterBanner(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      AppStaggeredReveal(
+                        index: 6,
+                        child: ProfileLearningSection(
+                          modules: profileLearningModules,
+                          onModuleTap: (module) =>
+                              _showComingSoon(context, module.title),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                  ),
+                ),
+              ),
+              const AppBottomNav(currentIndex: 2),
+            ],
+          ),
         ),
       ),
     );

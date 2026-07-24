@@ -2,7 +2,11 @@ class Validators {
   Validators._();
 
   static final _phoneRegex = RegExp(r'^[6-9]\d{9}$');
-  static final _emailRegex = RegExp(r'^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$');
+  // Local part allows dots, plus-aliases and hyphens; domain allows any
+  // number of labels (subdomains and multi-part TLDs like ".co.in") ending
+  // in an alphabetic TLD of 2+ chars.
+  static final _emailRegex =
+      RegExp(r'^[\w.+\-]+@[\w\-]+(\.[\w\-]+)*\.[a-zA-Z]{2,}$');
   static final _ifscRegex = RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$');
   static final _panRegex = RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$');
   static final _aadhaarRegex = RegExp(r'^\d{12}$');

@@ -387,16 +387,19 @@ class _StatGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        return GridView.count(
+        return GridView.builder(
           // Keep the dashboard's at-a-glance information in the familiar
           // two-column rhythm shown in the partner app reference.
-          crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: AppSpacing.sm,
-          crossAxisSpacing: AppSpacing.sm,
-          mainAxisExtent: 148,
-          children: tiles,
+          itemCount: tiles.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: AppSpacing.sm,
+            crossAxisSpacing: AppSpacing.sm,
+            mainAxisExtent: 148,
+          ),
+          itemBuilder: (context, index) => tiles[index],
         );
       },
     );
