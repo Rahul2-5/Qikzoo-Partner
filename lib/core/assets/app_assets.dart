@@ -15,7 +15,7 @@ class AppAssets {
   static const riderScooterIndigo3d = '$imagesPath/rider_scooter_indigo_3d.png';
   static const happyDeliveryRider3d =
       '$imagesPath/happy_delivery_rider_3d_transparent.png';
-  static const mainLogo = '$imagesPath/main_logo.png';
+  static const mainLogo = '$imagesPath/new_logo.png';
 
   static const emptyStateIllustration = '$illustrationsPath/empty_state.svg';
   static const successAnimation = '$animationsPath/success.json';

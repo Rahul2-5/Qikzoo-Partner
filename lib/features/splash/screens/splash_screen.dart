@@ -93,8 +93,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     );
     final logo = Image.asset(
       AppAssets.mainLogo,
-      width: isCompact ? 220 : 270,
-      height: isCompact ? 110 : 135,
+      width: isCompact ? 280 : 340,
+      height: isCompact ? 140 : 170,
       fit: BoxFit.contain,
       semanticLabel: 'Qikzoo Delivery Partner logo',
     );

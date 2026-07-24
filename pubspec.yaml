@@ -43,14 +43,15 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: "assets/images/Brand_logo.png"
+  image_path: "assets/images/new_logo.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/Brand_logo.png"
+  adaptive_icon_foreground: "assets/images/new_logo.png"
 
 flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/images/new_logo.png
     - assets/images/
     - assets/icons/
     - assets/illustrations/
