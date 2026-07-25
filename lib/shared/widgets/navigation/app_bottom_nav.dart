@@ -8,7 +8,9 @@ import 'floating_bottom_nav.dart';
 // three screens with a real, production implementation are visible tabs.
 const _tabRoutes = [
   AppRoutes.dashboard,
+  AppRoutes.gigs,
   AppRoutes.orders,
+  AppRoutes.earnings,
   AppRoutes.profile,
 ];
 
@@ -32,9 +34,17 @@ class AppBottomNav extends StatelessWidget {
               activeIcon: LucideIcons.home,
               label: 'Home'),
           NavItem(
+              icon: LucideIcons.calendarClock,
+              activeIcon: LucideIcons.calendarClock,
+              label: 'Gigs'),
+          NavItem(
               icon: LucideIcons.receipt,
               activeIcon: LucideIcons.receipt,
               label: 'Orders'),
+          NavItem(
+              icon: LucideIcons.barChart3,
+              activeIcon: LucideIcons.barChart3,
+              label: 'Earnings'),
           NavItem(
               icon: LucideIcons.user,
               activeIcon: LucideIcons.user,

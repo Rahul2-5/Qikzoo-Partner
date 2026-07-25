@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_radius.dart';
@@ -35,7 +36,7 @@ class FloatingBottomNav extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.sheet),
+        borderRadius: BorderRadius.circular(AppRadius.sheet + 2),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
@@ -62,10 +63,9 @@ class FloatingBottomNav extends StatelessWidget {
                             duration:
                                 AppMotion.duration(context, AppMotion.standard),
                             curve: AppMotion.enter,
-                            padding: EdgeInsets.symmetric(
-                              horizontal:
-                                  isActive ? AppSpacing.xs : AppSpacing.sm,
-                              vertical: AppSpacing.sm,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs + 2,
                             ),
                             decoration: BoxDecoration(
                               color: isActive
@@ -88,35 +88,32 @@ class FloatingBottomNav extends StatelessWidget {
                                   AppMotion.duration(context, AppMotion.quick),
                               switchInCurve: AppMotion.enter,
                               switchOutCurve: AppMotion.exit,
-                              child: isActive
-                                  ? Icon(
-                                      key: const ValueKey('active'),
-                                      item.activeIcon,
-                                      color: Colors.white,
-                                      size: 20,
-                                    )
-                                  : Column(
-                                      key: const ValueKey('inactive'),
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          item.icon,
-                                          color: AppColors.textSecondary,
-                                          size: 21,
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          item.label,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: AppTypography.caption.copyWith(
-                                            color: AppColors.textSecondary,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
+                              child: Column(
+                                key: ValueKey(isActive),
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isActive ? item.activeIcon : item.icon,
+                                    color: isActive
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.caption.copyWith(
+                                      color: isActive
+                                          ? Colors.white
+                                          : AppColors.textSecondary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
                                     ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -132,3 +129,46 @@ class FloatingBottomNav extends StatelessWidget {
     );
   }
 }
+
+@Preview(
+  name: 'Bottom navigation',
+  group: 'Navigation',
+  size: Size(390, 130),
+)
+Widget floatingBottomNavPreview() => MaterialApp(
+      theme: ThemeData.light(),
+      home: Scaffold(
+        backgroundColor: AppColors.background,
+        bottomNavigationBar: FloatingBottomNav(
+          currentIndex: 0,
+          onTap: (_) {},
+          items: const [
+            NavItem(
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home_rounded,
+              label: 'Home',
+            ),
+            NavItem(
+              icon: Icons.calendar_month_outlined,
+              activeIcon: Icons.calendar_month_rounded,
+              label: 'Gigs',
+            ),
+            NavItem(
+              icon: Icons.receipt_long_outlined,
+              activeIcon: Icons.receipt_long_rounded,
+              label: 'Orders',
+            ),
+            NavItem(
+              icon: Icons.bar_chart_outlined,
+              activeIcon: Icons.bar_chart_rounded,
+              label: 'Earnings',
+            ),
+            NavItem(
+              icon: Icons.person_outline_rounded,
+              activeIcon: Icons.person_rounded,
+              label: 'Profile',
+            ),
+          ],
+        ),
+      ),
+    );

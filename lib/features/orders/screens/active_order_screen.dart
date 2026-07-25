@@ -21,9 +21,13 @@ import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/misc/error_widget_custom.dart';
 import '../widgets/cancel_order_sheet.dart';
+import '../widgets/contactless_proof_sheet.dart';
 import '../widgets/contact_actions.dart';
+import '../widgets/delivery_handoff_card.dart';
 import '../widgets/delivery_otp_sheet.dart';
+import '../widgets/no_response_sheet.dart';
 import '../widgets/pickup_qr_scanner_screen.dart';
+import '../widgets/quick_message_sheet.dart';
 
 enum _PrimaryAction { markArrived, scanQr, confirmPickup, startDelivery, completeDelivery, none }
 
@@ -149,6 +153,25 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
         Get.back();
       });
 
+  Future<void> _showQuickMessage() async {
+    final message = await QuickMessageSheet.show(context);
+    if (!mounted || message == null) return;
+    AppSnackBar.success(context, 'Message ready: $message');
+  }
+
+  Future<void> _showNoResponseFlow() async {
+    final outcome = await NoResponseSheet.show(context);
+    if (!mounted || outcome == null) return;
+    if (outcome == NoResponseOutcome.contactSupport) {
+      AppSnackBar.info(context, 'Support request ready for this delivery.');
+      return;
+    }
+    final proofCaptured = await ContactlessProofSheet.show(context);
+    if (mounted && proofCaptured == true) {
+      AppSnackBar.success(context, 'Drop-off proof captured.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final orderAsync = ref.watch(activeOrderProvider);
@@ -203,6 +226,19 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
                       latitude: order.order.deliveryLat,
                       longitude: order.order.deliveryLng,
                     ),
+                    if (order.status == RiderOrderStatus.outForDelivery) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      DeliveryHandoffCard(
+                        preference: 'Call on arrival',
+                        buildingSummary: 'Tower B · Gate 2',
+                        instruction: 'Please hand over to security if unavailable.',
+                        onCall: order.order.customerPhone == null
+                            ? null
+                            : () => launchPhoneCall(context, order.order.customerPhone!),
+                        onQuickMessage: _showQuickMessage,
+                        onNoResponse: _showNoResponseFlow,
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
                     _PrimaryActionButton(
                       order: order,

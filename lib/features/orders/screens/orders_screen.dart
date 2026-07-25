@@ -43,7 +43,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       body: SafeArea(
         child: ResponsiveFrame(
           maxWidth: 640,
-          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -73,7 +74,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               Expanded(
                 child: OrderHistoryList(filter: _filter, onOpen: _openOrder),
               ),
-              const AppBottomNav(currentIndex: 1),
+              const AppBottomNav(currentIndex: 2),
             ],
           ),
         ),
@@ -110,7 +111,8 @@ class _ActiveOrderBanner extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'You have an order in progress',
-                    style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+                    style:
+                        AppTypography.bodyMedium.copyWith(color: Colors.white),
                   ),
                 ),
                 const Icon(LucideIcons.chevronRight, color: Colors.white),

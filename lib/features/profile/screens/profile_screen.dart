@@ -7,6 +7,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../models/profile/profile_summary.dart';
 import '../../../models/training/training_module_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
@@ -29,8 +30,34 @@ import '../widgets/wallet_balance_card.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  void _showComingSoon(BuildContext context, String title) {
-    AppSnackBar.info(context, '$title coming soon');
+  void _showPartnerStats(BuildContext context, ProfileSummary profile) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Partner stats', style: AppTypography.h2),
+              const SizedBox(height: AppSpacing.md),
+              Text('Rating: ${profile.ratingAverage.toStringAsFixed(1)}',
+                  style: AppTypography.bodyMedium),
+              const SizedBox(height: AppSpacing.sm),
+              Text('Deliveries: ${profile.deliveriesLabel}',
+                  style: AppTypography.bodyMedium),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                  'Documents: ${profile.documentsVerified ? 'Verified' : 'Needs attention'}',
+                  style: AppTypography.bodyMedium),
+            ]),
+      ),
+    );
   }
 
   Future<void> _showPersonalInformation(
@@ -101,7 +128,7 @@ class ProfileScreen extends ConsumerWidget {
         icon: LucideIcons.badgePercent,
         title: 'Incentives & Offers',
         subtitle: 'View your ongoing offers',
-        onTap: () => _showComingSoon(context, 'Incentives & Offers'),
+        onTap: () => Get.toNamed(AppRoutes.incentives),
         destructive: false,
       ),
       (
@@ -150,7 +177,7 @@ class ProfileScreen extends ConsumerWidget {
                   data: (profile) => _buildContent(context, ref, profile),
                 ),
               ),
-              const AppBottomNav(currentIndex: 2),
+              const AppBottomNav(currentIndex: 4),
             ],
           ),
         ),
@@ -186,7 +213,7 @@ class ProfileScreen extends ConsumerWidget {
               index: 1,
               child: ProfileIdentityCard(
                 summary: profile,
-                onViewStats: () => _showComingSoon(context, 'View Stats'),
+                onViewStats: () => _showPartnerStats(context, profile),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -209,8 +236,7 @@ class ProfileScreen extends ConsumerWidget {
             AppStaggeredReveal(
               index: 4,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.sheet),
@@ -243,8 +269,7 @@ class ProfileScreen extends ConsumerWidget {
                 index: 6,
                 child: ProfileLearningSection(
                   modules: modules,
-                  onModuleTap: (module) =>
-                      _showComingSoon(context, module.title),
+                  onModuleTap: (_) => Get.toNamed(AppRoutes.training),
                 ),
               ),
             ],

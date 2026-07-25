@@ -25,6 +25,7 @@ import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 import '../../partner_registration/screens/selfie_verification_screen.dart';
+import '../../gigs/widgets/available_gigs_section.dart';
 import '../widgets/todays_earnings_card.dart';
 
 /// Rider dashboard home — reached once onboarding is APPROVED and the
@@ -169,12 +170,14 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                 maxWidth: 640,
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: statsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, _) => _ErrorView(
                     message: error is ApiException
                         ? error.message
                         : 'Could not load your dashboard.',
-                    onRetry: () => ref.read(dashboardStatsProvider.notifier).refresh(),
+                    onRetry: () =>
+                        ref.read(dashboardStatsProvider.notifier).refresh(),
                   ),
                   data: (stats) => RefreshIndicator(
                     color: AppColors.secondary,
@@ -183,7 +186,8 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(
                           parent: BouncingScrollPhysics()),
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
                       children: [
                         _GreetingRow(
                           greeting: _greeting,
@@ -203,6 +207,8 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                           onPressed: () =>
                               _onToggleAvailability(stats.availabilityStatus),
                         ),
+                        const SizedBox(height: AppSpacing.lg),
+                        const AvailableGigsSection(),
                         const SizedBox(height: AppSpacing.lg),
                         _StatGrid(stats: stats),
                         const SizedBox(height: AppSpacing.lg),
@@ -247,8 +253,8 @@ class _GreetingRow extends StatelessWidget {
             children: [
               Text(
                 greeting,
-                style:
-                    AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.caption
+                    .copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 2),
               Text(
@@ -560,8 +566,8 @@ class _ErrorView extends StatelessWidget {
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style:
-                  AppTypography.caption.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.caption
+                  .copyWith(color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(height: AppSpacing.md),

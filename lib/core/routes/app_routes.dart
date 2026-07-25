@@ -20,7 +20,8 @@ class AppRoutes {
   static const selfieVerification = '/registration/selfie-verification';
   static const welcomeKit = '/registration/welcome-kit';
   static const paymentComingSoon = '/registration/payment-coming-soon';
-  static const applicationUnderReview = '/registration/application-under-review';
+  static const applicationUnderReview =
+      '/registration/application-under-review';
   static const applicationSubmitted = '/registration/application-submitted';
   static const bankDetails = '/bank-details';
   static const verificationStatus = '/verification-status';
@@ -28,7 +29,9 @@ class AppRoutes {
   static const agreement = '/agreement';
   static const approval = '/approval';
   static const dashboard = '/dashboard';
+  static const gigs = '/gigs';
   static const earnings = '/earnings';
+  static const incentives = '/earnings/incentives';
   static const orders = '/orders';
   static const incomingOffer = '/orders/offer';
   static const activeOrder = '/orders/active';

@@ -89,7 +89,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                   ),
                 ),
               ),
-              const AppBottomNav(currentIndex: 1),
+              const AppBottomNav(currentIndex: 3),
             ],
           ),
         ),

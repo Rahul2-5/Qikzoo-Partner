@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'app_routes.dart';
-import 'placeholder_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../../features/onboarding_welcome/screens/onboarding_welcome_screen.dart';
 import '../../features/onboarding_welcome/screens/partner_benefits_screen.dart';
@@ -23,7 +22,14 @@ import '../../features/partner_registration/screens/welcome_kit_screen.dart';
 import '../../features/partner_registration/screens/payment_status_screens.dart';
 import '../../features/partner_registration/screens/application_submitted_screen.dart';
 import '../../features/dashboard/screens/dashboard_home_screen.dart';
+import '../../features/gigs/screens/gigs_screen.dart';
 import '../../features/earnings/screens/earnings_screen.dart';
+import '../../features/earnings/screens/incentives_screen.dart';
+import '../../features/notifications/screens/notifications_screen.dart';
+import '../../features/wallet/screens/wallet_screen.dart';
+import '../../features/training/screens/training_screen.dart';
+import '../../features/agreement/screens/agreement_screen.dart';
+import '../../features/approval/screens/approval_screen.dart';
 import '../../features/orders/screens/active_order_screen.dart';
 import '../../features/orders/screens/incoming_offer_screen.dart';
 import '../../features/orders/screens/order_details_screen.dart';
@@ -99,20 +105,16 @@ class AppPages {
     GetPage(
         name: AppRoutes.verificationStatus,
         page: () => const VerificationStatusScreen()),
-    GetPage(
-        name: AppRoutes.training,
-        page: () => const PlaceholderScreen(title: 'Training')),
-    GetPage(
-        name: AppRoutes.agreement,
-        page: () => const PlaceholderScreen(title: 'Agreement')),
-    GetPage(
-        name: AppRoutes.approval,
-        page: () => const PlaceholderScreen(title: 'Approval')),
+    GetPage(name: AppRoutes.training, page: () => const TrainingScreen()),
+    GetPage(name: AppRoutes.agreement, page: () => const AgreementScreen()),
+    GetPage(name: AppRoutes.approval, page: () => const ApprovalScreen()),
     GetPage(
       name: AppRoutes.dashboard,
       page: () => const DashboardHomeScreen(),
     ),
+    GetPage(name: AppRoutes.gigs, page: () => const GigsScreen()),
     GetPage(name: AppRoutes.earnings, page: () => const EarningsScreen()),
+    GetPage(name: AppRoutes.incentives, page: () => const IncentivesScreen()),
     GetPage(name: AppRoutes.orders, page: () => const OrdersScreen()),
     GetPage(
         name: AppRoutes.incomingOffer, page: () => const IncomingOfferScreen()),
@@ -121,9 +123,7 @@ class AppPages {
       name: AppRoutes.orderDetails,
       page: () => OrderDetailsScreen(riderOrderId: Get.arguments as String),
     ),
-    GetPage(
-        name: AppRoutes.wallet,
-        page: () => const PlaceholderScreen(title: 'Wallet')),
+    GetPage(name: AppRoutes.wallet, page: () => const WalletScreen()),
     GetPage(name: AppRoutes.support, page: () => const HelpSupportScreen()),
     GetPage(name: AppRoutes.profile, page: () => const ProfileScreen()),
     GetPage(
@@ -133,8 +133,7 @@ class AppPages {
         name: AppRoutes.manageDocuments,
         page: () => const ManageDocumentsScreen()),
     GetPage(
-        name: AppRoutes.notifications,
-        page: () => const PlaceholderScreen(title: 'Notifications')),
+        name: AppRoutes.notifications, page: () => const NotificationsScreen()),
     GetPage(name: AppRoutes.settings, page: () => const SettingsScreen()),
   ];
 }

@@ -34,6 +34,33 @@ class AppTheme {
           centerTitle: false,
           foregroundColor: AppColors.textPrimary,
         ),
+        cardTheme: CardThemeData(
+          color: AppColors.surface,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            side: const BorderSide(color: AppColors.border),
+          ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(0, 52),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+            textStyle: AppTypography.button,
+          ),
+        ),
+        iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            foregroundColor: AppColors.textPrimary,
+            minimumSize: const Size(44, 44),
+          ),
+        ),
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.primary,

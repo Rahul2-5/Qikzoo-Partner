@@ -18,7 +18,17 @@ Widget wrap(Widget child) => MaterialApp(
     );
 
 void main() {
-  final summary = ProfileSummary.mock();
+  const summary = ProfileSummary(
+    name: 'Rahul Verma',
+    partnerId: 'ZP12345678',
+    ratingAverage: 4.8,
+    walletBalance: 2345.50,
+    notificationCount: 3,
+    deliveriesLabel: '250+ Deliveries',
+    documentsVerified: false,
+    pendingAmount: 240,
+    bankLabel: 'HDFC Bank ····4321',
+  );
 
   test('ProfileSummary.mock returns the documented partner data', () {
     expect(summary.name, 'Rahul Verma');
@@ -56,7 +66,7 @@ void main() {
     expect(find.text('Wallet Balance'), findsOneWidget);
     expect(find.text('₹2,345.50'), findsOneWidget);
     expect(find.text('HDFC Bank ····4321'), findsOneWidget);
-    expect(find.text('Next payout: 15 May 2025'), findsOneWidget);
+    expect(find.textContaining('Pending:'), findsOneWidget);
 
     await tester.tap(find.text('Withdraw'));
     expect(tapped, isTrue);

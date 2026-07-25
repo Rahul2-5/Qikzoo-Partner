@@ -15,12 +15,17 @@ class AppColors {
   static const warning = Color(0xFFB7791F);
   static const error = Color(0xFFD14354);
 
-  static const background = Color(0xFFF9FAFB);
+  /// A cool, soft canvas keeps the white surfaces distinct without making
+  /// the interface feel boxed in.
+  static const background = Color(0xFFF6F7FB);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceMuted = Color(0xFFF0F2F7);
-  static const border = Color(0xFF607D8B);
-  static const textPrimary = Color(0xFF2D3436);
-  static const textSecondary = Color(0xFF607D8B);
+  static const surfaceMuted = Color(0xFFF1F3F8);
+
+  /// Deliberately quiet so fields, dividers, and unselected controls do not
+  /// compete with the content or primary action.
+  static const border = Color(0xFFDCE1EB);
+  static const textPrimary = Color(0xFF1D2939);
+  static const textSecondary = Color(0xFF667085);
 
   /// Indigo depth → electric-indigo lift, used by primary action surfaces.
   static const ctaGradient = [Color(0xFF3F51B5), Color(0xFF536DFE)];
