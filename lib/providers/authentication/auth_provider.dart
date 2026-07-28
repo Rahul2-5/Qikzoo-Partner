@@ -69,7 +69,7 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
 
       state = AsyncData(
         AuthSessionModel(
-          partnerId: profile.id,
+          partnerId: profile.publicRiderId ?? '',
           token: accessToken,
           isAuthenticated: true,
         ),

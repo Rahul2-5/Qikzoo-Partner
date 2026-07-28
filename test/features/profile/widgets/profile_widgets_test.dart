@@ -47,12 +47,34 @@ void main() {
     )));
 
     expect(find.text('Rahul Verma'), findsOneWidget);
-    expect(find.text('Delivery Partner ID: ZP12345678'), findsOneWidget);
+    expect(find.text('ZP12345678'), findsOneWidget);
     expect(find.text('4.8'), findsOneWidget);
     expect(find.text('250+ Deliveries'), findsOneWidget);
 
     await tester.tap(find.text('View Stats'));
     expect(tapped, isTrue);
+  });
+
+  testWidgets('ProfileIdentityCard hides the Rider ID line when not yet loaded',
+      (tester) async {
+    const noRiderIdYet = ProfileSummary(
+      name: 'Rahul Verma',
+      partnerId: '',
+      ratingAverage: 4.8,
+      walletBalance: 2345.50,
+      notificationCount: 3,
+      deliveriesLabel: '250+ Deliveries',
+      documentsVerified: false,
+      pendingAmount: 240,
+      bankLabel: 'HDFC Bank ····4321',
+    );
+    await tester.pumpWidget(wrap(ProfileIdentityCard(
+      summary: noRiderIdYet,
+      onViewStats: () {},
+    )));
+
+    expect(find.text('Rahul Verma'), findsOneWidget);
+    expect(find.text('ZP12345678'), findsNothing);
   });
 
   testWidgets('WalletBalanceCard renders balance details and handles withdraw',

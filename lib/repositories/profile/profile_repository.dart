@@ -412,6 +412,7 @@ class DioProfileRepository implements ProfileRepository {
   PartnerProfileModel _parseProfile(Map<String, dynamic> payload) {
     return PartnerProfileModel(
       id: _readString(payload, ['id']) ?? '',
+      publicRiderId: _readString(payload, ['publicRiderId']),
       name: _readString(payload, ['name']) ?? '',
       phone: _readString(payload, ['phone']) ?? '',
       photoUrl: _readString(payload, ['profilePhotoUrl']),

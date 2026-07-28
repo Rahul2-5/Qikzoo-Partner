@@ -42,9 +42,10 @@ class ProfileIdentityCard extends StatelessWidget {
                       style: AppTypography.h2,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text('Delivery Partner ID: ${summary.partnerId}',
-                      style: AppTypography.caption),
+                  if (summary.partnerId.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(summary.partnerId, style: AppTypography.caption),
+                  ],
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,

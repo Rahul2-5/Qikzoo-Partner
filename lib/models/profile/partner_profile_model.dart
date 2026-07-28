@@ -4,6 +4,13 @@ import '../partner_registration/personal_info_model.dart';
 
 class PartnerProfileModel extends Equatable {
   final String id;
+
+  /// Permanent public Rider ID (e.g. "QRID00001") — backend-generated only,
+  /// assigned once the rider is approved (`Rider.publicRiderId`). Null
+  /// until then. This, never [id] (the internal UUID), is what the app may
+  /// show to the rider.
+  final String? publicRiderId;
+
   final String name;
   final String phone;
   final String? photoUrl;
@@ -34,6 +41,7 @@ class PartnerProfileModel extends Equatable {
 
   const PartnerProfileModel({
     required this.id,
+    this.publicRiderId,
     required this.name,
     required this.phone,
     this.photoUrl,
@@ -78,6 +86,7 @@ class PartnerProfileModel extends Equatable {
   @override
   List<Object?> get props => [
         id,
+        publicRiderId,
         name,
         phone,
         photoUrl,

@@ -43,7 +43,9 @@ final profileSummaryProvider = Provider<AsyncValue<ProfileSummary>>((ref) {
   return profileAsync.whenData(
     (profile) => ProfileSummary(
       name: profile.name,
-      partnerId: profile.id,
+      // Permanent, backend-issued QRIDxxxxx — never the internal UUID
+      // (profile.id), which must never reach the rider-facing UI.
+      partnerId: profile.publicRiderId ?? '',
       photoUrl: profile.photoUrl,
       ratingAverage: rating?.average ?? 0,
       deliveriesLabel: _deliveriesLabel(rating?.totalRatings ?? 0),
@@ -63,7 +65,7 @@ final personalInformationProvider = Provider<PersonalInformationData?>((ref) {
   if (profile == null) return null;
   return PersonalInformationData(
     fullName: profile.name,
-    partnerId: profile.id,
+    partnerId: profile.publicRiderId ?? '',
     phone: profile.phone,
     email: profile.email ?? '',
     dateOfBirth: profile.dateOfBirth != null

@@ -173,6 +173,7 @@ const pendingVehicleStatus = OnboardingStatusModel(
 
 final testProfile = PartnerProfileModel(
   id: 'rider_1',
+  publicRiderId: 'QRID00001',
   name: 'Test Rider',
   phone: '9876543210',
   joinedDate: DateTime(2026, 1, 1),
@@ -258,7 +259,7 @@ void main() {
             'applies everywhere else');
     final session = container.read(authSessionProvider).value!;
     expect(session.isAuthenticated, isTrue);
-    expect(session.partnerId, 'rider_1');
+    expect(session.partnerId, 'QRID00001');
     expect(session.token, 'new-access');
   });
 
