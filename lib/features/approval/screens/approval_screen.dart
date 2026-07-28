@@ -8,6 +8,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/approval/approval_status_model.dart';
 import '../../../providers/approval/approval_provider.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 
 class ApprovalScreen extends ConsumerWidget {
   const ApprovalScreen({super.key});
@@ -19,7 +20,7 @@ class ApprovalScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Application status')),
       body: approvalAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const PageLoadingShimmer(),
         error: (_, __) => Center(child: TextButton(onPressed: () => ref.invalidate(approvalStatusProvider), child: const Text('Retry'))),
         data: (status) => Center(child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),

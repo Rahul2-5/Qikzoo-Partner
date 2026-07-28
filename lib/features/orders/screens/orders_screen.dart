@@ -41,42 +41,49 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: ResponsiveFrame(
-          maxWidth: 640,
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Orders', style: AppTypography.h1),
-              const SizedBox(height: AppSpacing.md),
-              activeOrderAsync.maybeWhen(
-                data: (order) => order == null
-                    ? const SizedBox.shrink()
-                    : _ActiveOrderBanner(
-                        onTap: () => Get.toNamed(AppRoutes.activeOrder),
-                      ),
-                orElse: () => const SizedBox.shrink(),
-              ),
-              Row(
-                children: [
-                  for (final filter in OrderHistoryFilter.values) ...[
-                    FilterChipCustom(
-                      label: filter.label,
-                      selected: _filter == filter,
-                      onTap: () => setState(() => _filter = filter),
+        child: Column(
+          children: [
+            Expanded(
+              child: ResponsiveFrame(
+                maxWidth: 640,
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Orders', style: AppTypography.h1),
+                    const SizedBox(height: AppSpacing.md),
+                    activeOrderAsync.maybeWhen(
+                      data: (order) => order == null
+                          ? const SizedBox.shrink()
+                          : _ActiveOrderBanner(
+                              onTap: () => Get.toNamed(AppRoutes.activeOrder),
+                            ),
+                      orElse: () => const SizedBox.shrink(),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    Row(
+                      children: [
+                        for (final filter in OrderHistoryFilter.values) ...[
+                          FilterChipCustom(
+                            label: filter.label,
+                            selected: _filter == filter,
+                            onTap: () => setState(() => _filter = filter),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Expanded(
+                      child:
+                          OrderHistoryList(filter: _filter, onOpen: _openOrder),
+                    ),
                   ],
-                ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              Expanded(
-                child: OrderHistoryList(filter: _filter, onOpen: _openOrder),
-              ),
-              const AppBottomNav(currentIndex: 2),
-            ],
-          ),
+            ),
+            const AppBottomNav(currentIndex: 2),
+          ],
         ),
       ),
     );

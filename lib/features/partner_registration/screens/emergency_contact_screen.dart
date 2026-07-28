@@ -22,6 +22,7 @@ import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/inputs/app_text_field.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../widgets/labeled_field.dart';
 import '../widgets/onboarding_progress_bar.dart';
 
@@ -211,7 +212,7 @@ class _EmergencyContactScreenState
 
   Widget _buildBody(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const PageLoadingShimmer(padding: EdgeInsets.zero, itemCount: 2);
     }
     if (_loadError != null) {
       return Center(

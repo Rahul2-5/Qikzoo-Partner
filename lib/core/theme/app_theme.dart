@@ -10,6 +10,8 @@ class AppTheme {
 
   static ThemeData get light => ThemeData(
         useMaterial3: true,
+        visualDensity: VisualDensity.standard,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
         scaffoldBackgroundColor: AppColors.background,
         primaryColor: AppColors.primary,
         colorScheme: ColorScheme.fromSeed(
@@ -28,16 +30,21 @@ class AppTheme {
           bodyMedium: AppTypography.body,
           bodySmall: AppTypography.caption,
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.background,
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.surface,
           elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
           centerTitle: false,
           foregroundColor: AppColors.textPrimary,
+          titleTextStyle: AppTypography.h2,
         ),
         cardTheme: CardThemeData(
           color: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
           margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.card),
             side: const BorderSide(color: AppColors.border),
@@ -46,7 +53,9 @@ class AppTheme {
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.onPrimary,
+            disabledBackgroundColor: AppColors.surfaceMuted,
+            disabledForegroundColor: AppColors.textDisabled,
             minimumSize: const Size(0, 52),
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             shape: RoundedRectangleBorder(
@@ -55,11 +64,82 @@ class AppTheme {
             textStyle: AppTypography.button,
           ),
         ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            minimumSize: const Size(0, 52),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            side: const BorderSide(color: AppColors.primary, width: 1.25),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+            textStyle: AppTypography.button.copyWith(color: AppColors.primary),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            minimumSize: const Size(48, 48),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            textStyle: AppTypography.bodyMedium,
+          ),
+        ),
         iconButtonTheme: IconButtonThemeData(
           style: IconButton.styleFrom(
             foregroundColor: AppColors.textPrimary,
-            minimumSize: const Size(44, 44),
+            minimumSize: const Size(48, 48),
+            padding: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
           ),
+        ),
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? AppColors.onPrimary
+                : AppColors.textDisabled,
+          ),
+          trackColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? AppColors.secondary
+                : AppColors.border,
+          ),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? AppColors.secondary
+                : Colors.transparent,
+          ),
+          side: const BorderSide(color: AppColors.border, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ),
+        radioTheme: const RadioThemeData(
+          fillColor: WidgetStatePropertyAll(AppColors.secondary),
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
+          ),
+          showDragHandle: true,
+          dragHandleColor: AppColors.border,
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
+          ),
+          titleTextStyle: AppTypography.h2,
+          contentTextStyle: AppTypography.body,
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: AppColors.secondary,
         ),
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
@@ -82,6 +162,7 @@ class AppTheme {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppColors.surface,
+          focusColor: AppColors.primarySoft,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: 16,

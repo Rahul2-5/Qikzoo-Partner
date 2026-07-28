@@ -28,6 +28,7 @@ import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/inputs/app_text_field.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../widgets/date_of_birth_field.dart';
 import '../widgets/document_upload_actions.dart' show showImageSourceSheet;
 import '../widgets/gender_selector.dart';
@@ -330,7 +331,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
   Widget _buildBody(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const PageLoadingShimmer(padding: EdgeInsets.zero, itemCount: 2);
     }
     if (_loadError != null) {
       return Center(

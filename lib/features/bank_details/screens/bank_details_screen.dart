@@ -14,6 +14,7 @@ import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/inputs/app_text_field.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../profile/widgets/account_screen_components.dart';
 
 class BankDetailsScreen extends ConsumerStatefulWidget {
@@ -137,7 +138,10 @@ class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: showInitialLoader
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const PageLoadingShimmer(
+                        padding: EdgeInsets.zero,
+                        itemCount: 2,
+                      )
                     : SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         child: Column(

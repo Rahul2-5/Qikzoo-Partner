@@ -10,6 +10,7 @@ import '../../../models/settings/app_settings_model.dart';
 import '../../../providers/settings/settings_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../profile/widgets/account_screen_components.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -52,8 +53,10 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: settingsAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                  loading: () => const PageLoadingShimmer(
+                    padding: EdgeInsets.zero,
+                    itemCount: 2,
+                  ),
                   error: (error, _) => Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

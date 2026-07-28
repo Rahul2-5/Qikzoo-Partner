@@ -1,7 +1,10 @@
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/profile/screens/profile_screen.dart';
+import 'package:delivery_partner_app/features/profile/widgets/personal_information_sheet.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
+import 'package:delivery_partner_app/models/profile/profile_summary.dart';
+import 'package:delivery_partner_app/providers/profile/profile_provider.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,13 +18,12 @@ class FakeAuthRepository implements AuthRepository {
   Future<OtpModel> requestOtp(String phoneNumber) => throw UnimplementedError();
 
   @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) =>
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp,
+          {String? name}) =>
       throw UnimplementedError();
 
   @override
-  Future<void> logout() async {
-    loggedOut = true;
-  }
+  Future<void> logout() async => loggedOut = true;
 }
 
 void setTallSurface(WidgetTester tester) {
@@ -31,10 +33,25 @@ void setTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+const profileSummary = ProfileSummary(
+  name: 'Rahul Verma',
+  partnerId: 'ZP12345678',
+  ratingAverage: 4.8,
+  deliveriesLabel: '250+ Deliveries',
+  documentsVerified: true,
+  walletBalance: 8750,
+  pendingAmount: 1250,
+  notificationCount: 3,
+);
+
 Widget buildApp({AuthRepository? authRepository}) => ProviderScope(
       overrides: [
         authRepositoryProvider
             .overrideWithValue(authRepository ?? FakeAuthRepository()),
+        profileSummaryProvider
+            .overrideWith((ref) => const AsyncData(profileSummary)),
+        personalInformationProvider
+            .overrideWith((ref) => mockPersonalInformation),
       ],
       child: GetMaterialApp(
         initialRoute: AppRoutes.profile,
@@ -60,46 +77,58 @@ Widget buildApp({AuthRepository? authRepository}) => ProviderScope(
     );
 
 void main() {
-  testWidgets('ProfileScreen renders the complete menu', (tester) async {
+  testWidgets('ProfileScreen renders the requested sectioned menu',
+      (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
 
     expect(find.text('Rahul Verma'), findsOneWidget);
     for (final title in [
-      'Personal Information',
-      'Bank Details',
-      'Vehicle Details',
-      'Documents',
-      'Incentives & Offers',
-      'Help & Support',
-      'Settings',
-      'Log Out',
+      'Gigs history',
+      'Trips history',
+      'Up to ₹2,000 referral bonus',
+      'Support',
+      'Help centre',
+      'Support tickets',
+      'Partner options',
+      'Rest points',
+      'Your benefits',
+      'Doctor visit at store',
+      'Medical insurance',
+      'Scratch cards',
+      'Agreement',
+      'App settings',
+      'App language',
+      'Audio language',
+      'Support language',
+      'Order alert sound',
+      'Logout',
     ]) {
       expect(find.text(title), findsOneWidget);
     }
-    expect(find.text('Learnings'), findsOneWidget);
-    expect(find.text('Safe Food Delivery'), findsOneWidget);
   });
 
   testWidgets('Settings menu navigates to the settings route', (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
-    await tester.tap(find.text('Settings'));
+    await tester.tap(find.text('App language'));
     await tester.pumpAndSettle();
 
     expect(find.text('Settings Screen'), findsOneWidget);
   });
 
-  testWidgets('Personal Information opens its bottom sheet', (tester) async {
+  testWidgets('Tapping the profile summary opens the partner ID',
+      (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
 
-    await tester.tap(find.text('Personal Information'));
+    await tester.tap(find.text('Rahul Verma'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Your account and contact details'), findsOneWidget);
-    expect(find.text('Contact details'), findsOneWidget);
-    expect(find.text('Edit information'), findsOneWidget);
+    expect(find.text('DELIVERY PARTNER'), findsOneWidget);
+    expect(find.text('Essential services · Food delivery'), findsOneWidget);
+    expect(find.text('Active'), findsOneWidget);
+    expect(find.text('Currently not delivering any order'), findsOneWidget);
   });
 
   testWidgets('Home tab navigates to the dashboard', (tester) async {
@@ -116,7 +145,7 @@ void main() {
     setTallSurface(tester);
     final fakeAuth = FakeAuthRepository();
     await tester.pumpWidget(buildApp(authRepository: fakeAuth));
-    await tester.tap(find.text('Log Out'));
+    await tester.tap(find.text('Logout'));
     await tester.pumpAndSettle();
 
     expect(find.text('Log out?'), findsOneWidget);
@@ -131,7 +160,7 @@ void main() {
     setTallSurface(tester);
     final fakeAuth = FakeAuthRepository();
     await tester.pumpWidget(buildApp(authRepository: fakeAuth));
-    await tester.tap(find.text('Log Out'));
+    await tester.tap(find.text('Logout'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Cancel'));

@@ -25,96 +25,102 @@ class PrimaryCtaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDisabled = onPressed == null;
+    final isDisabled = onPressed == null && !isLoading;
     final isInteractive = !isLoading && !isDisabled;
 
-    return AppPressEffect(
+    return Semantics(
+      button: true,
       enabled: isInteractive,
-      child: SizedBox(
-        width: fullWidth ? double.infinity : null,
-        height: 54,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            boxShadow: isInteractive ? AppShadows.cta : const [],
-          ),
-          child: Material(
-            color: isDisabled ? AppColors.surfaceMuted : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            child: Ink(
-              decoration: isDisabled
-                  ? BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.button),
-                      border: Border.all(color: AppColors.border),
-                    )
-                  : BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: AppColors.ctaGradient,
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+      label: isLoading ? '$label, loading' : label,
+      child: AppPressEffect(
+        enabled: isInteractive,
+        child: SizedBox(
+          width: fullWidth ? double.infinity : null,
+          height: 52,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+              boxShadow: isInteractive ? AppShadows.cta : const [],
+            ),
+            child: Material(
+              color: isDisabled ? AppColors.surfaceMuted : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadius.button),
+              child: Ink(
+                decoration: isDisabled
+                    ? BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.button),
+                        border: Border.all(color: AppColors.border),
+                      )
+                    : BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: AppColors.ctaGradient,
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
-                      borderRadius: BorderRadius.circular(AppRadius.button),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppRadius.button),
+                  onTap: isInteractive ? onPressed : null,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
                     ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.button),
-                onTap: isInteractive ? onPressed : null,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                  child: Center(
-                    child: AnimatedSwitcher(
-                      duration: AppMotion.duration(context, AppMotion.quick),
-                      switchInCurve: AppMotion.enter,
-                      switchOutCurve: AppMotion.exit,
-                      child: isLoading
-                          ? const SizedBox(
-                              key: ValueKey('loading'),
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Row(
-                              key: const ValueKey('label'),
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (fullWidth)
-                                  Flexible(
-                                    child: Text(
+                    child: Center(
+                      child: AnimatedSwitcher(
+                        duration: AppMotion.duration(context, AppMotion.quick),
+                        switchInCurve: AppMotion.enter,
+                        switchOutCurve: AppMotion.exit,
+                        child: isLoading
+                            ? const SizedBox(
+                                key: ValueKey('loading'),
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: AppColors.onPrimary,
+                                ),
+                              )
+                            : Row(
+                                key: const ValueKey('label'),
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (fullWidth)
+                                    Flexible(
+                                      child: Text(
+                                        label,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.button.copyWith(
+                                          color: isDisabled
+                                              ? AppColors.textDisabled
+                                              : AppColors.onPrimary,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Text(
                                       label,
                                       maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                       style: AppTypography.button.copyWith(
                                         color: isDisabled
-                                            ? AppColors.textSecondary
-                                            : Colors.white,
+                                            ? AppColors.textDisabled
+                                            : AppColors.onPrimary,
                                       ),
                                     ),
-                                  )
-                                else
-                                  Text(
-                                    label,
-                                    maxLines: 1,
-                                    style: AppTypography.button.copyWith(
+                                  if (trailingIcon != null) ...[
+                                    const SizedBox(width: AppSpacing.sm),
+                                    Icon(
+                                      trailingIcon,
                                       color: isDisabled
-                                          ? AppColors.textSecondary
-                                          : Colors.white,
+                                          ? AppColors.textDisabled
+                                          : AppColors.onPrimary,
+                                      size: 20,
                                     ),
-                                  ),
-                                if (trailingIcon != null) ...[
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Icon(
-                                    trailingIcon,
-                                    color: isDisabled
-                                        ? AppColors.textSecondary
-                                        : Colors.white,
-                                    size: 20,
-                                  ),
+                                  ],
                                 ],
-                              ],
-                            ),
+                              ),
+                      ),
                     ),
                   ),
                 ),

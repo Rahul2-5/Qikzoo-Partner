@@ -13,6 +13,7 @@ import '../../../providers/orders/order_detail_provider.dart';
 import '../../../shared/widgets/chips/status_chip.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/error_widget_custom.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../widgets/contact_actions.dart';
 import '../widgets/order_status_timeline.dart';
 
@@ -36,7 +37,10 @@ class OrderDetailsScreen extends ConsumerWidget {
           maxWidth: 640,
           padding: const EdgeInsets.all(AppSpacing.md),
           child: orderAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const PageLoadingShimmer(
+              padding: EdgeInsets.zero,
+              itemCount: 3,
+            ),
             error: (error, _) => ErrorWidgetCustom(
               message: error is ApiException
                   ? error.message

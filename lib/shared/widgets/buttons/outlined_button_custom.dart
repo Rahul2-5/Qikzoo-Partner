@@ -12,24 +12,30 @@ class OutlinedButtonCustom extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppPressEffect(
+    return Semantics(
+      button: true,
       enabled: onPressed != null,
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.primary, width: 1.4),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.button),
+      label: label,
+      child: AppPressEffect(
+        enabled: onPressed != null,
+        child: SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.primary, width: 1.25),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.button),
+              ),
             ),
-          ),
-          child: Text(
-            label,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
+            child: Text(
+              label,
+              style: AppTypography.button.copyWith(
+                color: onPressed == null
+                    ? AppColors.textDisabled
+                    : AppColors.primary,
+              ),
             ),
           ),
         ),

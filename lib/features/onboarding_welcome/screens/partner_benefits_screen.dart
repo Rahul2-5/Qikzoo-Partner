@@ -20,7 +20,14 @@ import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../widgets/onboarding_step_indicator.dart';
 
 class PartnerBenefitsScreen extends StatelessWidget {
-  const PartnerBenefitsScreen({super.key});
+  const PartnerBenefitsScreen({
+    super.key,
+    this.showOnboardingControls = true,
+  });
+
+  /// Profile benefits are informational; only the onboarding flow needs
+  /// navigation controls and a sign-up CTA.
+  final bool showOnboardingControls;
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +53,12 @@ class PartnerBenefitsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: AppSpacing.sm),
-                    const _BenefitsTopBar(),
-                    SizedBox(height: isCompact ? AppSpacing.md : AppSpacing.lg),
+                    if (showOnboardingControls) ...[
+                      const _BenefitsTopBar(),
+                      SizedBox(
+                          height: isCompact ? AppSpacing.md : AppSpacing.lg),
+                    ] else
+                      const SizedBox(height: AppSpacing.md),
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
@@ -77,17 +88,19 @@ class PartnerBenefitsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    AppStaggeredReveal(
-                      index: 3,
-                      child: PrimaryCtaButton(
-                        label: 'Get Started',
-                        trailingIcon: LucideIcons.arrowRight,
-                        onPressed: () => Get.toNamed(
-                          authFlowRoute(AppRoutes.otp, AuthFlow.signUp),
+                    if (showOnboardingControls) ...[
+                      AppStaggeredReveal(
+                        index: 3,
+                        child: PrimaryCtaButton(
+                          label: 'Get Started',
+                          trailingIcon: LucideIcons.arrowRight,
+                          onPressed: () => Get.toNamed(
+                            authFlowRoute(AppRoutes.otp, AuthFlow.signUp),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
                   ],
                 );
               },
@@ -441,3 +454,14 @@ Widget partnerBenefitsScreenPreview() {
     home: const PartnerBenefitsScreen(),
   );
 }
+
+@Preview(
+  name: 'Partner benefits - profile',
+  group: 'Profile',
+  size: Size(390, 844),
+)
+Widget partnerBenefitsProfilePreview() => MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      home: const PartnerBenefitsScreen(showOnboardingControls: false),
+    );

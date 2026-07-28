@@ -12,6 +12,7 @@ import '../../../providers/support/support_provider.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../profile/widgets/account_screen_components.dart';
 
 class HelpSupportScreen extends ConsumerStatefulWidget {
@@ -147,12 +148,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                       const SizedBox(height: AppSpacing.sm),
                       ticketsAsync.when(
                         loading: () => const AccountSectionCard(
-                          child: Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(AppSpacing.md),
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
+                          child: LoadingSkeleton(height: 72),
                         ),
                         error: (error, _) => AccountSectionCard(
                           child: Row(

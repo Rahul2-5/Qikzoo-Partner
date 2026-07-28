@@ -20,6 +20,7 @@ import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/misc/error_widget_custom.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../widgets/cancel_order_sheet.dart';
 import '../widgets/contactless_proof_sheet.dart';
 import '../widgets/contact_actions.dart';
@@ -184,7 +185,10 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
           maxWidth: 640,
           padding: const EdgeInsets.all(AppSpacing.md),
           child: orderAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const PageLoadingShimmer(
+              padding: EdgeInsets.zero,
+              itemCount: 3,
+            ),
             error: (error, _) => ErrorWidgetCustom(
               message: error is ApiException
                   ? error.message

@@ -26,6 +26,7 @@ import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../widgets/onboarding_progress_bar.dart';
 
 /// Rider onboarding Review & Submit step — the last screen before
@@ -196,7 +197,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   Widget _buildBody(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const PageLoadingShimmer(padding: EdgeInsets.zero, itemCount: 2);
     }
     if (_loadError != null) {
       return Center(

@@ -10,7 +10,11 @@ class StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const StatCard({super.key, required this.label, required this.value, required this.icon});
+  const StatCard(
+      {super.key,
+      required this.label,
+      required this.value,
+      required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +23,22 @@ class StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
         boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.secondary, size: 22),
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.secondaryBg,
+              borderRadius: BorderRadius.circular(AppRadius.control),
+            ),
+            child: Icon(icon, color: AppColors.secondary, size: 20),
+          ),
           const SizedBox(height: AppSpacing.sm),
           Text(value, style: AppTypography.numericMd),
           const SizedBox(height: AppSpacing.xs),

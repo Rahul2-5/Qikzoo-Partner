@@ -10,6 +10,7 @@ import '../../../providers/orders/order_history_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/misc/error_widget_custom.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import 'rider_order_list_tile.dart';
 
 /// One tab's worth of paginated order history — infinite-scrolls by
@@ -64,7 +65,10 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
     final stateAsync = ref.watch(orderHistoryProvider(widget.filter));
 
     return stateAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const PageLoadingShimmer(
+        padding: EdgeInsets.zero,
+        itemCount: 3,
+      ),
       error: (error, _) => ErrorWidgetCustom(
         message: error is ApiException ? error.message : 'Could not load orders.',
         onRetry: () => ref.read(orderHistoryProvider(widget.filter).notifier).refresh(),
@@ -94,7 +98,7 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
               if (index >= state.items.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: LoadingSkeleton(height: 56),
                 );
               }
               final order = state.items[index];

@@ -12,6 +12,7 @@ import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../../shared/widgets/navigation/step_progress_indicator.dart';
 import '../widgets/document_upload_actions.dart';
 import '../widgets/document_upload_tile.dart';
@@ -107,8 +108,10 @@ class DocumentUploadScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: documentsAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                  loading: () => const PageLoadingShimmer(
+                    padding: EdgeInsets.zero,
+                    itemCount: 3,
+                  ),
                   error: (error, _) => Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

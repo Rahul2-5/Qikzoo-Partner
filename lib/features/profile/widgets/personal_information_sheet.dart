@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -20,6 +21,8 @@ class PersonalInformationData {
   final String gender;
   final String emergencyContactName;
   final String emergencyContactPhone;
+  final String? photoUrl;
+  final String? vehicleType;
 
   const PersonalInformationData({
     required this.fullName,
@@ -30,6 +33,8 @@ class PersonalInformationData {
     required this.gender,
     required this.emergencyContactName,
     required this.emergencyContactPhone,
+    this.photoUrl,
+    this.vehicleType,
   });
 
   PersonalInformationData copyWith({
@@ -64,7 +69,189 @@ const mockPersonalInformation = PersonalInformationData(
   gender: 'Male',
   emergencyContactName: 'Suresh Verma',
   emergencyContactPhone: '98123 45678',
+  vehicleType: 'Bike / scooter',
 );
+
+/// A non-editable identity card, shown from the profile header. It is kept
+/// separate from [PersonalInformationSheet], which remains the edit surface.
+class PartnerIdSheet extends StatelessWidget {
+  const PartnerIdSheet({super.key, required this.information});
+
+  final PersonalInformationData information;
+
+  static Future<void> show(
+    BuildContext context, {
+    required PersonalInformationData information,
+  }) =>
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: 0.28),
+        builder: (_) => FractionallySizedBox(
+          heightFactor: 1,
+          child: PartnerIdSheet(information: information),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: AppColors.surface,
+        child: Column(
+          children: [
+            SizedBox(
+              height: 248,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Container(color: AppColors.surfaceMuted),
+                  Positioned(
+                    top: AppSpacing.md,
+                    right: AppSpacing.md,
+                    child: IconButton(
+                      tooltip: 'Close partner ID',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(LucideIcons.x, size: 28),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -42,
+                    child: _PartnerIdPhoto(url: information.photoUrl),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl + AppSpacing.sm),
+            Text(
+              'QIKZOO',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text('DELIVERY PARTNER', style: AppTypography.h1),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Essential services · Food delivery',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.xs + 2,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.successBg,
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+              ),
+              child: Text(
+                'Active',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Valid partner ID',
+              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Text(information.fullName, style: AppTypography.h1.copyWith(fontSize: 30)),
+            const SizedBox(height: AppSpacing.xs),
+            Text(information.partnerId, style: AppTypography.bodyMedium),
+            const SizedBox(height: AppSpacing.xl),
+            _PartnerIdDetail(label: 'PHONE', value: information.phone),
+            const SizedBox(height: AppSpacing.lg),
+            _PartnerIdDetail(
+              label: 'VEHICLE',
+              value: information.vehicleType?.trim().isNotEmpty == true
+                  ? information.vehicleType!
+                  : 'Not added',
+            ),
+            const Spacer(),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              color: AppColors.primarySoft,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.circle, color: AppColors.secondary),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Currently not delivering any order',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.info,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+class _PartnerIdPhoto extends StatelessWidget {
+  const _PartnerIdPhoto({this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 132,
+        height: 164,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: AppColors.secondaryBg,
+          borderRadius: BorderRadius.circular(AppRadius.card + 8),
+          border: Border.all(color: AppColors.surface, width: 4),
+        ),
+        child: url == null || url!.isEmpty
+            ? const Icon(LucideIcons.user, size: 56, color: AppColors.secondary)
+            : CachedNetworkImage(
+                imageUrl: url!,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => const Icon(
+                  LucideIcons.user,
+                  size: 56,
+                  color: AppColors.secondary,
+                ),
+              ),
+      );
+}
+
+class _PartnerIdDetail extends StatelessWidget {
+  const _PartnerIdDetail({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(value, style: AppTypography.h2.copyWith(fontSize: 24)),
+        ],
+      );
+}
 
 class PersonalInformationSheet extends StatefulWidget {
   final PersonalInformationData information;
@@ -578,6 +765,20 @@ Widget personalInformationSheetPreview() => MaterialApp(
           child: PersonalInformationSheet(
             information: mockPersonalInformation,
           ),
+        ),
+      ),
+    );
+
+@Preview(
+  name: 'Partner ID card',
+  group: 'Profile',
+  size: Size(390, 844),
+)
+Widget partnerIdSheetPreview() => MaterialApp(
+      theme: AppTheme.light,
+      home: const Scaffold(
+        body: SafeArea(
+          child: PartnerIdSheet(information: mockPersonalInformation),
         ),
       ),
     );

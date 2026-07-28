@@ -15,6 +15,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/app_3d_illustration.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 
 /// Temporary payment destination until payment processing is connected.
 /// It deliberately moves the rider to the review state rather than trying
@@ -84,12 +85,8 @@ class _PaymentComingSoonScreenState extends State<PaymentComingSoonScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: AppColors.secondary,
-                    ),
+                    width: 96,
+                    child: LoadingSkeleton(height: 12),
                   ),
                 ],
               ),

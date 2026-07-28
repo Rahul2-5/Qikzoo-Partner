@@ -23,6 +23,7 @@ import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/countdown_timer.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/misc/error_widget_custom.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 
 /// Shown when the dashboard's offer poll detects a WAITING_RIDER attempt.
 /// The backend's `GET /rider/dispatch/current` only returns the bare
@@ -124,7 +125,10 @@ class _IncomingOfferScreenState extends ConsumerState<IncomingOfferScreen> {
             maxWidth: 480,
             padding: const EdgeInsets.all(AppSpacing.md),
             child: offerAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const PageLoadingShimmer(
+                padding: EdgeInsets.zero,
+                itemCount: 2,
+              ),
               error: (error, _) => ErrorWidgetCustom(
                 message: error is ApiException
                     ? error.message

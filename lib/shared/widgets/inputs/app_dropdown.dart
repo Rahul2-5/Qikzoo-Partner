@@ -8,7 +8,8 @@ class AppDropdown<T> extends StatelessWidget {
   final T? value;
   final List<T> items;
   final String Function(T) itemLabel;
-  final void Function(T?) onChanged;
+  final ValueChanged<T?>? onChanged;
+  final String? hint;
 
   const AppDropdown({
     super.key,
@@ -17,6 +18,7 @@ class AppDropdown<T> extends StatelessWidget {
     required this.items,
     required this.itemLabel,
     required this.onChanged,
+    this.hint,
   });
 
   @override
@@ -24,17 +26,28 @@ class AppDropdown<T> extends StatelessWidget {
     return DropdownButtonFormField<T>(
       initialValue: value,
       style: AppTypography.body,
+      isExpanded: true,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded),
       decoration: InputDecoration(
         labelText: label,
+        hintText: hint,
         filled: true,
         fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
       items: items
-          .map((item) => DropdownMenuItem(value: item, child: Text(itemLabel(item))))
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(
+                itemLabel(item),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
           .toList(),
       onChanged: onChanged,
     );

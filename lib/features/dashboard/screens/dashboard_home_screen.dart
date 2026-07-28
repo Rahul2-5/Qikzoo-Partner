@@ -23,6 +23,7 @@ import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 import '../../partner_registration/screens/selfie_verification_screen.dart';
 import '../../gigs/widgets/available_gigs_section.dart';
@@ -170,8 +171,9 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                 maxWidth: 640,
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: statsAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                  loading: () => const PageLoadingShimmer(
+                    padding: EdgeInsets.only(top: AppSpacing.md),
+                  ),
                   error: (error, _) => _ErrorView(
                     message: error is ApiException
                         ? error.message

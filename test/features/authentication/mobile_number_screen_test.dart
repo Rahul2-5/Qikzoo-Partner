@@ -1,7 +1,7 @@
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/authentication/screens/mobile_number_screen.dart';
-import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/auth_flow.dart';
+import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:delivery_partner_app/shared/widgets/buttons/primary_cta_button.dart';
@@ -24,9 +24,9 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) {
-    throw UnimplementedError();
-  }
+  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp,
+          {String? name}) =>
+      throw UnimplementedError();
 
   @override
   Future<void> logout() => throw UnimplementedError();
@@ -39,50 +39,46 @@ void setPhoneSurface(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Widget buildApp(
-  FakeAuthRepository repository, {
-  AuthFlow flow = AuthFlow.login,
-}) {
-  return ProviderScope(
-    overrides: [authRepositoryProvider.overrideWithValue(repository)],
-    child: GetMaterialApp(
-      initialRoute: AppRoutes.otp,
-      getPages: [
-        GetPage(
-          name: AppRoutes.otp,
-          page: () => MobileNumberScreen(flow: flow),
-        ),
-        GetPage(
-          name: AppRoutes.otpVerification,
-          page: () => Scaffold(
-            body: Text(
-              Get.parameters['flow'] == 'signup'
-                  ? 'Signup OTP destination'
-                  : 'Login OTP destination',
+Widget buildApp(FakeAuthRepository repository,
+        {AuthFlow flow = AuthFlow.login}) =>
+    ProviderScope(
+      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      child: GetMaterialApp(
+        initialRoute: AppRoutes.otp,
+        getPages: [
+          GetPage(
+            name: AppRoutes.otp,
+            page: () => MobileNumberScreen(flow: flow),
+          ),
+          GetPage(
+            name: AppRoutes.otpVerification,
+            page: () => Scaffold(
+              body: Text(
+                Get.parameters['flow'] == 'signup'
+                    ? 'Signup OTP destination'
+                    : 'Login OTP destination',
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
 
 void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  testWidgets('shows enhanced secure mobile-number entry state',
+  testWidgets('shows the Qikzoo logo and a single mobile-number field',
       (tester) async {
     setPhoneSurface(tester);
     await tester.pumpWidget(buildApp(FakeAuthRepository()));
 
-    expect(find.text('SECURE SIGN IN'), findsOneWidget);
-    expect(find.text('Secure login'), findsOneWidget);
-    expect(find.text('Mobile number'), findsOneWidget);
-    expect(
-      find.text('Enter a valid 10-digit Indian number (no repeated digits)'),
-      findsOneWidget,
-    );
+    expect(find.text('Sign in to your account'), findsOneWidget);
+    expect(find.text('Login or create an account'), findsOneWidget);
+    expect(find.text('Enter a valid 10 digit mobile number'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('Full name'), findsNothing);
+    expect(find.text('Enter your full name'), findsNothing);
 
     final button = tester.widget<PrimaryCtaButton>(
       find.byType(PrimaryCtaButton),
@@ -90,13 +86,12 @@ void main() {
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('valid signup number forwards its flow to OTP', (tester) async {
+  testWidgets('a valid signup number forwards its flow to OTP', (tester) async {
     setPhoneSurface(tester);
     final repository = FakeAuthRepository();
     await tester.pumpWidget(buildApp(repository, flow: AuthFlow.signUp));
 
-    await tester.enterText(find.byType(TextField).first, '9876543210');
-    await tester.enterText(find.byType(TextField).last, 'Ravi Kumar');
+    await tester.enterText(find.byType(TextField), '9876543210');
     await tester.pump();
 
     expect(find.text('Number looks good'), findsOneWidget);
@@ -107,43 +102,19 @@ void main() {
     expect(find.text('Signup OTP destination'), findsOneWidget);
   });
 
-  testWidgets('invalid number shows a snackbar only after Continue is tapped',
+  testWidgets('invalid number shows a snackbar after Continue is tapped',
       (tester) async {
     setPhoneSurface(tester);
     final repository = FakeAuthRepository();
     await tester.pumpWidget(buildApp(repository));
 
-    await tester.enterText(find.byType(TextField).first, '9999999999');
+    await tester.enterText(find.byType(TextField), '9999999999');
     await tester.pump();
-
-    expect(
-      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
-      '9999999999',
-    );
-    final button = tester.widget<PrimaryCtaButton>(
-      find.byType(PrimaryCtaButton),
-    );
-    expect(button.onPressed, isNotNull);
 
     await tester.tap(find.text('Continue'));
     await tester.pump();
 
     expect(find.text('Please enter a valid mobile number.'), findsOneWidget);
     expect(repository.requestedPhone, isNull);
-  });
-
-  testWidgets('signup Continue stays disabled until a name is entered',
-      (tester) async {
-    setPhoneSurface(tester);
-    final repository = FakeAuthRepository();
-    await tester.pumpWidget(buildApp(repository, flow: AuthFlow.signUp));
-
-    await tester.enterText(find.byType(TextField).first, '9876543210');
-    await tester.pump();
-
-    final button = tester.widget<PrimaryCtaButton>(
-      find.byType(PrimaryCtaButton),
-    );
-    expect(button.onPressed, isNull);
   });
 }

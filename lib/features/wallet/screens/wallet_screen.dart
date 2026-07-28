@@ -13,6 +13,7 @@ import '../../../models/wallet/wallet_model.dart';
 import '../../../providers/wallet/wallet_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 
 class WalletScreen extends ConsumerWidget {
   const WalletScreen({super.key});
@@ -31,7 +32,7 @@ class WalletScreen extends ConsumerWidget {
           await ref.read(walletProvider.future);
         },
         child: walletAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const PageLoadingShimmer(),
           error: (_, __) => _WalletError(onRetry: () => ref.invalidate(walletProvider)),
           data: (wallet) => ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -41,9 +42,9 @@ class WalletScreen extends ConsumerWidget {
               Text('Recent activity', style: AppTypography.h2),
               const SizedBox(height: AppSpacing.sm),
               transactionsAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: Center(child: CircularProgressIndicator()),
+                loading: () => const SizedBox(
+                  height: 250,
+                  child: PageLoadingShimmer(showHeader: false, itemCount: 2),
                 ),
                 error: (_, __) => const EmptyState(message: 'Transactions could not be loaded.'),
                 data: (transactions) => transactions.isEmpty

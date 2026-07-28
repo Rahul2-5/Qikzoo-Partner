@@ -10,6 +10,7 @@ import '../../../models/training/training_module_model.dart';
 import '../../../providers/training/training_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 
 class TrainingScreen extends ConsumerWidget {
   const TrainingScreen({super.key});
@@ -21,7 +22,7 @@ class TrainingScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Training')),
       body: modulesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const PageLoadingShimmer(),
         error: (_, __) => Center(child: TextButton(onPressed: () => ref.invalidate(trainingModulesProvider), child: const Text('Retry'))),
         data: (modules) => modules.isEmpty
             ? const EmptyState(message: 'No training modules are available right now.')

@@ -16,6 +16,7 @@ import '../../../repositories/profile/profile_repository.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 
 /// Terminal/non-editable onboarding states — SUBMITTED, UNDER_REVIEW,
 /// APPROVED-but-not-yet-ACTIVE, and REJECTED. Reached only via
@@ -110,7 +111,7 @@ class _VerificationStatusScreenState
 
   Widget _buildBody(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const PageLoadingShimmer(padding: EdgeInsets.zero, itemCount: 2);
     }
     if (_loadError != null) {
       return Center(

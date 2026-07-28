@@ -74,6 +74,8 @@ final personalInformationProvider = Provider<PersonalInformationData?>((ref) {
     gender: _genderLabel(profile.gender),
     emergencyContactName: profile.emergencyContactName ?? '',
     emergencyContactPhone: profile.emergencyContactPhone ?? '',
+    photoUrl: profile.photoUrl,
+    vehicleType: profile.vehicleType,
   );
 });
 
@@ -90,9 +92,8 @@ bool _allStepsCompleted(List<VerificationStepModel>? steps) =>
 String? _bankLabel(BankDetailsModel? bank) {
   if (bank == null) return null;
   final account = bank.accountNumber.trim();
-  final last4 = account.length >= 4
-      ? account.substring(account.length - 4)
-      : account;
+  final last4 =
+      account.length >= 4 ? account.substring(account.length - 4) : account;
   final ifsc = bank.ifsc.trim().toUpperCase();
   final bankCode = ifsc.length >= 4 ? ifsc.substring(0, 4) : ifsc;
   if (bankCode.isEmpty) return '····$last4';

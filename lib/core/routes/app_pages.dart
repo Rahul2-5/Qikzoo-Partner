@@ -51,7 +51,9 @@ class AppPages {
         name: AppRoutes.welcome, page: () => const OnboardingWelcomeScreen()),
     GetPage(
         name: AppRoutes.partnerBenefits,
-        page: () => const PartnerBenefitsScreen()),
+        page: () => PartnerBenefitsScreen(
+              showOnboardingControls: Get.parameters['source'] != 'profile',
+            )),
     GetPage(
       name: AppRoutes.otp,
       page: () => MobileNumberScreen(

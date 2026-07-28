@@ -9,6 +9,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../models/document_verification/document_model.dart';
 import '../../../providers/document_verification/documents_provider.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../partner_registration/widgets/document_upload_actions.dart';
 import '../../partner_registration/widgets/document_upload_tile.dart';
 import '../../profile/widgets/account_screen_components.dart';
@@ -62,8 +63,10 @@ class ManageDocumentsScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: documentsAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                  loading: () => const PageLoadingShimmer(
+                    padding: EdgeInsets.zero,
+                    itemCount: 2,
+                  ),
                   error: (error, _) => Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,

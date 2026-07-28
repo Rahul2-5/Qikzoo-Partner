@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
@@ -69,6 +70,7 @@ class AccountSectionCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.sheet),
         border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.control,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

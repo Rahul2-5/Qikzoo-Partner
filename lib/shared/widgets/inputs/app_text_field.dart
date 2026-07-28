@@ -14,12 +14,16 @@ class AppTextField extends StatelessWidget {
   final bool showFloatingLabel;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final FocusNode? focusNode;
   final bool readOnly;
+  final bool enabled;
   final VoidCallback? onTap;
   final void Function(String)? onChanged;
   final List<TextInputFormatter>? inputFormatters;
   final int? maxLength;
   final TextCapitalization textCapitalization;
+  final TextInputAction? textInputAction;
+  final Iterable<String>? autofillHints;
 
   const AppTextField({
     super.key,
@@ -32,26 +36,34 @@ class AppTextField extends StatelessWidget {
     this.showFloatingLabel = true,
     this.prefixIcon,
     this.suffixIcon,
+    this.focusNode,
     this.readOnly = false,
+    this.enabled = true,
     this.onTap,
     this.onChanged,
     this.inputFormatters,
     this.maxLength,
     this.textCapitalization = TextCapitalization.none,
+    this.textInputAction,
+    this.autofillHints,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
       obscureText: obscureText,
       readOnly: readOnly,
+      enabled: enabled,
       onTap: onTap,
       onChanged: onChanged,
       inputFormatters: inputFormatters,
       maxLength: maxLength,
       textCapitalization: textCapitalization,
+      textInputAction: textInputAction,
+      autofillHints: autofillHints,
       style: AppTypography.bodyMedium,
       decoration: InputDecoration(
         labelText: showFloatingLabel ? label : null,
@@ -59,7 +71,12 @@ class AppTextField extends StatelessWidget {
         errorText: errorText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
+        prefixIconConstraints:
+            const BoxConstraints(minWidth: 48, minHeight: 48),
+        suffixIconConstraints:
+            const BoxConstraints(minWidth: 48, minHeight: 48),
         counterText: maxLength != null ? '' : null,
+        errorMaxLines: 2,
         filled: true,
         fillColor: AppColors.surface,
         contentPadding:

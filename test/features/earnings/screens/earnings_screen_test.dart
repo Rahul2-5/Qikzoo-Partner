@@ -32,7 +32,7 @@ void main() {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Earnings'), findsOneWidget);
+    expect(find.text("Today's Earnings"), findsOneWidget);
     expect(find.text('₹2,345.50'), findsWidgets);
   });
 

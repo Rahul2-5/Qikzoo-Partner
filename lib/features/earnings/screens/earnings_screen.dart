@@ -5,12 +5,7 @@ import '../../../models/earnings/earnings_models.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
-import '../widgets/earnings_breakdown_grid.dart';
-import '../widgets/earnings_header.dart';
-import '../widgets/earnings_history_list.dart';
-import '../widgets/earnings_trend_chart.dart';
-import '../widgets/next_payout_card.dart';
-import '../widgets/total_earnings_card.dart';
+import '../widgets/today_performance_widgets.dart';
 
 class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
@@ -32,7 +27,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
       body: SafeArea(
         child: ResponsiveFrame(
           maxWidth: 520,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Column(
             children: [
               Expanded(
@@ -41,34 +36,36 @@ class _EarningsScreenState extends State<EarningsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      AppStaggeredReveal(
+                      const AppStaggeredReveal(
                         index: 0,
-                        child: EarningsHeader(
-                          period: _period,
-                          onPeriodChanged: _setPeriod,
-                        ),
+                        child: TodayPerformanceHeader(),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppStaggeredReveal(
                         index: 1,
-                        child: TotalEarningsCard(
+                        child: TodayEarningsCard(
                           total: summary.total,
-                          deltaPercent: summary.deltaPercent,
-                          comparisonLabel: _period.comparisonLabel,
+                          orderEarnings: summary.categories.first.amount,
+                          incentives: summary.categories[1].amount,
+                          tips: summary.categories[2].amount +
+                              summary.categories[3].amount,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      AppStaggeredReveal(
+                      const AppStaggeredReveal(
                         index: 2,
-                        child: EarningsBreakdownGrid(
-                          categories: summary.categories,
-                        ),
+                        child: GigProgressCard(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      const AppStaggeredReveal(
+                        index: 3,
+                        child: TodayStatGrid(),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppStaggeredReveal(
-                        index: 3,
-                        child: EarningsTrendChart(
-                          bars: summary.bars,
+                        index: 4,
+                        child: TodayEarningsTrend(
+                          points: summary.bars,
                           maxValue: summary.maxBarValue,
                           period: _period,
                           onPeriodChanged: _setPeriod,
@@ -76,13 +73,9 @@ class _EarningsScreenState extends State<EarningsScreen> {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppStaggeredReveal(
-                        index: 4,
-                        child: EarningsHistoryList(history: summary.history),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppStaggeredReveal(
                         index: 5,
-                        child: NextPayoutCard(payout: summary.payout),
+                        child:
+                            TodayBreakdownCard(categories: summary.categories),
                       ),
                       const SizedBox(height: AppSpacing.md),
                     ],
