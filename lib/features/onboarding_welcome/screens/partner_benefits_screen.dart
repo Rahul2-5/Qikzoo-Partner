@@ -48,20 +48,26 @@ class PartnerBenefitsScreen extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isCompact = constraints.maxHeight < 760;
+                final isShort = constraints.maxHeight < 680;
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
                     if (showOnboardingControls) ...[
                       const _BenefitsTopBar(),
                       SizedBox(
-                          height: isCompact ? AppSpacing.md : AppSpacing.lg),
+                          height: isShort
+                              ? AppSpacing.sm
+                              : (isCompact ? AppSpacing.md : AppSpacing.lg)),
                     ] else
                       const SizedBox(height: AppSpacing.md),
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.only(
+                          bottom: isShort ? AppSpacing.sm : AppSpacing.lg,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -83,23 +89,45 @@ class PartnerBenefitsScreen extends StatelessWidget {
                               index: 2,
                               child: _EverydayBenefits(),
                             ),
-                            const SizedBox(height: AppSpacing.lg),
+                            const SizedBox(height: AppSpacing.md),
                           ],
                         ),
                       ),
                     ),
                     if (showOnboardingControls) ...[
-                      AppStaggeredReveal(
-                        index: 3,
-                        child: PrimaryCtaButton(
-                          label: 'Get Started',
-                          trailingIcon: LucideIcons.arrowRight,
-                          onPressed: () => Get.toNamed(
-                            authFlowRoute(AppRoutes.otp, AuthFlow.signUp),
+                      Container(
+                        padding: const EdgeInsets.only(top: AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.background.withValues(alpha: 0),
+                              AppColors.background,
+                            ],
+                          ),
+                        ),
+                        child: AppStaggeredReveal(
+                          index: 3,
+                          child: Column(
+                            children: [
+                              PrimaryCtaButton(
+                                label: 'Get Started',
+                                trailingIcon: LucideIcons.arrowRight,
+                                onPressed: () => Get.toNamed(
+                                  authFlowRoute(
+                                    AppRoutes.otp,
+                                    AuthFlow.signUp,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              const _OnboardingReassurance(),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
                     ],
                   ],
                 );
@@ -142,18 +170,32 @@ class _BenefitsHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'WELCOME TO QIKZOO',
-          style: AppTypography.caption.copyWith(
-            color: AppColors.secondary,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm + 3,
+            vertical: AppSpacing.xs + 2,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            border: Border.all(
+              color: AppColors.secondary.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Text(
+            'WELCOME TO QIKZOO',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.secondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.15,
+            ),
           ),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.sm + 2),
         RichText(
           text: TextSpan(
-            style: AppTypography.display.copyWith(fontSize: 29),
+            style: AppTypography.display.copyWith(fontSize: 31),
             children: const [
               TextSpan(text: 'Earn with freedom.\n'),
               TextSpan(
@@ -163,12 +205,13 @@ class _BenefitsHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.sm + 2),
+        const SizedBox(height: AppSpacing.sm + 4),
         Text(
           'Benefits designed to support you on the road and care for the people waiting at home.',
           style: AppTypography.body.copyWith(
             color: AppColors.textSecondary,
-            fontSize: 15,
+            fontSize: 15.5,
+            height: 1.48,
           ),
         ),
       ],
@@ -189,7 +232,7 @@ class _InsuranceSpotlight extends StatelessWidget {
       label: 'Medical and health insurance cover up to 15 lakh rupees.',
       child: Container(
         width: double.infinity,
-        constraints: BoxConstraints(minHeight: compact ? 194 : 210),
+        constraints: BoxConstraints(minHeight: compact ? 204 : 224),
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
           AppSpacing.md,
@@ -203,6 +246,9 @@ class _InsuranceSpotlight extends StatelessWidget {
             colors: [AppColors.primary, AppColors.primaryDark],
           ),
           borderRadius: BorderRadius.circular(AppRadius.sheet + 4),
+          border: Border.all(
+            color: AppColors.surface.withValues(alpha: 0.12),
+          ),
           boxShadow: AppShadows.card,
         ),
         child: Row(
@@ -248,10 +294,10 @@ class _InsuranceSpotlight extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm + 2),
                   Text(
-                    'Medical & health insurance',
+                    'Medical & health\ninsurance',
                     style: AppTypography.h2.copyWith(
                       color: AppColors.surface,
-                      fontSize: compact ? 17 : 18,
+                      fontSize: compact ? 17 : 19,
                       height: 1.22,
                     ),
                   ),
@@ -287,6 +333,7 @@ class _InsuranceSpotlight extends StatelessWidget {
                     'Protection for you and your family, wherever the road takes you.',
                     style: AppTypography.caption.copyWith(
                       color: AppColors.surface.withValues(alpha: 0.78),
+                      fontSize: 11,
                       height: 1.35,
                     ),
                   ),
@@ -301,7 +348,7 @@ class _InsuranceSpotlight extends StatelessWidget {
                   child: App3dIllustration(
                     assetPath: AppAssets.applicationSubmitted3d,
                     semanticLabel: 'Medical and health insurance protection',
-                    size: compact ? 112 : 126,
+                    size: compact ? 116 : 132,
                     glowColor: const Color(0xFFAAB7FF),
                     fallbackIcon: LucideIcons.shieldCheck,
                   ),
@@ -326,6 +373,13 @@ class _EverydayBenefits extends StatelessWidget {
         Text(
           'More reasons to partner',
           style: AppTypography.h2.copyWith(fontSize: 17),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Built around the way you want to work.',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
         const SizedBox(height: AppSpacing.sm + 2),
         const _BenefitTile(
@@ -373,73 +427,103 @@ class _BenefitTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 94),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.sm,
-        AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.sheet),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.85)),
-        boxShadow: AppShadows.control,
-      ),
-      child: Row(
-        children: [
-          App3dIllustration(
-            assetPath: assetPath,
-            semanticLabel: title,
-            size: 76,
-            glowColor: glowColor,
-            fallbackIcon: fallbackIcon,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w800,
+    return Semantics(
+      container: true,
+      label: '$title. $description',
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 100),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.sheet),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.85)),
+          boxShadow: AppShadows.control,
+        ),
+        child: Row(
+          children: [
+            App3dIllustration(
+              assetPath: assetPath,
+              semanticLabel: title,
+              size: 80,
+              glowColor: glowColor,
+              fallbackIcon: fallbackIcon,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  description,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.35,
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    description,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.35,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Container(
-            width: 26,
-            height: 26,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFEEF1FF),
-              shape: BoxShape.circle,
+            const SizedBox(width: AppSpacing.sm),
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEEF1FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.check,
+                color: AppColors.secondary,
+                size: 16,
+              ),
             ),
-            child: const Icon(
-              LucideIcons.check,
-              color: AppColors.secondary,
-              size: 15,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+class _OnboardingReassurance extends StatelessWidget {
+  const _OnboardingReassurance();
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: 'Takes only a few minutes to get started',
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              LucideIcons.shieldCheck,
+              size: 14,
+              color: AppColors.success,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              'Takes only a few minutes to get started',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 @Preview(

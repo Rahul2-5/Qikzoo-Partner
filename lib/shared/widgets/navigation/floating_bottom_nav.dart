@@ -70,7 +70,7 @@ class FloatingBottomNav extends StatelessWidget {
                                     context, AppMotion.standard),
                                 curve: AppMotion.enter,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.sm,
+                                  horizontal: AppSpacing.xs,
                                   vertical: AppSpacing.xs + 2,
                                 ),
                                 decoration: BoxDecoration(
@@ -108,16 +108,18 @@ class FloatingBottomNav extends StatelessWidget {
                                         size: 20,
                                       ),
                                       const SizedBox(height: 2),
-                                      Text(
-                                        item.label,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.caption.copyWith(
-                                          color: isActive
-                                              ? Colors.white
-                                              : AppColors.textSecondary,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          item.label,
+                                          maxLines: 1,
+                                          style: AppTypography.caption.copyWith(
+                                            color: isActive
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
                                     ],

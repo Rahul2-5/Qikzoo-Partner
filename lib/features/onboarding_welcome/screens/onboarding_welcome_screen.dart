@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -6,6 +7,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/authentication/auth_flow.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
@@ -27,8 +29,8 @@ class OnboardingWelcomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF4F5FF), AppColors.background],
-            stops: [0, 0.45],
+            colors: [Color(0xFFF0F2FF), Color(0xFFF8F9FF), AppColors.background],
+            stops: [0, 0.34, 0.7],
           ),
         ),
         child: SafeArea(
@@ -37,41 +39,43 @@ class OnboardingWelcomeScreen extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isCompact = constraints.maxHeight < 760;
+                final isShort = constraints.maxHeight < 680;
 
                 return Column(
                   children: [
-                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
                     const AppStaggeredReveal(
                       index: 0,
                       child: _WelcomeTopBar(),
                     ),
-                    SizedBox(height: isCompact ? AppSpacing.md : AppSpacing.lg),
+                    SizedBox(height: isShort ? AppSpacing.sm : (isCompact ? AppSpacing.md : AppSpacing.lg)),
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.only(bottom: isShort ? AppSpacing.sm : AppSpacing.lg),
                         child: Column(
                           children: [
                             AppStaggeredReveal(
                               index: 1,
                               child: RiderHeroIllustration(
-                                height: isCompact ? 228 : 272,
+                                height: isShort ? 208 : (isCompact ? 238 : 278),
                               ),
                             ),
                             SizedBox(
-                              height: isCompact ? AppSpacing.md : AppSpacing.lg,
+                              height: isShort ? AppSpacing.sm + 2 : (isCompact ? AppSpacing.md : AppSpacing.lg),
                             ),
                             const AppStaggeredReveal(
                               index: 2,
                               child: _WelcomeCopy(),
                             ),
                             SizedBox(
-                              height: isCompact ? AppSpacing.lg : AppSpacing.xl,
+                              height: isShort ? AppSpacing.md : (isCompact ? AppSpacing.lg : AppSpacing.xl),
                             ),
                             const AppStaggeredReveal(
                               index: 3,
                               child: _FeatureRow(),
                             ),
-                            const SizedBox(height: AppSpacing.lg),
+                            SizedBox(height: isShort ? AppSpacing.sm : AppSpacing.lg),
                           ],
                         ),
                       ),
@@ -86,7 +90,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
                   ],
                 );
               },
@@ -203,7 +207,7 @@ class _WelcomeCopy extends StatelessWidget {
             ),
           ),
           child: Text(
-            'WORK ON YOUR TERMS',
+            'YOUR ROUTE. YOUR SCHEDULE.',
             textAlign: TextAlign.center,
             style: AppTypography.caption.copyWith(
               color: AppColors.primary,
@@ -270,31 +274,34 @@ class _FeatureRow extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm + 2),
-        const Row(
-          children: [
-            Expanded(
-              child: FeatureHighlightChip(
-                icon: LucideIcons.clock3,
-                label: 'Flexible\nhours',
+        Semantics(
+          label: 'Partner benefits: flexible hours, weekly payouts, and more earning control',
+          child: const Row(
+            children: [
+              Expanded(
+                child: FeatureHighlightChip(
+                  icon: LucideIcons.clock3,
+                  label: 'Flexible\nhours',
+                ),
               ),
-            ),
-            SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: FeatureHighlightChip(
-                icon: LucideIcons.wallet,
-                label: 'Weekly\npayouts',
-                color: AppColors.accent,
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: FeatureHighlightChip(
+                  icon: LucideIcons.wallet,
+                  label: 'Weekly\npayouts',
+                  color: AppColors.accent,
+                ),
               ),
-            ),
-            SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: FeatureHighlightChip(
-                icon: LucideIcons.trendingUp,
-                label: 'More earning\ncontrol',
-                color: AppColors.primary,
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: FeatureHighlightChip(
+                  icon: LucideIcons.trendingUp,
+                  label: 'More earning\ncontrol',
+                  color: AppColors.primary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -312,49 +319,89 @@ class _WelcomeActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        PrimaryCtaButton(
-          label: 'Start earning with Qikzoo',
-          trailingIcon: LucideIcons.arrowRight,
-          onPressed: onGetStarted,
+    return Container(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.background.withValues(alpha: 0), AppColors.background],
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Semantics(
-          button: true,
-          label: 'Already a partner? Log in',
-          child: SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: TextButton(
-              onPressed: onLogin,
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.secondary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.button),
-                ),
-              ),
-              child: Text.rich(
-                TextSpan(
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
+      ),
+      child: Column(
+        children: [
+          PrimaryCtaButton(
+            label: 'Start earning with Qikzoo',
+            trailingIcon: LucideIcons.arrowRight,
+            onPressed: onGetStarted,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const _SetupHint(),
+          const SizedBox(height: AppSpacing.xs),
+          Semantics(
+            button: true,
+            label: 'Already a partner? Log in',
+            child: SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: TextButton(
+                onPressed: onLogin,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.secondary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.button),
                   ),
-                  children: const [
-                    TextSpan(text: 'Already a partner?  '),
-                    TextSpan(
-                      text: 'Log in',
-                      style: TextStyle(
-                        color: AppColors.secondary,
-                        fontWeight: FontWeight.w800,
-                      ),
+                ),
+                child: Text.rich(
+                  TextSpan(
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
                     ),
-                  ],
+                    children: const [
+                      TextSpan(text: 'Already a partner?  '),
+                      TextSpan(
+                        text: 'Log in',
+                        style: TextStyle(
+                          color: AppColors.secondary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
+
+class _SetupHint extends StatelessWidget {
+  const _SetupHint();
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(LucideIcons.shieldCheck, size: 14, color: AppColors.success),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            'Set up your partner profile in a few simple steps',
+            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      );
+}
+
+@Preview(
+  name: 'Welcome - phone',
+  group: 'Onboarding',
+  size: Size(390, 844),
+)
+Widget onboardingWelcomeScreenPreview() => MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      home: const OnboardingWelcomeScreen(),
+    );

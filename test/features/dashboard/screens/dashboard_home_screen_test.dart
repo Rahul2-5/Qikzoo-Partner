@@ -241,22 +241,27 @@ void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  testWidgets('loads and displays greeting, status, earnings, and every stat tile',
+  testWidgets('loads the compact rider overview without the legacy stat grid',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(initial: mockStats());
     await tester.pumpWidget(buildApp(dashboardRepository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ravi Kumar'), findsOneWidget);
-    expect(find.text('Offline'), findsWidgets);
+    expect(find.text('Qikzoo'), findsOneWidget);
+    expect(find.text('You are Offline'), findsOneWidget);
     expect(find.textContaining('842'), findsOneWidget);
     expect(find.text('14'), findsOneWidget);
-    expect(find.textContaining('3120'), findsOneWidget);
     expect(find.text('92%'), findsOneWidget);
-    expect(find.text('96%'), findsOneWidget);
     expect(find.text('4.7'), findsOneWidget);
-    expect(find.text('Bengaluru, Karnataka'), findsOneWidget);
+    expect(find.text('Wallet balance'), findsNothing);
+    expect(find.text('Completion rate'), findsNothing);
+    expect(find.text('Working zone'), findsNothing);
+    expect(find.text('Wallet'), findsOneWidget);
+    expect(find.text('Incentives'), findsOneWidget);
+    expect(find.text('Performance'), findsOneWidget);
+    expect(find.text('Schedule'), findsOneWidget);
+    expect(find.text('Support'), findsOneWidget);
   });
 
   testWidgets('shows — for acceptance/completion rate and zone when null',
@@ -272,14 +277,16 @@ void main() {
     await tester.pumpWidget(buildApp(dashboardRepository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('—'), findsNWidgets(3));
+    expect(find.text('—'), findsOneWidget);
   });
 
-  testWidgets('going online requires approval and a selfie before updating the chip',
+  testWidgets(
+      'going online requires approval and a selfie before updating the chip',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(
-        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline));
+        initial:
+            mockStats(availabilityStatus: RiderAvailabilityStatus.offline));
     final profileRepo = FakeProfileRepository();
     await tester.pumpWidget(
         buildApp(dashboardRepository: repo, profileRepository: profileRepo));
@@ -305,7 +312,7 @@ void main() {
     expect(profileRepo.uploadSelfieCalls, 1);
     expect(profileRepo.lastSelfiePath, '/tmp/selfie.jpg');
     expect(repo.goOnlineCalls, 1);
-    expect(find.text('Online'), findsWidgets);
+    expect(find.text('You are Online'), findsOneWidget);
   });
 
   testWidgets(
@@ -313,7 +320,8 @@ void main() {
       (tester) async {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(
-        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline));
+        initial:
+            mockStats(availabilityStatus: RiderAvailabilityStatus.offline));
     final profileRepo = FakeProfileRepository()
       ..uploadSelfieError = Exception('network down');
     await tester.pumpWidget(
@@ -348,14 +356,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.goOfflineCalls, 1);
-    expect(find.text('Offline'), findsWidgets);
+    expect(find.text('You are Offline'), findsOneWidget);
   });
 
-  testWidgets('a hard 401 on toggle logs the rider out and navigates to welcome',
+  testWidgets(
+      'a hard 401 on toggle logs the rider out and navigates to welcome',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(initial: mockStats())
-      ..toggleError = const ApiException(message: 'Unauthorized', statusCode: 401);
+      ..toggleError =
+          const ApiException(message: 'Unauthorized', statusCode: 401);
     final authRepo = FakeAuthRepository();
     await tester.pumpWidget(
         buildApp(dashboardRepository: repo, authRepository: authRepo));
@@ -396,14 +406,15 @@ void main() {
     await tester.tap(find.text('Use Photo'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("You're offline") , findsNothing);
+    expect(find.textContaining("You're offline"), findsNothing);
     expect(find.textContaining('Unable to connect'), findsOneWidget);
     // The toggle failed, so status stays exactly as it was — no data lost.
-    expect(find.text('Ravi Kumar'), findsOneWidget);
-    expect(find.text('Offline'), findsWidgets);
+    expect(find.text('Qikzoo'), findsOneWidget);
+    expect(find.text('You are Offline'), findsOneWidget);
   });
 
-  testWidgets('a load failure shows Retry, which succeeds on retry', (tester) async {
+  testWidgets('a load failure shows Retry, which succeeds on retry',
+      (tester) async {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(initial: mockStats())
       ..getStatsError = const ApiException(
@@ -418,7 +429,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ravi Kumar'), findsOneWidget);
+    expect(find.text('Qikzoo'), findsOneWidget);
   });
 
   testWidgets('pull-to-refresh reloads the dashboard', (tester) async {
@@ -436,7 +447,8 @@ void main() {
     expect(repo.getStatsCalls, greaterThan(initialCalls));
   });
 
-  testWidgets('navigates to the incoming offer screen when a dispatch offer appears',
+  testWidgets(
+      'navigates to the incoming offer screen when a dispatch offer appears',
       (tester) async {
     setTallSurface(tester);
     final dashboardRepo = FakeDashboardRepository(initial: mockStats());
@@ -450,7 +462,8 @@ void main() {
     expect(find.text('Incoming Offer Screen'), findsOneWidget);
   });
 
-  testWidgets('stays on the dashboard when there is no dispatch offer', (tester) async {
+  testWidgets('stays on the dashboard when there is no dispatch offer',
+      (tester) async {
     setTallSurface(tester);
     final dashboardRepo = FakeDashboardRepository(initial: mockStats());
     final dispatchRepo = FakeDispatchRepository(offer: null);
@@ -460,7 +473,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ravi Kumar'), findsOneWidget);
+    expect(find.text('Qikzoo'), findsOneWidget);
     expect(find.text('Incoming Offer Screen'), findsNothing);
   });
 
