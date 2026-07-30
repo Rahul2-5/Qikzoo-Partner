@@ -29,7 +29,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Qikzoo Partner uses your location to suggest your delivery city.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Qikzoo Partner needs camera access to capture your documents.</string>
+	<string>Qikzoo Partner needs camera access to capture verification selfies and documents.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Qikzoo Partner needs photo library access to upload your documents.</string>
 	<key>UIApplicationSceneManifest</key>
@@ -59,6 +59,8 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

@@ -403,7 +403,7 @@ class _OnlineStatusBanner extends StatelessWidget {
                 key: const Key('availability-toggle'),
                 value: isOnline,
                 onChanged: (_) => onPressed(),
-                activeColor: AppColors.surface,
+                activeThumbColor: AppColors.surface,
                 activeTrackColor: const Color(0xFF20B955),
                 inactiveThumbColor: AppColors.surface,
                 inactiveTrackColor: const Color(0xFF6675A7),

@@ -15,6 +15,7 @@ import '../../../repositories/profile/profile_repository.dart';
 import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
+import '../screens/selfie_camera_capture_screen.dart';
 
 Future<ImageSource?> showImageSourceSheet(BuildContext context) {
   return showModalBottomSheet<ImageSource>(
@@ -200,15 +201,17 @@ Future<bool> pickAndConfirmSelfie(
 }) async {
   while (true) {
     if (!context.mounted) return false;
-    final source = cameraOnly
-        ? ImageSource.camera
-        : await showImageSourceSheet(context);
-    if (source == null) return false;
-
-    final path = await ref.read(documentImagePickerProvider).pickImage(source);
-    if (path == null) return false;
-
-    if (!context.mounted) return false;
+    String? path;
+    if (cameraOnly) {
+      path = await Navigator.of(context).push<String>(
+        MaterialPageRoute(builder: (_) => const SelfieCameraCaptureScreen()),
+      );
+    } else {
+      final source = await showImageSourceSheet(context);
+      if (source == null) return false;
+      path = await ref.read(documentImagePickerProvider).pickImage(source);
+    }
+    if (path == null || !context.mounted) return false;
     final useThisPhoto = await showSelfieConfirmSheet(context, path);
     if (useThisPhoto == null) return false;
     if (useThisPhoto == false) continue;

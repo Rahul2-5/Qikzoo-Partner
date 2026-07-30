@@ -14,6 +14,7 @@ class DeliveryPartnerApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Qikzoo Delivery Partner',
       theme: AppTheme.light,
+      themeMode: ThemeMode.light,
       initialRoute: AppRoutes.splash,
       getPages: AppPages.pages,
       customTransition: AppPageTransition(),

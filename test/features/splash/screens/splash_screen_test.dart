@@ -30,7 +30,8 @@ class FakeAuthSessionNotifier extends AuthSessionNotifier {
 
 Widget buildApp(List<SessionRestoreResult> results) => ProviderScope(
       overrides: [
-        authSessionProvider.overrideWith(() => FakeAuthSessionNotifier(results)),
+        authSessionProvider
+            .overrideWith(() => FakeAuthSessionNotifier(results)),
       ],
       child: GetMaterialApp(
         initialRoute: AppRoutes.splash,
@@ -61,9 +62,9 @@ Widget buildApp(List<SessionRestoreResult> results) => ProviderScope(
 /// The splash screen's glow/logo/dots animations repeat indefinitely, so
 /// `pumpAndSettle()` would hang for as long as it's on screen — advance
 /// time with bounded `pump()` calls instead, exactly as the real
-/// 2200ms-delay-then-260ms-transition timeline requires.
+/// 1000ms-delay-then-260ms-transition timeline requires.
 Future<void> settleBootstrap(WidgetTester tester) async {
-  await tester.pump(const Duration(milliseconds: 2300));
+  await tester.pump(const Duration(milliseconds: 1100));
   await tester.pump();
 }
 
@@ -75,7 +76,8 @@ void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  testWidgets('active session restore navigates straight to the dashboard, no login',
+  testWidgets(
+      'active session restore navigates straight to the dashboard, no login',
       (tester) async {
     await tester.pumpWidget(buildApp([
       const SessionRestoreResult(SessionRestoreOutcome.active,
@@ -91,8 +93,7 @@ void main() {
 
   testWidgets(
       'pending onboarding navigates to whatever route restoreSession already resolved — '
-      'splash never derives its own destination',
-      (tester) async {
+      'splash never derives its own destination', (tester) async {
     await tester.pumpWidget(buildApp([
       const SessionRestoreResult(SessionRestoreOutcome.needsOnboarding,
           route: AppRoutes.verificationStatus),
@@ -144,7 +145,8 @@ void main() {
     expect(find.text('Welcome Screen'), findsOneWidget);
   });
 
-  testWidgets('offline falls back to welcome instead of trapping the rider on splash',
+  testWidgets(
+      'offline falls back to welcome instead of trapping the rider on splash',
       (tester) async {
     await tester.pumpWidget(buildApp([
       const SessionRestoreResult(SessionRestoreOutcome.offline),

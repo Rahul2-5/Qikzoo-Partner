@@ -9,6 +9,7 @@ class IconButtonCustom extends StatelessWidget {
   final VoidCallback? onPressed;
   final Color? backgroundColor;
   final Color? iconColor;
+  final String? tooltip;
 
   const IconButtonCustom({
     super.key,
@@ -16,11 +17,12 @@ class IconButtonCustom extends StatelessWidget {
     this.onPressed,
     this.backgroundColor,
     this.iconColor,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AppPressEffect(
+    final button = AppPressEffect(
       enabled: onPressed != null,
       pressedScale: 0.94,
       child: Material(
@@ -41,6 +43,18 @@ class IconButtonCustom extends StatelessWidget {
             child: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
           ),
         ),
+      ),
+    );
+
+    if (tooltip == null) return button;
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip!,
+        excludeFromSemantics: true,
+        child: button,
       ),
     );
   }

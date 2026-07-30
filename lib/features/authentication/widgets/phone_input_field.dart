@@ -12,6 +12,7 @@ class PhoneInputField extends StatefulWidget {
   final void Function(String) onChanged;
   final ValueChanged<String>? onSubmitted;
   final bool isValid;
+  final bool enabled;
 
   const PhoneInputField({
     super.key,
@@ -19,6 +20,7 @@ class PhoneInputField extends StatefulWidget {
     required this.onChanged,
     this.onSubmitted,
     this.isValid = false,
+    this.enabled = true,
   });
 
   @override
@@ -46,27 +48,31 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = widget.isValid
-        ? AppColors.success
-        : _focusNode.hasFocus
-            ? AppColors.secondary
-            : AppColors.border;
+    final borderColor = !widget.enabled
+        ? AppColors.border
+        : widget.isValid
+            ? AppColors.success
+            : _focusNode.hasFocus
+                ? AppColors.secondary
+                : AppColors.border;
 
     return Semantics(
-      textField: true,
-      label: 'Indian mobile number',
+      container: true,
+      label: 'Indian mobile number, country code plus 91',
       child: AnimatedContainer(
         duration: AppMotion.duration(context, AppMotion.quick),
         curve: AppMotion.enter,
-        height: 64,
+        constraints: const BoxConstraints(minHeight: 64),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: widget.enabled ? AppColors.surface : AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(AppRadius.button),
           border: Border.all(
             color: borderColor,
-            width: _focusNode.hasFocus || widget.isValid ? 1.5 : 1,
+            width: widget.enabled && (_focusNode.hasFocus || widget.isValid)
+                ? 1.5
+                : 1,
           ),
-          boxShadow: _focusNode.hasFocus
+          boxShadow: widget.enabled && _focusNode.hasFocus
               ? [
                   BoxShadow(
                     color: AppColors.secondary.withValues(alpha: 0.1),
@@ -83,25 +89,30 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondaryBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      'IN',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.secondary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 10,
+                  ExcludeSemantics(
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        'IN',
+                        maxLines: 1,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Text('+91', style: AppTypography.bodyMedium),
+                  ExcludeSemantics(
+                    child: Text('+91', style: AppTypography.bodyMedium),
+                  ),
                 ],
               ),
             ),
@@ -112,13 +123,18 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                 child: TextField(
                   controller: widget.controller,
                   focusNode: _focusNode,
+                  enabled: widget.enabled,
                   onChanged: widget.onChanged,
                   onSubmitted: widget.onSubmitted,
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.done,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textDirection: TextDirection.ltr,
                   autofillHints: const [AutofillHints.telephoneNumberNational],
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   maxLength: 10,
+                  onTapOutside: (_) => _focusNode.unfocus(),
                   style: AppTypography.bodyMedium.copyWith(
                     fontSize: 16,
                     letterSpacing: 1,
@@ -130,12 +146,13 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     counterText: '',
-                    contentPadding: EdgeInsets.zero,
-                    hintText: '98765 43210',
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
+                    hintText: '10 digits',
                     hintStyle: AppTypography.bodyMedium.copyWith(
                       color: AppColors.textSecondary.withValues(alpha: 0.45),
                       fontSize: 16,
-                      letterSpacing: 1,
                     ),
                   ),
                 ),
@@ -143,7 +160,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
             ),
             AnimatedSwitcher(
               duration: AppMotion.duration(context, AppMotion.quick),
-              child: widget.isValid
+              child: widget.enabled && widget.isValid
                   ? const Padding(
                       key: ValueKey('valid-phone'),
                       padding: EdgeInsets.only(right: AppSpacing.md),
@@ -160,5 +177,4 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
       ),
     );
   }
-
 }

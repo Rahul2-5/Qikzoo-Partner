@@ -19,6 +19,8 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  static const _minimumDisplayDuration = Duration(milliseconds: 1000);
+
   bool _exiting = false;
 
   @override
@@ -33,8 +35,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   /// loop beyond this — a single attempt per tap, so there's no splash
   /// loop if the backend is down.
   Future<void> _bootstrap() async {
-    final delay = Future.delayed(const Duration(milliseconds: 2200));
-    final result = await ref.read(authSessionProvider.notifier).restoreSession();
+    final delay = Future.delayed(_minimumDisplayDuration);
+    final result =
+        await ref.read(authSessionProvider.notifier).restoreSession();
     await delay;
     if (!mounted) return;
     _handleResult(result);
@@ -73,8 +76,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final reduceMotion = AppMotion.reduceMotion(context);
     final screenHeight = MediaQuery.sizeOf(context).height;
     final isCompact = screenHeight < 720;
-    final riderHeight =
-        isCompact ? 245.0 : screenHeight >= 900 ? 340.0 : 310.0;
+    final riderHeight = isCompact
+        ? 245.0
+        : screenHeight >= 900
+            ? 340.0
+            : 310.0;
     const logoRed = Color(0xFFFF3D1F);
     const logoBlue = Color(0xFF0E43B7);
     const splashBackground = Color(0xFFF8FBFF);
@@ -171,10 +177,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 if (reduceMotion)
                   logo
                 else
-                  logo
-                      .animate(delay: 280.ms)
-                      .fadeIn(duration: 350.ms)
-                      .slideY(
+                  logo.animate(delay: 280.ms).fadeIn(duration: 350.ms).slideY(
                         begin: 0.15,
                         end: 0,
                         duration: 350.ms,
