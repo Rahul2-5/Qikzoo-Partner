@@ -13,6 +13,7 @@ import '../../../models/wallet/transaction_model.dart';
 import '../../../models/wallet/wallet_model.dart';
 import '../../../providers/wallet/wallet_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
 
 /// A pocket-style overview of the partner's available wallet funds.
@@ -31,24 +32,32 @@ class WalletScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Wallet help',
-            onPressed: () => AppSnackBar.info(context, 'Wallet help will be available soon.'),
+            onPressed: () => AppSnackBar.info(
+                context, 'Wallet help will be available soon.'),
             icon: const Icon(LucideIcons.helpCircle),
           ),
           const SizedBox(width: AppSpacing.xs),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(walletProvider);
-          ref.invalidate(transactionsProvider);
-          await ref.read(walletProvider.future);
-        },
-        child: walletAsync.when(
-          loading: () => const PageLoadingShimmer(),
-          error: (_, __) => _WalletError(onRetry: () => ref.invalidate(walletProvider)),
-          data: (wallet) => _PocketContent(
-            wallet: wallet,
-            transactionsAsync: transactionsAsync,
+      body: SafeArea(
+        child: ResponsiveFrame(
+          maxWidth: 640,
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(walletProvider);
+              ref.invalidate(transactionsProvider);
+              await ref.read(walletProvider.future);
+            },
+            child: walletAsync.when(
+              loading: () => const PageLoadingShimmer(),
+              error: (_, __) => _WalletError(
+                onRetry: () => ref.invalidate(walletProvider),
+              ),
+              data: (wallet) => _PocketContent(
+                wallet: wallet,
+                transactionsAsync: transactionsAsync,
+              ),
+            ),
           ),
         ),
       ),
@@ -66,7 +75,10 @@ class _PocketContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.xxl),
+      padding: const EdgeInsets.only(
+        top: AppSpacing.sm,
+        bottom: AppSpacing.xxl,
+      ),
       children: [
         _EarningsSummary(amount: wallet.balance),
         const SizedBox(height: AppSpacing.xl),
@@ -111,10 +123,12 @@ class _EarningsSummary extends StatelessWidget {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
     final weekEnd = weekStart.add(const Duration(days: 6));
-    final period = '${DateHelper.formatShort(weekStart)} - ${DateHelper.formatShort(weekEnd)}';
+    final period =
+        '${DateHelper.formatShort(weekStart)} - ${DateHelper.formatShort(weekEnd)}';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.sheet),
@@ -126,9 +140,12 @@ class _EarningsSummary extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(period, style: AppTypography.caption),
           const SizedBox(height: AppSpacing.md),
-          Text(
-            CurrencyFormatter.rupeesPrecise(amount),
-            style: AppTypography.display.copyWith(color: AppColors.primary),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              CurrencyFormatter.rupeesPrecise(amount),
+              style: AppTypography.display.copyWith(color: AppColors.primary),
+            ),
           ),
         ],
       ),
@@ -155,42 +172,77 @@ class _PocketBalanceCard extends StatelessWidget {
           _BalanceLine(
             label: 'Pocket balance',
             amount: CurrencyFormatter.rupeesPrecise(wallet.balance),
-            onTap: () => AppSnackBar.info(context, 'Your available balance is ready for payout.'),
+            onTap: () => AppSnackBar.info(
+                context, 'Your available balance is ready for payout.'),
           ),
           const Divider(height: AppSpacing.lg, color: AppColors.border),
           _BalanceLine(
             label: 'Pending payout',
             amount: CurrencyFormatter.rupeesPrecise(wallet.pendingAmount),
-            onTap: () => AppSnackBar.info(context, 'Pending funds are included in your next payout.'),
+            onTap: () => AppSnackBar.info(
+                context, 'Pending funds are included in your next payout.'),
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => AppSnackBar.info(context, 'Adding money to your pocket will be available soon.'),
-                  child: const Text('Add funds'),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: FilledButton(
-                  onPressed: wallet.balance > 0
-                      ? () => AppSnackBar.info(context, 'Withdrawals are included in your scheduled payout.')
-                      : null,
-                  child: const Text('Withdraw'),
-                ),
-              ),
-            ],
-          ),
+          _WalletActions(wallet: wallet),
         ],
       ),
     );
   }
 }
 
+class _WalletActions extends StatelessWidget {
+  const _WalletActions({required this.wallet});
+
+  final WalletModel wallet;
+
+  @override
+  Widget build(BuildContext context) {
+    final addFundsButton = OutlinedButton(
+      onPressed: () => AppSnackBar.info(
+        context,
+        'Adding money to your pocket will be available soon.',
+      ),
+      child: const Text('Add funds'),
+    );
+    final withdrawButton = FilledButton(
+      onPressed: wallet.balance > 0
+          ? () => AppSnackBar.info(
+                context,
+                'Withdrawals are included in your scheduled payout.',
+              )
+          : null,
+      child: const Text('Withdraw'),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackButtons = constraints.maxWidth < 320 ||
+            MediaQuery.textScalerOf(context).scale(1) > 1.3;
+        if (stackButtons) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              addFundsButton,
+              const SizedBox(height: AppSpacing.sm),
+              withdrawButton,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: addFundsButton),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(child: withdrawButton),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _BalanceLine extends StatelessWidget {
-  const _BalanceLine({required this.label, required this.amount, required this.onTap});
+  const _BalanceLine(
+      {required this.label, required this.amount, required this.onTap});
 
   final String label;
   final String amount;
@@ -206,7 +258,13 @@ class _BalanceLine extends StatelessWidget {
         child: Row(
           children: [
             Expanded(child: Text(label, style: AppTypography.bodyMedium)),
-            Text(amount, style: AppTypography.numericMd),
+            Flexible(
+              child: Text(
+                amount,
+                style: AppTypography.numericMd,
+                textAlign: TextAlign.end,
+              ),
+            ),
             const SizedBox(width: AppSpacing.sm),
             const Icon(LucideIcons.chevronRight, size: 20),
           ],
@@ -226,11 +284,13 @@ class _ActivityCard extends StatelessWidget {
     final isCredit = transaction.type == TransactionType.credit;
     final amount = CurrencyFormatter.rupeesPrecise(transaction.amount);
     return _TappableCard(
-      onTap: () => AppSnackBar.info(context, 'Transaction details will be available soon.'),
+      onTap: () => AppSnackBar.info(
+          context, 'Transaction details will be available soon.'),
       child: Row(
         children: [
           _CircleIcon(
-            icon: isCredit ? LucideIcons.arrowDownLeft : LucideIcons.arrowUpRight,
+            icon:
+                isCredit ? LucideIcons.arrowDownLeft : LucideIcons.arrowUpRight,
             color: isCredit ? AppColors.success : AppColors.error,
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -240,13 +300,15 @@ class _ActivityCard extends StatelessWidget {
               children: [
                 Text(transaction.description, style: AppTypography.bodyMedium),
                 const SizedBox(height: 2),
-                Text(DateHelper.formatShort(transaction.date), style: AppTypography.caption),
+                Text(DateHelper.formatShort(transaction.date),
+                    style: AppTypography.caption),
               ],
             ),
           ),
           Text(
             '${isCredit ? '+' : '-'}$amount',
-            style: AppTypography.bodyMedium.copyWith(color: isCredit ? AppColors.success : AppColors.error),
+            style: AppTypography.bodyMedium.copyWith(
+                color: isCredit ? AppColors.success : AppColors.error),
           ),
           const SizedBox(width: AppSpacing.xs),
           const Icon(LucideIcons.chevronRight, size: 20),
@@ -257,7 +319,8 @@ class _ActivityCard extends StatelessWidget {
 }
 
 class _CompactStatusCard extends StatelessWidget {
-  const _CompactStatusCard({required this.icon, required this.title, required this.subtitle});
+  const _CompactStatusCard(
+      {required this.icon, required this.title, required this.subtitle});
 
   final IconData icon;
   final String title;
@@ -299,31 +362,41 @@ class _ServicesGrid extends StatelessWidget {
       _ServiceData('Payment support', LucideIcons.headphones),
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: services.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: AppSpacing.sm,
-        crossAxisSpacing: AppSpacing.sm,
-        mainAxisExtent: 132,
+    return LayoutBuilder(
+      builder: (context, constraints) => GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: services.length,
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: constraints.maxWidth < 360 ? 180 : 210,
+          mainAxisSpacing: AppSpacing.sm,
+          crossAxisSpacing: AppSpacing.sm,
+          mainAxisExtent: 132,
+        ),
+        itemBuilder: (context, index) {
+          final service = services[index];
+          return _TappableCard(
+            onTap: () => AppSnackBar.info(
+              context,
+              '${service.label} will be available soon.',
+            ),
+            height: 132,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CircleIcon(icon: service.icon, color: AppColors.primary),
+                const Spacer(),
+                Text(
+                  service.label,
+                  style: AppTypography.bodyMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          );
+        },
       ),
-      itemBuilder: (context, index) {
-        final service = services[index];
-        return _TappableCard(
-          onTap: () => AppSnackBar.info(context, '${service.label} will be available soon.'),
-          height: 132,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CircleIcon(icon: service.icon, color: AppColors.primary),
-              const Spacer(),
-              Text(service.label, style: AppTypography.bodyMedium),
-            ],
-          ),
-        );
-      },
     );
   }
 }
@@ -361,7 +434,8 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _TappableCard extends StatelessWidget {
-  const _TappableCard({required this.child, required this.onTap, this.height = 84});
+  const _TappableCard(
+      {required this.child, required this.onTap, this.height = 84});
 
   final Widget child;
   final VoidCallback onTap;
@@ -397,7 +471,8 @@ class _CircleIcon extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+        decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
         alignment: Alignment.center,
         child: Icon(icon, size: 19, color: color),
       );
@@ -410,6 +485,7 @@ class _WalletError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: TextButton(onPressed: onRetry, child: const Text('Retry loading wallet')),
+        child: TextButton(
+            onPressed: onRetry, child: const Text('Retry loading wallet')),
       );
 }

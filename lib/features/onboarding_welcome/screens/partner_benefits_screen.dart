@@ -515,10 +515,13 @@ class _OnboardingReassurance extends StatelessWidget {
               color: AppColors.success,
             ),
             const SizedBox(width: AppSpacing.xs),
-            Text(
-              'Takes only a few minutes to get started',
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondary,
+            Flexible(
+              child: Text(
+                'Takes only a few minutes to get started',
+                textAlign: TextAlign.center,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ],

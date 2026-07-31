@@ -72,6 +72,13 @@ Future<void> settleTransition(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 400));
 }
 
+void setSurfaceSize(WidgetTester tester, Size size) {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
@@ -174,5 +181,21 @@ void main() {
 
     expect(find.text('Welcome Screen'), findsOneWidget);
     expect(find.text('Dashboard Screen'), findsNothing);
+  });
+
+  testWidgets('brand artwork fits a compact landscape window', (tester) async {
+    setSurfaceSize(tester, const Size(568, 320));
+    await tester.pumpWidget(buildApp([
+      const SessionRestoreResult(SessionRestoreOutcome.loggedOut),
+    ]));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('DELIVERY PARTNER APP'), findsOneWidget);
+    expect(find.byType(Image), findsWidgets);
+    expect(tester.takeException(), isNull);
+
+    await settleBootstrap(tester);
+    await settleTransition(tester);
+    await tester.pumpAndSettle();
   });
 }

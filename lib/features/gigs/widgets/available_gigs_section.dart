@@ -289,10 +289,17 @@ class _Benefit extends StatelessWidget {
       required this.color});
   @override
   Widget build(BuildContext context) => Column(children: [
-        Row(mainAxisSize: MainAxisSize.min, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon, size: 13, color: color),
           const SizedBox(width: 3),
-          Text(value, style: AppTypography.bodyMedium.copyWith(fontSize: 11))
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.bodyMedium.copyWith(fontSize: 11),
+            ),
+          ),
         ]),
         const SizedBox(height: 2),
         Text(label,

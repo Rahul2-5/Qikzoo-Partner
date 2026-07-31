@@ -190,7 +190,10 @@ void main() {
       find.byKey(const ValueKey('mobile-number-scroll-view')),
       findsOneWidget,
     );
-    expect(find.bySemanticsLabel('Back'), findsOneWidget);
+    final backButton = find.bySemanticsLabel('Back');
+    expect(backButton, findsOneWidget);
+    final initialBackTop = tester.getTopLeft(backButton).dy;
+    expect(initialBackTop, lessThanOrEqualTo(12));
     expect(
       find.bySemanticsLabel('Qikzoo Delivery Partner'),
       findsOneWidget,
@@ -209,6 +212,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(tester.getTopLeft(backButton).dy, closeTo(initialBackTop, 0.1));
     expect(
       find.text(
         'By continuing, you agree to Qikzoo Terms and Conditions.',

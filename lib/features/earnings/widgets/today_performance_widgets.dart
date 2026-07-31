@@ -19,100 +19,130 @@ class TodayPerformanceHeader extends StatelessWidget {
   const TodayPerformanceHeader({super.key});
 
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final useStackedTitle = constraints.maxWidth < 360 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.3;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _RoundIconButton(
-                icon: LucideIcons.arrowLeft,
-                label: 'Go back',
-                onTap: () => Navigator.maybePop(context),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(LucideIcons.bike,
-                        color: AppColors.primary, size: 26),
-                    const SizedBox(width: 4),
-                    RichText(
-                      text: TextSpan(
-                        style: AppTypography.h2.copyWith(
-                          color: AppColors.primaryDark,
-                          letterSpacing: -0.6,
+              Row(
+                children: [
+                  _RoundIconButton(
+                    icon: LucideIcons.arrowLeft,
+                    label: 'Go back',
+                    onTap: () => Navigator.maybePop(context),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.bike,
+                                color: AppColors.primary, size: 26),
+                            const SizedBox(width: 4),
+                            RichText(
+                              text: TextSpan(
+                                style: AppTypography.h2.copyWith(
+                                  color: AppColors.primaryDark,
+                                  letterSpacing: -0.6,
+                                ),
+                                children: [
+                                  const TextSpan(text: 'Qikzoo'),
+                                  TextSpan(
+                                    text: ' PARTNER',
+                                    style: AppTypography.caption.copyWith(
+                                      color: _positive,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        children: [
-                          const TextSpan(text: 'Qikzoo'),
-                          TextSpan(
-                            text: ' PARTNER',
-                            style: AppTypography.caption.copyWith(
-                              color: _positive,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primarySoft,
+                          border: Border.all(
+                            color: AppColors.surface,
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          'RS',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 1,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: _positive,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.surface,
+                              width: 2,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primarySoft,
-                      border: Border.all(color: AppColors.surface, width: 2),
-                    ),
-                    child: Text('RS',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w800,
-                        )),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 1,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: _positive,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.surface, width: 2),
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: AppSpacing.lg),
+              if (useStackedTitle) ...[
+                Text("Today's Earnings", style: AppTypography.h1),
+                const SizedBox(height: 3),
+                Text('25 July, Saturday', style: AppTypography.body),
+                const SizedBox(height: AppSpacing.sm),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: _OnlineBadge(),
+                ),
+              ] else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text("Today's Earnings", style: AppTypography.h1),
-                    const SizedBox(height: 3),
-                    Text('25 July, Saturday', style: AppTypography.body),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Today's Earnings", style: AppTypography.h1),
+                          const SizedBox(height: 3),
+                          Text('25 July, Saturday', style: AppTypography.body),
+                        ],
+                      ),
+                    ),
+                    const _OnlineBadge(),
                   ],
                 ),
-              ),
-              const _OnlineBadge(),
             ],
-          ),
-        ],
+          );
+        },
       );
 }
 
@@ -170,53 +200,95 @@ class TodayEarningsCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text('Total Earnings',
+                      Expanded(
+                        child: Text(
+                          'Total Earnings',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: AppTypography.bodyMedium.copyWith(
-                              color: Colors.white.withValues(alpha: .88))),
+                            color: Colors.white.withValues(alpha: .88),
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 6),
                       Icon(LucideIcons.info,
                           color: Colors.white.withValues(alpha: .72), size: 16),
-                      const Spacer(),
+                      const SizedBox(width: AppSpacing.sm),
                       const Icon(LucideIcons.chevronRight,
                           color: Colors.white, size: 24),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    CurrencyFormatter.rupeesPrecise(total),
-                    style: AppTypography.display.copyWith(
-                      color: Colors.white,
-                      fontSize: 38,
-                      letterSpacing: -1.2,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      CurrencyFormatter.rupeesPrecise(total),
+                      style: AppTypography.display.copyWith(
+                        color: Colors.white,
+                        fontSize: 38,
+                        letterSpacing: -1.2,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Divider(
                       color: Colors.white.withValues(alpha: .18), height: 1),
                   const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _EarningValue(
-                            label: 'Order Earnings', amount: orderEarnings),
-                      ),
-                      _Divider(color: Colors.white.withValues(alpha: .18)),
-                      Expanded(
-                        child: _EarningValue(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final useStackedMetrics = constraints.maxWidth < 340 ||
+                          MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                      final metrics = [
+                        _EarningValue(
+                          label: 'Order Earnings',
+                          amount: orderEarnings,
+                        ),
+                        _EarningValue(
                           label: 'Incentives',
                           amount: incentives,
                           amountColor: const Color(0xFF6EEB91),
                         ),
-                      ),
-                      _Divider(color: Colors.white.withValues(alpha: .18)),
-                      Expanded(
-                        child: _EarningValue(
+                        _EarningValue(
                           label: 'Tips',
                           amount: tips,
                           amountColor: const Color(0xFFB6D2FF),
                         ),
-                      ),
-                    ],
+                      ];
+                      if (useStackedMetrics) {
+                        return Column(
+                          children: [
+                            for (var index = 0;
+                                index < metrics.length;
+                                index++) ...[
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: metrics[index],
+                              ),
+                              if (index < metrics.length - 1)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: AppSpacing.sm,
+                                  ),
+                                  child: Divider(
+                                    color: Colors.white.withValues(alpha: .18),
+                                    height: 1,
+                                  ),
+                                ),
+                            ],
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: metrics[0]),
+                          _Divider(color: Colors.white.withValues(alpha: .18)),
+                          Expanded(child: metrics[1]),
+                          _Divider(color: Colors.white.withValues(alpha: .18)),
+                          Expanded(child: metrics[2]),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -231,60 +303,81 @@ class GigProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _SurfaceCard(
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Gig Progress',
-                      style: AppTypography.h2.copyWith(fontSize: 18)),
-                  const SizedBox(height: AppSpacing.sm),
-                  RichText(
-                    text: TextSpan(
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: '6 / 8 ',
-                          style: AppTypography.bodyMedium
-                              .copyWith(color: _positive),
-                        ),
-                        const TextSpan(text: 'Orders Completed'),
-                      ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final useStackedLayout = constraints.maxWidth < 360 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.3;
+            final progressDetails = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Gig Progress',
+                    style: AppTypography.h2.copyWith(fontSize: 18)),
+                const SizedBox(height: AppSpacing.sm),
+                RichText(
+                  text: TextSpan(
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
                     children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.chip),
-                          child: const LinearProgressIndicator(
-                            value: .75,
-                            minHeight: 10,
-                            backgroundColor: Color(0xFFE8ECF2),
-                            valueColor: AlwaysStoppedAnimation(_positive),
-                          ),
-                        ),
+                      TextSpan(
+                        text: '6 / 8 ',
+                        style:
+                            AppTypography.bodyMedium.copyWith(color: _positive),
                       ),
-                      const SizedBox(width: 12),
-                      Text('75%', style: AppTypography.bodyMedium),
+                      const TextSpan(text: 'Orders Completed'),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Container(
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
+                        child: const LinearProgressIndicator(
+                          value: .75,
+                          minHeight: 10,
+                          backgroundColor: Color(0xFFE8ECF2),
+                          valueColor: AlwaysStoppedAnimation(_positive),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('75%', style: AppTypography.bodyMedium),
+                  ],
+                ),
+              ],
+            );
+            final illustration = Container(
               width: 74,
               height: 74,
               decoration: const BoxDecoration(
                   color: _positiveSoft, shape: BoxShape.circle),
               child: const Icon(LucideIcons.bike, size: 36, color: _positive),
-            ),
-          ],
+            );
+
+            if (useStackedLayout) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  progressDetails,
+                  const SizedBox(height: AppSpacing.md),
+                  Align(alignment: Alignment.centerRight, child: illustration),
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: progressDetails),
+                const SizedBox(width: AppSpacing.md),
+                Align(
+                  alignment: Alignment.center,
+                  child: illustration,
+                ),
+              ],
+            );
+          },
         ),
       );
 }
@@ -295,34 +388,45 @@ class TodayStatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          final cardWidth = (constraints.maxWidth - AppSpacing.sm) / 2;
-          return Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              SizedBox(
-                width: cardWidth,
-                child: const _PerformanceStatCard(
-                  icon: LucideIcons.timer,
-                  tint: Color(0xFFF1EBFF),
-                  iconColor: Color(0xFF7958D9),
-                  title: 'Online Hours',
-                  value: '06h 15m',
-                  caption: '1h 20m more than yesterday',
-                ),
-              ),
-              SizedBox(
-                width: cardWidth,
-                child: const _PerformanceStatCard(
-                  icon: LucideIcons.shoppingBag,
-                  tint: Color(0xFFFFF3E7),
-                  iconColor: Color(0xFFE6892E),
-                  title: 'Completed Orders',
-                  value: '6',
-                  caption: '2 more than yesterday',
-                ),
-              ),
-            ],
+          final useSingleColumn = constraints.maxWidth < 340 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.3;
+          const onlineHoursCard = _PerformanceStatCard(
+            icon: LucideIcons.timer,
+            tint: Color(0xFFF1EBFF),
+            iconColor: Color(0xFF7958D9),
+            title: 'Online Hours',
+            value: '06h 15m',
+            caption: '1h 20m more than yesterday',
+          );
+          const completedOrdersCard = _PerformanceStatCard(
+            icon: LucideIcons.shoppingBag,
+            tint: Color(0xFFFFF3E7),
+            iconColor: Color(0xFFE6892E),
+            title: 'Completed Orders',
+            value: '6',
+            caption: '2 more than yesterday',
+          );
+
+          if (useSingleColumn) {
+            return const Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                onlineHoursCard,
+                SizedBox(height: AppSpacing.sm),
+                completedOrdersCard,
+              ],
+            );
+          }
+
+          return const IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: onlineHoursCard),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(child: completedOrdersCard),
+              ],
+            ),
           );
         },
       );
@@ -350,18 +454,38 @@ class TodayEarningsTrend extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text('Earnings Trend', style: AppTypography.h2)),
-              PeriodSelector(value: period, onChanged: onPeriodChanged),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final useStackedHeader = constraints.maxWidth < 380 ||
+                  MediaQuery.textScalerOf(context).scale(1) > 1.3;
+              final selector =
+                  PeriodSelector(value: period, onChanged: onPeriodChanged);
+              if (useStackedHeader) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Earnings Trend', style: AppTypography.h2),
+                    const SizedBox(height: AppSpacing.sm),
+                    Align(alignment: Alignment.centerRight, child: selector),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    child: Text('Earnings Trend', style: AppTypography.h2),
+                  ),
+                  selector,
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           SizedBox(
             height: 218,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                const axisWidth = 38.0;
+                const axisWidth = 44.0;
                 return Row(
                   children: [
                     SizedBox(
@@ -413,15 +537,34 @@ class TodayBreakdownCard extends StatelessWidget {
   Widget build(BuildContext context) => _SurfaceCard(
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(child: Text('Breakdown', style: AppTypography.h2)),
-                Semantics(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final viewDetails = Semantics(
                   button: true,
                   label: 'View earning details',
                   child: const _ViewDetailsButton(),
-                ),
-              ],
+                );
+                if (constraints.maxWidth < 380 ||
+                    MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Breakdown', style: AppTypography.h2),
+                      const SizedBox(height: AppSpacing.xs),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: viewDetails,
+                      ),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: Text('Breakdown', style: AppTypography.h2)),
+                    viewDetails,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.sm),
             for (var index = 0; index < categories.length; index++)
@@ -445,10 +588,19 @@ class TodayBreakdownCard extends StatelessWidget {
                       child: Text(categories[index].label,
                           style: AppTypography.body),
                     ),
-                    Text(
-                        CurrencyFormatter.rupeesPrecise(
-                            categories[index].amount),
-                        style: AppTypography.bodyMedium.copyWith(fontSize: 16)),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          CurrencyFormatter.rupeesPrecise(
+                            categories[index].amount,
+                          ),
+                          style:
+                              AppTypography.bodyMedium.copyWith(fontSize: 16),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -724,8 +876,7 @@ class _LineChartPainter extends CustomPainter {
       final x = points.length == 1
           ? size.width / 2
           : size.width * index / (points.length - 1);
-      final ratio =
-          (points[index].value / maxValue).clamp(0.0, 1.0).toDouble();
+      final ratio = (points[index].value / maxValue).clamp(0.0, 1.0).toDouble();
       chartPoints.add(Offset(x, size.height - size.height * ratio * progress));
     }
 
@@ -820,11 +971,17 @@ class _ViewDetailsButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('View Details',
+              Flexible(
+                child: Text(
+                  'View Details',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.primary,
                     fontSize: 13,
-                  )),
+                  ),
+                ),
+              ),
               const SizedBox(width: 2),
               const Icon(LucideIcons.chevronRight,
                   size: 17, color: AppColors.primary),

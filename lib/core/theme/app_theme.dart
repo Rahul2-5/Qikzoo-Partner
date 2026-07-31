@@ -10,6 +10,7 @@ class AppTheme {
 
   static ThemeData get light => ThemeData(
         useMaterial3: true,
+        fontFamily: AppTypography.fontFamily,
         visualDensity: VisualDensity.standard,
         materialTapTargetSize: MaterialTapTargetSize.padded,
         scaffoldBackgroundColor: AppColors.background,

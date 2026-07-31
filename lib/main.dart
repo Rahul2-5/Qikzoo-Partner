@@ -24,5 +24,11 @@ void _registerFontLicenses() {
       const ['Manrope'],
       await rootBundle.loadString('assets/fonts/OFL-Manrope.txt'),
     );
+    yield LicenseEntryWithLineBreaks(
+      const ['Plus Jakarta Sans'],
+      await rootBundle.loadString(
+        'assets/fonts/OFL-PlusJakartaSans.txt',
+      ),
+    );
   });
 }

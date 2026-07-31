@@ -9,6 +9,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../models/training/training_module_model.dart';
 import '../../../providers/training/training_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
 
@@ -21,23 +22,45 @@ class TrainingScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Training')),
-      body: modulesAsync.when(
-        loading: () => const PageLoadingShimmer(),
-        error: (_, __) => Center(child: TextButton(onPressed: () => ref.invalidate(trainingModulesProvider), child: const Text('Retry'))),
-        data: (modules) => modules.isEmpty
-            ? const EmptyState(message: 'No training modules are available right now.')
-            : ListView.separated(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount: modules.length,
-                separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (_, index) => _TrainingModuleCard(
-                  module: modules[index],
-                  onComplete: () async {
-                    await ref.read(trainingModulesProvider.notifier).markCompleted(modules[index].id);
-                    if (context.mounted) AppSnackBar.success(context, '${modules[index].title} completed');
-                  },
-                ),
+      body: SafeArea(
+        child: ResponsiveFrame(
+          maxWidth: 640,
+          child: modulesAsync.when(
+            loading: () => const PageLoadingShimmer(),
+            error: (_, __) => Center(
+              child: TextButton(
+                onPressed: () => ref.invalidate(trainingModulesProvider),
+                child: const Text('Retry'),
               ),
+            ),
+            data: (modules) => modules.isEmpty
+                ? const EmptyState(
+                    message: 'No training modules are available right now.',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
+                    itemCount: modules.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (_, index) => _TrainingModuleCard(
+                      module: modules[index],
+                      onComplete: () async {
+                        await ref
+                            .read(trainingModulesProvider.notifier)
+                            .markCompleted(modules[index].id);
+                        if (context.mounted) {
+                          AppSnackBar.success(
+                            context,
+                            '${modules[index].title} completed',
+                          );
+                        }
+                      },
+                    ),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -49,24 +72,73 @@ class _TrainingModuleCard extends StatelessWidget {
   const _TrainingModuleCard({required this.module, required this.onComplete});
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.card),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(module.isCompleted ? Icons.check_circle : Icons.play_circle_outline,
-              color: module.isCompleted ? AppColors.secondary : AppColors.primary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(module.title, style: AppTypography.bodyMedium),
-            const SizedBox(height: 2),
-            Text(module.description, style: AppTypography.body),
-            const SizedBox(height: AppSpacing.xs),
-            Text('${module.durationMinutes} min', style: AppTypography.caption),
-          ])),
-          TextButton(
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final useStackedLayout = constraints.maxWidth < 400 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.3;
+          final icon = Icon(
+            module.isCompleted ? Icons.check_circle : Icons.play_circle_outline,
+            color: module.isCompleted ? AppColors.secondary : AppColors.primary,
+          );
+          final details = _ModuleDetails(module: module);
+          final action = TextButton(
             onPressed: module.isCompleted ? null : onComplete,
             child: Text(module.isCompleted ? 'Completed' : 'Complete'),
-          ),
-        ]),
+          );
+
+          return Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              boxShadow: AppShadows.card,
+            ),
+            child: useStackedLayout
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          icon,
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(child: details),
+                        ],
+                      ),
+                      Align(alignment: Alignment.centerRight, child: action),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      icon,
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(child: details),
+                      const SizedBox(width: AppSpacing.sm),
+                      action,
+                    ],
+                  ),
+          );
+        },
       );
+}
+
+class _ModuleDetails extends StatelessWidget {
+  const _ModuleDetails({required this.module});
+
+  final TrainingModuleModel module;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(module.title, style: AppTypography.bodyMedium),
+        const SizedBox(height: 2),
+        Text(module.description, style: AppTypography.body),
+        const SizedBox(height: AppSpacing.xs),
+        Text('${module.durationMinutes} min', style: AppTypography.caption),
+      ],
+    );
+  }
 }

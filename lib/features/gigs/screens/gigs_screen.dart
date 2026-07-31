@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -7,6 +8,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../models/dashboard/dashboard_stats_model.dart';
+import '../../../providers/dashboard/dashboard_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/navigation/app_bottom_nav.dart';
@@ -14,64 +17,78 @@ import '../../../shared/widgets/navigation/app_bottom_nav.dart';
 /// The partner's weekly booking calendar. The content is intentionally
 /// schedule-first: it makes the current booking state and earning potential
 /// immediately clear before a rider opens an individual day.
-class GigsScreen extends StatelessWidget {
+class GigsScreen extends ConsumerWidget {
   const GigsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: ResponsiveFrame(
-                  maxWidth: 640,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(
-                      top: AppSpacing.sm,
-                      bottom: AppSpacing.md,
-                    ),
-                    children: const [
-                      _GigsHeader(),
-                      SizedBox(height: AppSpacing.md),
-                      _IncentiveStrip(),
-                      SizedBox(height: AppSpacing.lg),
-                      _MonthDivider(month: 'JULY'),
-                      SizedBox(height: AppSpacing.md),
-                      _ScheduleCard.booked(),
-                      SizedBox(height: AppSpacing.sm),
-                      _ScheduleCard.open(day: '26', weekday: 'Sun'),
-                      SizedBox(height: AppSpacing.sm),
-                      _ScheduleCard.open(day: '27', weekday: 'Mon'),
-                      SizedBox(height: AppSpacing.sm),
-                      _ScheduleCard.open(day: '28', weekday: 'Tue'),
-                      SizedBox(height: AppSpacing.sm),
-                      _ScheduleCard.open(day: '29', weekday: 'Wed'),
-                      SizedBox(height: AppSpacing.sm),
-                      _ScheduleCard.locked(),
-                      SizedBox(height: AppSpacing.md),
-                      _SuperGigsInfoCard(),
-                    ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final availability =
+        ref.watch(dashboardStatsProvider).valueOrNull?.availabilityStatus;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ResponsiveFrame(
+                maxWidth: 640,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(
+                    top: AppSpacing.sm,
+                    bottom: AppSpacing.md,
                   ),
+                  children: [
+                    _GigsHeader(availability: availability),
+                    const SizedBox(height: AppSpacing.md),
+                    const _IncentiveStrip(),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _MonthDivider(month: 'JULY'),
+                    const SizedBox(height: AppSpacing.md),
+                    const _ScheduleCard.booked(),
+                    const SizedBox(height: AppSpacing.sm),
+                    const _ScheduleCard.open(day: '26', weekday: 'Sun'),
+                    const SizedBox(height: AppSpacing.sm),
+                    const _ScheduleCard.open(day: '27', weekday: 'Mon'),
+                    const SizedBox(height: AppSpacing.sm),
+                    const _ScheduleCard.open(day: '28', weekday: 'Tue'),
+                    const SizedBox(height: AppSpacing.sm),
+                    const _ScheduleCard.open(day: '29', weekday: 'Wed'),
+                    const SizedBox(height: AppSpacing.sm),
+                    const _ScheduleCard.locked(),
+                    const SizedBox(height: AppSpacing.md),
+                    const _SuperGigsInfoCard(),
+                  ],
                 ),
               ),
-              const AppBottomNav(currentIndex: 1),
-            ],
-          ),
+            ),
+            const AppBottomNav(currentIndex: 1),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _GigsHeader extends StatelessWidget {
-  const _GigsHeader();
+  final RiderAvailabilityStatus? availability;
 
-  void _showStatus(BuildContext context) => AppSnackBar.success(
-        context,
-        'You are online and ready to book gigs.',
-      );
+  const _GigsHeader({this.availability});
+
+  void _showStatus(BuildContext context) {
+    if (availability == RiderAvailabilityStatus.offline) {
+      AppSnackBar.info(context, 'You are offline. Go online to book gigs.');
+      return;
+    }
+    AppSnackBar.info(
+      context,
+      availability?.isOnlineFacing == true
+          ? 'You are online and ready to book gigs.'
+          : 'Your availability is being updated.',
+    );
+  }
 
   void _showUpdates(BuildContext context) => AppSnackBar.success(
         context,
@@ -79,67 +96,77 @@ class _GigsHeader extends StatelessWidget {
       );
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 58,
-        child: Row(
-          children: [
-            Semantics(
-              button: true,
-              label: 'You are online',
-              child: InkWell(
-                onTap: () => _showStatus(context),
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-                child: Container(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: AppShadows.control,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF17A34A),
-                          shape: BoxShape.circle,
-                        ),
+  Widget build(BuildContext context) {
+    final isOnline = availability?.isOnlineFacing ?? false;
+    final isOffline = availability == RiderAvailabilityStatus.offline;
+    final statusLabel = availability?.label ?? 'Checking status';
+    final statusColor = isOnline
+        ? AppColors.success
+        : isOffline
+            ? AppColors.textSecondary
+            : AppColors.warning;
+
+    return SizedBox(
+      height: 58,
+      child: Row(
+        children: [
+          Semantics(
+            button: true,
+            label: 'You are $statusLabel',
+            child: InkWell(
+              onTap: () => _showStatus(context),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppShadows.control,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 7),
-                      Text('Online',
-                          style:
-                              AppTypography.bodyMedium.copyWith(fontSize: 13)),
-                      const SizedBox(width: 5),
-                      const Icon(LucideIcons.chevronDown,
-                          size: 16, color: AppColors.textSecondary),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(statusLabel,
+                        style: AppTypography.bodyMedium.copyWith(fontSize: 13)),
+                    const SizedBox(width: 5),
+                    const Icon(LucideIcons.chevronDown,
+                        size: 16, color: AppColors.textSecondary),
+                  ],
                 ),
               ),
             ),
-            const Spacer(),
-            const _PartnerWordmark(),
-            const Spacer(),
-            _HeaderIcon(
-              icon: LucideIcons.bell,
-              label: 'Gig notifications',
-              showDot: true,
-              onTap: () => _showUpdates(context),
-            ),
-            const SizedBox(width: 4),
-            _HeaderIcon(
-              icon: LucideIcons.helpCircle,
-              label: 'Gig help',
-              onTap: () => AppSnackBar.success(
-                  context, 'Booking support is available in Help & Support.'),
-            ),
-          ],
-        ),
-      );
+          ),
+          const Spacer(),
+          const _PartnerWordmark(),
+          const Spacer(),
+          _HeaderIcon(
+            icon: LucideIcons.bell,
+            label: 'Gig notifications',
+            showDot: true,
+            onTap: () => _showUpdates(context),
+          ),
+          const SizedBox(width: 4),
+          _HeaderIcon(
+            icon: LucideIcons.helpCircle,
+            label: 'Gig help',
+            onTap: () => AppSnackBar.success(
+                context, 'Booking support is available in Help & Support.'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PartnerWordmark extends StatelessWidget {
@@ -612,4 +639,6 @@ class _SuperGigsInfoCard extends StatelessWidget {
 }
 
 @Preview(name: 'Gigs schedule', group: 'Gigs', size: Size(390, 844))
-Widget gigsScreenPreview() => const MaterialApp(home: GigsScreen());
+Widget gigsScreenPreview() => const ProviderScope(
+      child: MaterialApp(home: GigsScreen()),
+    );

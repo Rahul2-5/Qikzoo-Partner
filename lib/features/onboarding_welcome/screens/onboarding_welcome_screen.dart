@@ -29,7 +29,11 @@ class OnboardingWelcomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF0F2FF), Color(0xFFF8F9FF), AppColors.background],
+            colors: [
+              Color(0xFFF0F2FF),
+              Color(0xFFF8F9FF),
+              AppColors.background
+            ],
             stops: [0, 0.34, 0.7],
           ),
         ),
@@ -48,11 +52,15 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                       index: 0,
                       child: _WelcomeTopBar(),
                     ),
-                    SizedBox(height: isShort ? AppSpacing.sm : (isCompact ? AppSpacing.md : AppSpacing.lg)),
+                    SizedBox(
+                        height: isShort
+                            ? AppSpacing.sm
+                            : (isCompact ? AppSpacing.md : AppSpacing.lg)),
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.only(bottom: isShort ? AppSpacing.sm : AppSpacing.lg),
+                        padding: EdgeInsets.only(
+                            bottom: isShort ? AppSpacing.sm : AppSpacing.lg),
                         child: Column(
                           children: [
                             AppStaggeredReveal(
@@ -62,20 +70,26 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                               ),
                             ),
                             SizedBox(
-                              height: isShort ? AppSpacing.sm + 2 : (isCompact ? AppSpacing.md : AppSpacing.lg),
+                              height: isShort
+                                  ? AppSpacing.sm + 2
+                                  : (isCompact ? AppSpacing.md : AppSpacing.lg),
                             ),
                             const AppStaggeredReveal(
                               index: 2,
                               child: _WelcomeCopy(),
                             ),
                             SizedBox(
-                              height: isShort ? AppSpacing.md : (isCompact ? AppSpacing.lg : AppSpacing.xl),
+                              height: isShort
+                                  ? AppSpacing.md
+                                  : (isCompact ? AppSpacing.lg : AppSpacing.xl),
                             ),
                             const AppStaggeredReveal(
                               index: 3,
                               child: _FeatureRow(),
                             ),
-                            SizedBox(height: isShort ? AppSpacing.sm : AppSpacing.lg),
+                            SizedBox(
+                                height:
+                                    isShort ? AppSpacing.sm : AppSpacing.lg),
                           ],
                         ),
                       ),
@@ -275,7 +289,8 @@ class _FeatureRow extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm + 2),
         Semantics(
-          label: 'Partner benefits: flexible hours, weekly payouts, and more earning control',
+          label:
+              'Partner benefits: flexible hours, weekly payouts, and more earning control',
           child: const Row(
             children: [
               Expanded(
@@ -325,7 +340,10 @@ class _WelcomeActions extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.background.withValues(alpha: 0), AppColors.background],
+          colors: [
+            AppColors.background.withValues(alpha: 0),
+            AppColors.background
+          ],
         ),
       ),
       child: Column(
@@ -385,11 +403,17 @@ class _SetupHint extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(LucideIcons.shieldCheck, size: 14, color: AppColors.success),
+          const Icon(LucideIcons.shieldCheck,
+              size: 14, color: AppColors.success),
           const SizedBox(width: AppSpacing.xs),
-          Text(
-            'Set up your partner profile in a few simple steps',
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+          Flexible(
+            child: Text(
+              'Set up your partner profile in a few simple steps',
+              textAlign: TextAlign.center,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
         ],
       );

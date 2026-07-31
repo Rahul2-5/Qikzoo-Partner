@@ -11,8 +11,13 @@ void setTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Widget buildApp() => GetMaterialApp(
+Widget buildApp({TextScaler textScaler = TextScaler.noScaling}) =>
+    GetMaterialApp(
       initialRoute: AppRoutes.earnings,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+        child: child ?? const SizedBox.shrink(),
+      ),
       getPages: [
         GetPage(name: AppRoutes.earnings, page: () => const EarningsScreen()),
         GetPage(
@@ -59,5 +64,20 @@ void main() {
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle();
     expect(find.text('Dashboard Screen'), findsOneWidget);
+  });
+
+  testWidgets('remains usable on compact screens with large text',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(buildApp(textScaler: const TextScaler.linear(1.5)));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text("Today's Earnings"), findsOneWidget);
+    expect(find.text('Gig Progress'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_spacing.dart';
 
 class ResponsiveFrame extends StatelessWidget {
+  /// The maximum width of the complete frame, including its horizontal
+  /// padding. Keeping that contract consistent avoids content jumping between
+  /// screens that use different internal layouts.
   final Widget child;
   final double maxWidth;
   final EdgeInsetsGeometry? padding;
@@ -20,17 +23,26 @@ class ResponsiveFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final horizontalPadding =
-            constraints.maxWidth >= 600 ? AppSpacing.xl : AppSpacing.lg;
+        final horizontalPadding = switch (constraints.maxWidth) {
+          < 360 => AppSpacing.sm + AppSpacing.xs,
+          < 600 => AppSpacing.md,
+          _ => AppSpacing.lg,
+        };
 
         return Align(
           alignment: alignment,
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Padding(
-              padding: padding ??
-                  EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: child,
+            constraints: BoxConstraints(
+              maxWidth: maxWidth,
+              minWidth: constraints.maxWidth.clamp(0, maxWidth).toDouble(),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Padding(
+                padding: padding ??
+                    EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: child,
+              ),
             ),
           ),
         );

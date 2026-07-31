@@ -19,6 +19,7 @@ class PeriodSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLargeText = MediaQuery.textScalerOf(context).scale(1) > 1.2;
     return PopupMenuButton<EarningsPeriod>(
       onSelected: onChanged,
       color: AppColors.surface,
@@ -35,8 +36,10 @@ class PeriodSelector extends StatelessWidget {
           ),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        padding: EdgeInsets.symmetric(
+          horizontal: isLargeText ? AppSpacing.sm : AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -47,8 +50,15 @@ class PeriodSelector extends StatelessWidget {
           children: [
             const Icon(LucideIcons.calendar,
                 size: 16, color: AppColors.primary),
-            const SizedBox(width: AppSpacing.sm),
-            Text(value.label, style: AppTypography.bodyMedium),
+            SizedBox(width: isLargeText ? AppSpacing.xs : AppSpacing.sm),
+            Flexible(
+              child: Text(
+                value.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodyMedium,
+              ),
+            ),
             const Icon(LucideIcons.chevronDown,
                 size: 16, color: AppColors.textSecondary),
           ],

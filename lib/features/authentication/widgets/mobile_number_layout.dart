@@ -81,9 +81,11 @@ class MobileNumberLayout extends StatelessWidget {
                             ScrollViewKeyboardDismissBehavior.onDrag,
                         slivers: [
                           SliverPadding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding,
-                              vertical: verticalPadding,
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              verticalPadding + 56,
+                              horizontalPadding,
+                              verticalPadding,
                             ),
                             sliver: SliverFillRemaining(
                               hasScrollBody: false,
@@ -100,7 +102,6 @@ class MobileNumberLayout extends StatelessWidget {
                                           isPhoneValid: isPhoneValid,
                                           isRequesting: isRequesting,
                                           isCompact: isCompact,
-                                          onBack: onBack,
                                           onPhoneChanged: onPhoneChanged,
                                           onContinue: onContinue,
                                           onSubmitted: onSubmitted,
@@ -112,7 +113,6 @@ class MobileNumberLayout extends StatelessWidget {
                                           isPhoneValid: isPhoneValid,
                                           isRequesting: isRequesting,
                                           isCompact: isCompact,
-                                          onBack: onBack,
                                           onPhoneChanged: onPhoneChanged,
                                           onContinue: onContinue,
                                           onSubmitted: onSubmitted,
@@ -122,6 +122,27 @@ class MobileNumberLayout extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: verticalPadding,
+                    left: horizontalPadding,
+                    right: horizontalPadding,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1120),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: AppStaggeredReveal(
+                            index: 0,
+                            child: IconButtonCustom(
+                              icon: LucideIcons.arrowLeft,
+                              tooltip: 'Back',
+                              onPressed: onBack,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -143,7 +164,6 @@ class _NarrowLoginLayout extends StatelessWidget {
     required this.isPhoneValid,
     required this.isRequesting,
     required this.isCompact,
-    required this.onBack,
     required this.onPhoneChanged,
     required this.onContinue,
     required this.onSubmitted,
@@ -155,7 +175,6 @@ class _NarrowLoginLayout extends StatelessWidget {
   final bool isPhoneValid;
   final bool isRequesting;
   final bool isCompact;
-  final VoidCallback onBack;
   final ValueChanged<String> onPhoneChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
@@ -168,8 +187,7 @@ class _NarrowLoginLayout extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _LoginTopBar(
-            onBack: onBack,
+          _NarrowBrandHeader(
             logoWidth: isCompact ? 164 : 196,
           ),
           SizedBox(height: isCompact ? AppSpacing.sm : AppSpacing.md),
@@ -203,7 +221,6 @@ class _WideLoginLayout extends StatelessWidget {
     required this.isPhoneValid,
     required this.isRequesting,
     required this.isCompact,
-    required this.onBack,
     required this.onPhoneChanged,
     required this.onContinue,
     required this.onSubmitted,
@@ -215,7 +232,6 @@ class _WideLoginLayout extends StatelessWidget {
   final bool isPhoneValid;
   final bool isRequesting;
   final bool isCompact;
-  final VoidCallback onBack;
   final ValueChanged<String> onPhoneChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
@@ -226,18 +242,6 @@ class _WideLoginLayout extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: AppStaggeredReveal(
-            index: 0,
-            child: IconButtonCustom(
-              icon: LucideIcons.arrowLeft,
-              tooltip: 'Back',
-              onPressed: onBack,
-            ),
-          ),
-        ),
-        SizedBox(height: isCompact ? AppSpacing.sm : AppSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -287,38 +291,22 @@ class _WideLoginLayout extends StatelessWidget {
   }
 }
 
-class _LoginTopBar extends StatelessWidget {
-  const _LoginTopBar({
-    required this.onBack,
+class _NarrowBrandHeader extends StatelessWidget {
+  const _NarrowBrandHeader({
     required this.logoWidth,
   });
 
-  final VoidCallback onBack;
   final double logoWidth;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 68,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AppStaggeredReveal(
-              index: 0,
-              child: IconButtonCustom(
-                icon: LucideIcons.arrowLeft,
-                tooltip: 'Back',
-                onPressed: onBack,
-              ),
-            ),
-          ),
-          AppStaggeredReveal(
-            index: 0,
-            child: _BrandLogo(width: logoWidth),
-          ),
-        ],
+      child: Center(
+        child: AppStaggeredReveal(
+          index: 0,
+          child: _BrandLogo(width: logoWidth),
+        ),
       ),
     );
   }
