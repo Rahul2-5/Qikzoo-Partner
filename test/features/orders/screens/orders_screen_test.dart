@@ -4,9 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
+import 'package:delivery_partner_app/features/orders/data/order_preview_data.dart';
 import 'package:delivery_partner_app/features/orders/screens/orders_screen.dart';
+import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
 import 'package:delivery_partner_app/models/orders/order_history_page_model.dart';
 import 'package:delivery_partner_app/models/orders/rider_order_model.dart';
+import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
 import 'package:delivery_partner_app/repositories/orders/rider_orders_repository.dart';
 
 class FakeRiderOrdersRepository implements RiderOrdersRepository {
@@ -22,7 +25,8 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
       activeOrder == null ? [] : [activeOrder!];
 
   @override
-  Future<RiderOrderModel> getOne(String riderOrderId) => throw UnimplementedError();
+  Future<RiderOrderModel> getOne(String riderOrderId) =>
+      throw UnimplementedError();
 
   @override
   Future<OrderHistoryPageModel> getHistory({
@@ -32,10 +36,12 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   }) async {
     if (historyError != null) throw historyError!;
     // 1-indexed call count for this filter — the Nth call reads pages[N-1].
-    final callNumber = pageRequests.update(filter, (v) => v + 1, ifAbsent: () => 1);
+    final callNumber =
+        pageRequests.update(filter, (v) => v + 1, ifAbsent: () => 1);
     final list = pages[filter] ?? const [];
     if (callNumber - 1 >= list.length) {
-      return OrderHistoryPageModel(items: const [], total: 0, page: page, pageSize: pageSize);
+      return OrderHistoryPageModel(
+          items: const [], total: 0, page: page, pageSize: pageSize);
     }
     return list[callNumber - 1];
   }
@@ -43,7 +49,8 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   @override
   Future<void> markArrived(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> scanPickupQr(String riderOrderId, String token) => throw UnimplementedError();
+  Future<void> scanPickupQr(String riderOrderId, String token) =>
+      throw UnimplementedError();
   @override
   Future<void> pickupSuccess(String riderOrderId) => throw UnimplementedError();
   @override
@@ -52,7 +59,29 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   Future<void> completeDelivery(String riderOrderId, String code) =>
       throw UnimplementedError();
   @override
-  Future<void> cancel(String riderOrderId, String reason) => throw UnimplementedError();
+  Future<void> cancel(String riderOrderId, String reason) =>
+      throw UnimplementedError();
+}
+
+class FakeDashboardRepository implements DashboardRepository {
+  @override
+  Future<DashboardStatsModel> getStats() async => const DashboardStatsModel(
+        riderName: 'Ravi Kumar',
+        availabilityStatus: RiderAvailabilityStatus.online,
+        todaysEarningsPaise: 0,
+        todaysDeliveries: 0,
+        walletBalancePaise: 0,
+        acceptanceRatePercent: null,
+        completionRatePercent: null,
+        rating: 5,
+        workingZone: null,
+      );
+
+  @override
+  Future<DashboardStatsModel> goOffline() => getStats();
+
+  @override
+  Future<DashboardStatsModel> goOnline() => getStats();
 }
 
 RiderOrderModel mockOrder({
@@ -105,7 +134,11 @@ RiderOrderModel mockOrder({
 
 Widget buildApp({required FakeRiderOrdersRepository repository}) {
   return ProviderScope(
-    overrides: [riderOrdersRepositoryProvider.overrideWithValue(repository)],
+    overrides: [
+      riderOrdersRepositoryProvider.overrideWithValue(repository),
+      dashboardRepositoryProvider.overrideWithValue(FakeDashboardRepository()),
+      showOrderPreviewProvider.overrideWithValue(false),
+    ],
     child: GetMaterialApp(
       initialRoute: AppRoutes.orders,
       getPages: [
@@ -127,9 +160,11 @@ void main() {
   setUp(() => Get.testMode = true);
   tearDown(Get.reset);
 
-  testWidgets('shows the active-order banner when one exists, and navigates on tap',
+  testWidgets(
+      'shows the active-order banner when one exists, and navigates on tap',
       (tester) async {
-    final repo = FakeRiderOrdersRepository(activeOrder: mockOrder(status: RiderOrderStatus.accepted));
+    final repo = FakeRiderOrdersRepository(
+        activeOrder: mockOrder(status: RiderOrderStatus.accepted));
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
@@ -141,7 +176,8 @@ void main() {
     expect(find.text('Active Order Screen'), findsOneWidget);
   });
 
-  testWidgets('hides the active-order banner when there is none', (tester) async {
+  testWidgets('hides the active-order banner when there is none',
+      (tester) async {
     final repo = FakeRiderOrdersRepository(activeOrder: null);
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
@@ -149,11 +185,16 @@ void main() {
     expect(find.text('You have an order in progress'), findsNothing);
   });
 
-  testWidgets('defaults to the Active tab and lists its orders', (tester) async {
+  testWidgets('defaults to the Active tab and lists its orders',
+      (tester) async {
     final repo = FakeRiderOrdersRepository(pages: {
       OrderHistoryFilter.active: [
         OrderHistoryPageModel(
-          items: [mockOrder(restaurantName: 'Active Kitchen', status: RiderOrderStatus.accepted)],
+          items: [
+            mockOrder(
+                restaurantName: 'Active Kitchen',
+                status: RiderOrderStatus.accepted)
+          ],
           total: 1,
           page: 1,
           pageSize: 20,
@@ -164,9 +205,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Active Kitchen'), findsOneWidget);
+    expect(find.text('1 order'), findsOneWidget);
+    expect(find.text('Online'), findsOneWidget);
   });
 
-  testWidgets('switching tabs loads the Completed/Cancelled lists independently',
+  testWidgets(
+      'switching tabs loads the Completed/Cancelled lists independently',
       (tester) async {
     final repo = FakeRiderOrdersRepository(pages: {
       OrderHistoryFilter.active: [
@@ -208,7 +252,8 @@ void main() {
     expect(find.text('Cancelled Kitchen'), findsOneWidget);
   });
 
-  testWidgets('tapping an order navigates to its details screen', (tester) async {
+  testWidgets('tapping an order navigates to its details screen',
+      (tester) async {
     final repo = FakeRiderOrdersRepository(pages: {
       OrderHistoryFilter.active: [
         OrderHistoryPageModel(
@@ -230,13 +275,17 @@ void main() {
 
   testWidgets('infinite scroll loads the next page near the bottom of the list',
       (tester) async {
-    final firstPageItems =
-        List.generate(20, (i) => mockOrder(id: 'ro-$i', restaurantName: 'Kitchen $i'));
-    final secondPageItems = [mockOrder(id: 'ro-20', restaurantName: 'Kitchen 20')];
+    final firstPageItems = List.generate(
+        20, (i) => mockOrder(id: 'ro-$i', restaurantName: 'Kitchen $i'));
+    final secondPageItems = [
+      mockOrder(id: 'ro-20', restaurantName: 'Kitchen 20')
+    ];
     final repo = FakeRiderOrdersRepository(pages: {
       OrderHistoryFilter.active: [
-        OrderHistoryPageModel(items: firstPageItems, total: 21, page: 1, pageSize: 20),
-        OrderHistoryPageModel(items: secondPageItems, total: 21, page: 2, pageSize: 20),
+        OrderHistoryPageModel(
+            items: firstPageItems, total: 21, page: 1, pageSize: 20),
+        OrderHistoryPageModel(
+            items: secondPageItems, total: 21, page: 2, pageSize: 20),
       ],
     });
     await tester.pumpWidget(buildApp(repository: repo));
@@ -244,14 +293,17 @@ void main() {
 
     expect(find.text('Kitchen 0'), findsOneWidget);
 
-    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+    final scrollable =
+        tester.state<ScrollableState>(find.byType(Scrollable).first);
     scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
     await tester.pumpAndSettle();
 
-    expect(repo.pageRequests[OrderHistoryFilter.active], greaterThanOrEqualTo(2));
+    expect(
+        repo.pageRequests[OrderHistoryFilter.active], greaterThanOrEqualTo(2));
   });
 
-  testWidgets('an empty tab shows the matching empty state message', (tester) async {
+  testWidgets('an empty tab shows the matching empty state message',
+      (tester) async {
     final repo = FakeRiderOrdersRepository(pages: {
       OrderHistoryFilter.active: [
         const OrderHistoryPageModel(items: [], total: 0, page: 1, pageSize: 20),
@@ -263,9 +315,11 @@ void main() {
     expect(find.text('No active orders right now.'), findsOneWidget);
   });
 
-  testWidgets('a history load failure shows Retry, which succeeds on retry', (tester) async {
+  testWidgets('a history load failure shows Retry, which succeeds on retry',
+      (tester) async {
     final repo = FakeRiderOrdersRepository()
-      ..historyError = const ApiException(message: 'Unable to connect. Check your internet connection.');
+      ..historyError = const ApiException(
+          message: 'Unable to connect. Check your internet connection.');
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 

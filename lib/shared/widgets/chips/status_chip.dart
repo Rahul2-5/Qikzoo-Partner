@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 
@@ -27,7 +28,10 @@ class StatusChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
+          border: Border.all(
+            color: color.withValues(alpha: 0.18),
+            width: GlassTheme.borderWidth,
+          ),
         ),
         child: Text(
           label,

@@ -42,26 +42,32 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsAsync = ref.watch(notificationsProvider);
-    final unreadCount = notificationsAsync.valueOrNull
-            ?.where((notification) => !notification.isRead)
-            .length ??
-        0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Updates'),
+        actions: [
+          IconButton(
+            tooltip: 'Help centre',
+            onPressed: () => Get.toNamed(AppRoutes.support),
+            icon: const Icon(LucideIcons.helpCircle),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+        ],
+      ),
       body: SafeArea(
+        top: false,
         child: ResponsiveFrame(
           maxWidth: 560,
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.md,
-            AppSpacing.sm,
+            AppSpacing.md,
             AppSpacing.md,
             0,
           ),
           child: Column(
             children: [
-              _UpdatesHeader(unreadCount: unreadCount),
-              const SizedBox(height: AppSpacing.md),
               Expanded(
                 child: notificationsAsync.when(
                   loading: () => const PageLoadingShimmer(
@@ -121,153 +127,12 @@ class NotificationsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const _UpdatesNavigation(),
             ],
           ),
         ),
       ),
     );
   }
-}
-
-class _UpdatesHeader extends StatelessWidget {
-  const _UpdatesHeader({required this.unreadCount});
-
-  final int unreadCount;
-
-  @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Container(
-            height: 46,
-            padding: const EdgeInsets.symmetric(horizontal: 13),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 9,
-                  height: 9,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF16A34A),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text('Online', style: AppTypography.bodyMedium),
-                const SizedBox(width: 5),
-                const Icon(LucideIcons.chevronDown, size: 17),
-              ],
-            ),
-          ),
-          const Spacer(),
-          const _Wordmark(),
-          const Spacer(),
-          _HeaderIconButton(
-            icon: LucideIcons.bell,
-            label: 'Notifications',
-            badgeCount: unreadCount,
-            onPressed: () {},
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          _HeaderIconButton(
-            icon: LucideIcons.helpCircle,
-            label: 'Help centre',
-            onPressed: () => Get.toNamed(AppRoutes.support),
-          ),
-        ],
-      );
-}
-
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
-
-  @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Qikzoo',
-              style: AppTypography.h2.copyWith(
-                color: const Color(0xFF14376D),
-                fontWeight: FontWeight.w800,
-                letterSpacing: -1.1,
-              ),
-            ),
-            Text(
-              'PARTNER',
-              style: AppTypography.caption.copyWith(
-                color: const Color(0xFF16823A),
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.4,
-              ),
-            ),
-          ],
-        ),
-      );
-}
-
-class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-    this.badgeCount = 0,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  final int badgeCount;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: badgeCount > 0 ? '$label, $badgeCount unread' : label,
-        child: InkResponse(
-          onTap: onPressed,
-          radius: 24,
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Icon(icon, color: AppColors.textPrimary, size: 23),
-                if (badgeCount > 0)
-                  Positioned(
-                    top: 2,
-                    right: 2,
-                    child: Container(
-                      constraints: const BoxConstraints(minWidth: 17),
-                      height: 17,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFD92D20),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        badgeCount > 9 ? '9+' : '$badgeCount',
-                        style: AppTypography.caption.copyWith(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      );
 }
 
 class _PartnerMomentumCard extends StatelessWidget {
@@ -754,90 +619,6 @@ class _LearningVideoCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text('Qikzoo Partner', style: AppTypography.caption),
-              ],
-            ),
-          ),
-        ),
-      );
-}
-
-class _UpdatesNavigation extends StatelessWidget {
-  const _UpdatesNavigation();
-
-  @override
-  Widget build(BuildContext context) => Container(
-        height: 72,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(
-              top: BorderSide(color: AppColors.border.withValues(alpha: 0.75))),
-        ),
-        child: const Row(
-          children: [
-            _UpdatesNavItem(
-              icon: LucideIcons.layoutList,
-              label: 'Feed',
-              route: AppRoutes.dashboard,
-            ),
-            _UpdatesNavItem(
-              icon: LucideIcons.walletCards,
-              label: 'Pocket',
-              route: AppRoutes.wallet,
-            ),
-            _UpdatesNavItem(
-              icon: LucideIcons.briefcase,
-              label: 'Gigs',
-              route: AppRoutes.gigs,
-            ),
-            _UpdatesNavItem(
-              icon: LucideIcons.bell,
-              label: 'Updates',
-              route: AppRoutes.notifications,
-              isActive: true,
-            ),
-          ],
-        ),
-      );
-}
-
-class _UpdatesNavItem extends StatelessWidget {
-  const _UpdatesNavItem({
-    required this.icon,
-    required this.label,
-    required this.route,
-    this.isActive = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final String route;
-  final bool isActive;
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-        child: Semantics(
-          button: true,
-          selected: isActive,
-          label: label,
-          child: InkWell(
-            onTap: isActive ? null : () => Get.offAllNamed(route),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 23,
-                  color: isActive ? AppColors.primary : AppColors.textSecondary,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: AppTypography.caption.copyWith(
-                    color:
-                        isActive ? AppColors.primary : AppColors.textSecondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               ],
             ),
           ),

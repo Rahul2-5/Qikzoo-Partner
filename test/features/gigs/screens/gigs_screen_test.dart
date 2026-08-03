@@ -45,4 +45,50 @@ void main() {
 
     expect(find.text('Offline'), findsOneWidget);
   });
+
+  testWidgets('puts the weekly plan and next booking action up front',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dashboardRepositoryProvider
+              .overrideWithValue(const _OfflineDashboardRepository()),
+        ],
+        child: const MaterialApp(home: GigsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your week is taking shape'), findsOneWidget);
+    expect(find.text('Available to book'), findsOneWidget);
+    expect(find.text('2 Hour Delivery Gig'), findsOneWidget);
+    expect(find.text('Starts in 15 mins'), findsOneWidget);
+  });
+
+  testWidgets('keeps the schedule legible on a compact phone', (tester) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dashboardRepositoryProvider
+              .overrideWithValue(const _OfflineDashboardRepository()),
+        ],
+        child: const MaterialApp(home: GigsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Estimated payout'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Booking open'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
 }

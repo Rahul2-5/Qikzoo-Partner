@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -18,7 +19,7 @@ class FilterChipCustom extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.secondary : AppColors.surface,
+      color: selected ? AppColors.secondary : GlassTheme.surfaceColor,
       borderRadius: BorderRadius.circular(AppRadius.chip),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -33,7 +34,7 @@ class FilterChipCustom extends StatelessWidget {
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
-              color: selected ? AppColors.secondary : AppColors.border,
+              color: selected ? AppColors.secondary : GlassTheme.borderColor,
             ),
           ),
           child: Text(

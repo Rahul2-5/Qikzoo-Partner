@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../layout/glass_container.dart';
 
 class LoadingDialog {
   LoadingDialog._();
@@ -9,13 +10,9 @@ class LoadingDialog {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Dialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
-        child: const Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(color: AppColors.secondary),
-        ),
+      builder: (_) => const GlassDialog(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: CircularProgressIndicator(color: AppColors.secondary),
       ),
     );
   }

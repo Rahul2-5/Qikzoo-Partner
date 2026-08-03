@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/inputs/app_text_field.dart';
+import '../../../shared/widgets/layout/glass_container.dart';
 
 /// Bottom sheet collecting a mandatory cancellation reason before calling
 /// `POST /rider/orders/:id/cancel` — the backend requires a non-empty
@@ -19,11 +19,10 @@ class CancelOrderSheet {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const GlassBottomSheet(
+        child: _CancelOrderSheetContent(),
       ),
-      builder: (ctx) => const _CancelOrderSheetContent(),
     );
   }
 }
@@ -32,7 +31,8 @@ class _CancelOrderSheetContent extends StatefulWidget {
   const _CancelOrderSheetContent();
 
   @override
-  State<_CancelOrderSheetContent> createState() => _CancelOrderSheetContentState();
+  State<_CancelOrderSheetContent> createState() =>
+      _CancelOrderSheetContentState();
 }
 
 class _CancelOrderSheetContentState extends State<_CancelOrderSheetContent> {
@@ -62,7 +62,8 @@ class _CancelOrderSheetContentState extends State<_CancelOrderSheetContent> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Tell us why — this helps us support you and the customer.',
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            style:
+                AppTypography.caption.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(

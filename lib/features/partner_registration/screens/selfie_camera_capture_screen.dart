@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
@@ -11,6 +12,7 @@ import '../widgets/face_overlay.dart';
 import '../widgets/instruction_card.dart';
 import '../widgets/selfie_camera_preview.dart';
 import '../widgets/status_card.dart';
+import '../services/selfie_image_processor.dart';
 
 typedef CameraListLoader = Future<List<CameraDescription>> Function();
 typedef SelfieCameraControllerBuilder = CameraController Function(
@@ -229,11 +231,24 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
 
     try {
       final image = await controller.takePicture();
-      if (mounted) Navigator.of(context).pop(image.path);
+      final selfiePath = await SelfieImageProcessor.prepareForUpload(image.path);
+      if (mounted) Navigator.of(context).pop(selfiePath);
     } on CameraException {
       if (mounted) {
         setState(() {
           _captureError = 'We could not capture your selfie. Please try again.';
+        });
+      }
+    } on FileSystemException {
+      if (mounted) {
+        setState(() {
+          _captureError = 'We could not prepare your selfie. Please try again.';
+        });
+      }
+    } on FormatException {
+      if (mounted) {
+        setState(() {
+          _captureError = 'We could not prepare your selfie. Please try again.';
         });
       }
     } finally {

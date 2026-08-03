@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/layout/glass_container.dart';
 
 enum NoResponseOutcome { contactSupport, captureProof }
 
@@ -21,11 +22,10 @@ class NoResponseSheet {
       showModalBottomSheet<NoResponseOutcome>(
         context: context,
         isScrollControlled: true,
-        backgroundColor: AppColors.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        backgroundColor: Colors.transparent,
+        builder: (_) => GlassBottomSheet(
+          child: _NoResponseSheetContent(waitDuration: waitDuration),
         ),
-        builder: (_) => _NoResponseSheetContent(waitDuration: waitDuration),
       );
 }
 
@@ -35,7 +35,8 @@ class _NoResponseSheetContent extends StatefulWidget {
   const _NoResponseSheetContent({required this.waitDuration});
 
   @override
-  State<_NoResponseSheetContent> createState() => _NoResponseSheetContentState();
+  State<_NoResponseSheetContent> createState() =>
+      _NoResponseSheetContentState();
 }
 
 class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
@@ -67,8 +68,10 @@ class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
   }
 
   String get _timerLabel {
-    final minutes = _remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = _remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes =
+        _remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds =
+        _remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds remaining';
   }
 
@@ -78,7 +81,8 @@ class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,40 +94,52 @@ class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
             ]),
             const SizedBox(height: AppSpacing.xs),
             Text('Try the steps below before escalating this delivery.',
-                style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                style: AppTypography.caption
+                    .copyWith(color: AppColors.textSecondary)),
             const SizedBox(height: AppSpacing.md),
             const _Step(text: 'Call the customer'),
             const _Step(text: 'Send “I’m at the gate”'),
-            _Step(text: readyForProof ? 'Waiting period complete' : 'Wait for the customer'),
+            _Step(
+                text: readyForProof
+                    ? 'Waiting period complete'
+                    : 'Wait for the customer'),
             const SizedBox(height: AppSpacing.md),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: readyForProof ? AppColors.successBg : AppColors.warningBg,
+                color:
+                    readyForProof ? AppColors.successBg : AppColors.warningBg,
                 borderRadius: BorderRadius.circular(AppRadius.control),
               ),
               child: Text(
-                readyForProof ? 'You can now record contactless proof.' : _timerLabel,
+                readyForProof
+                    ? 'You can now record contactless proof.'
+                    : _timerLabel,
                 style: AppTypography.bodyMedium,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
             if (readyForProof)
               FilledButton.icon(
-                onPressed: () => Navigator.of(context).pop(NoResponseOutcome.captureProof),
+                onPressed: () =>
+                    Navigator.of(context).pop(NoResponseOutcome.captureProof),
                 icon: const Icon(Icons.camera_alt_outlined),
                 label: const Text('Capture drop-off photo'),
               )
             else
               OutlinedButton.icon(
-                onPressed: _calledAgain ? null : () => setState(() => _calledAgain = true),
+                onPressed: _calledAgain
+                    ? null
+                    : () => setState(() => _calledAgain = true),
                 icon: const Icon(Icons.phone_outlined),
-                label: Text(_calledAgain ? 'Call attempt recorded' : 'Call again'),
+                label:
+                    Text(_calledAgain ? 'Call attempt recorded' : 'Call again'),
               ),
             const SizedBox(height: AppSpacing.xs),
             TextButton.icon(
-              onPressed: () => Navigator.of(context).pop(NoResponseOutcome.contactSupport),
+              onPressed: () =>
+                  Navigator.of(context).pop(NoResponseOutcome.contactSupport),
               icon: const Icon(Icons.headset_mic_outlined, size: 18),
               label: const Text('Contact support'),
             ),
@@ -143,7 +159,8 @@ class _Step extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: Row(children: [
-          const Icon(Icons.check_circle_outline, size: 18, color: AppColors.secondary),
+          const Icon(Icons.check_circle_outline,
+              size: 18, color: AppColors.secondary),
           const SizedBox(width: AppSpacing.sm),
           Text(text, style: AppTypography.body),
         ]),

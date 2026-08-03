@@ -12,7 +12,8 @@ import '../../../models/dashboard/dashboard_stats_model.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
-import '../../../shared/widgets/navigation/app_bottom_nav.dart';
+import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
+import '../widgets/available_gigs_section.dart';
 
 /// The partner's weekly booking calendar. The content is intentionally
 /// schedule-first: it makes the current booking state and earning potential
@@ -27,49 +28,256 @@ class GigsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ResponsiveFrame(
-                maxWidth: 640,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: ListView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.only(
-                    top: AppSpacing.sm,
-                    bottom: AppSpacing.md,
-                  ),
-                  children: [
-                    _GigsHeader(availability: availability),
-                    const SizedBox(height: AppSpacing.md),
-                    const _IncentiveStrip(),
-                    const SizedBox(height: AppSpacing.lg),
-                    const _MonthDivider(month: 'JULY'),
-                    const SizedBox(height: AppSpacing.md),
-                    const _ScheduleCard.booked(),
-                    const SizedBox(height: AppSpacing.sm),
-                    const _ScheduleCard.open(day: '26', weekday: 'Sun'),
-                    const SizedBox(height: AppSpacing.sm),
-                    const _ScheduleCard.open(day: '27', weekday: 'Mon'),
-                    const SizedBox(height: AppSpacing.sm),
-                    const _ScheduleCard.open(day: '28', weekday: 'Tue'),
-                    const SizedBox(height: AppSpacing.sm),
-                    const _ScheduleCard.open(day: '29', weekday: 'Wed'),
-                    const SizedBox(height: AppSpacing.sm),
-                    const _ScheduleCard.locked(),
-                    const SizedBox(height: AppSpacing.md),
-                    const _SuperGigsInfoCard(),
-                  ],
-                ),
-              ),
+      body: AppTabScaffold(
+        currentIndex: 1,
+        child: ResponsiveFrame(
+          maxWidth: 640,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.sm,
+              bottom: AppSpacing.md,
             ),
-            const AppBottomNav(currentIndex: 1),
-          ],
+            children: [
+              _GigsHeader(availability: availability),
+              const SizedBox(height: AppSpacing.md),
+              const _WeekOverview(),
+              const SizedBox(height: AppSpacing.md),
+              const _IncentiveStrip(),
+              const SizedBox(height: AppSpacing.lg),
+              const AvailableGigsSection(
+                title: 'Available to book',
+                actionLabel: 'See all',
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const _ScheduleSectionHeader(),
+              const SizedBox(height: AppSpacing.sm + 2),
+              const _ScheduleCard.booked(),
+              const SizedBox(height: AppSpacing.sm),
+              const _ScheduleCard.open(day: '26', weekday: 'Sun'),
+              const SizedBox(height: AppSpacing.sm),
+              const _ScheduleCard.open(day: '27', weekday: 'Mon'),
+              const SizedBox(height: AppSpacing.sm),
+              const _ScheduleCard.open(day: '28', weekday: 'Tue'),
+              const SizedBox(height: AppSpacing.sm),
+              const _ScheduleCard.open(day: '29', weekday: 'Wed'),
+              const SizedBox(height: AppSpacing.sm),
+              const _ScheduleCard.locked(),
+              const SizedBox(height: AppSpacing.md),
+              const _SuperGigsInfoCard(),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// A concise, high-contrast weekly summary gives the schedule context before
+/// riders scan individual days or choose another booking.
+class _WeekOverview extends StatelessWidget {
+  const _WeekOverview();
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: 'This week: 6 gigs booked, 11 hours planned, estimated payout '
+            '₹922 to ₹1,252.',
+        excludeSemantics: true,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF283B8F), Color(0xFF536DFE)],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x2B3348A7),
+                offset: Offset(0, 10),
+                blurRadius: 22,
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                right: -42,
+                top: -72,
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .08),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 28,
+                bottom: -66,
+                child: Container(
+                  width: 116,
+                  height: 116,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBFC8FF).withValues(alpha: .15),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .14),
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: .18),
+                          ),
+                        ),
+                        child: Text(
+                          'THIS WEEK',
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: .8,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        LucideIcons.calendarDays,
+                        color: Color(0xFFDCE2FF),
+                        size: 18,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        '25–30 Jul',
+                        style: AppTypography.caption.copyWith(
+                          color: const Color(0xFFDCE2FF),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm + 2),
+                  Text(
+                    'Your week is taking shape',
+                    style: AppTypography.h2.copyWith(
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Keep the momentum going—more gig slots are open now.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body.copyWith(
+                      color: const Color(0xFFDCE2FF),
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: const [
+                      Expanded(
+                        child: _WeekMetric(
+                          value: '6',
+                          label: 'Gigs booked',
+                          icon: LucideIcons.badgeCheck,
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _WeekMetric(
+                          value: '₹922+',
+                          label: 'Est. payout',
+                          icon: LucideIcons.wallet,
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _WeekMetric(
+                          value: '11h',
+                          label: 'On the road',
+                          icon: LucideIcons.clock3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _WeekMetric extends StatelessWidget {
+  const _WeekMetric({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: .11),
+          borderRadius: BorderRadius.circular(AppRadius.control),
+          border: Border.all(color: Colors.white.withValues(alpha: .12)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 15, color: const Color(0xFFE7EAFF)),
+            const SizedBox(height: AppSpacing.xs),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(
+                color: const Color(0xFFDCE2FF),
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _GigsHeader extends StatelessWidget {
@@ -106,67 +314,126 @@ class _GigsHeader extends StatelessWidget {
             ? AppColors.textSecondary
             : AppColors.warning;
 
-    return SizedBox(
-      height: 58,
-      child: Row(
-        children: [
-          Semantics(
-            button: true,
-            label: 'You are $statusLabel',
-            child: InkWell(
-              onTap: () => _showStatus(context),
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-              child: Container(
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: AppShadows.control,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Keep the wordmark centred while bounding the status label. The
+        // former intrinsic-width Row overflowed with longer status values.
+        final isCompact = constraints.maxWidth < 340;
+        final statusWidth = isCompact ? 108.0 : 128.0;
+        final wordmarkWidth = isCompact ? 60.0 : 72.0;
+
+        return SizedBox(
+          height: 58,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: statusWidth,
+                  child: _AvailabilityControl(
+                    label: statusLabel,
+                    color: statusColor,
+                    onTap: () => _showStatus(context),
+                  ),
                 ),
+              ),
+              SizedBox(
+                width: wordmarkWidth,
+                child: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: _PartnerWordmark(),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
+                    _HeaderIcon(
+                      icon: LucideIcons.bell,
+                      label: 'Gig notifications',
+                      showDot: true,
+                      onTap: () => _showUpdates(context),
+                    ),
+                    const SizedBox(width: 4),
+                    _HeaderIcon(
+                      icon: LucideIcons.helpCircle,
+                      label: 'Gig help',
+                      onTap: () => AppSnackBar.success(
+                        context,
+                        'Booking support is available in Help & Support.',
                       ),
                     ),
-                    const SizedBox(width: 7),
-                    Text(statusLabel,
-                        style: AppTypography.bodyMedium.copyWith(fontSize: 13)),
-                    const SizedBox(width: 5),
-                    const Icon(LucideIcons.chevronDown,
-                        size: 16, color: AppColors.textSecondary),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-          const Spacer(),
-          const _PartnerWordmark(),
-          const Spacer(),
-          _HeaderIcon(
-            icon: LucideIcons.bell,
-            label: 'Gig notifications',
-            showDot: true,
-            onTap: () => _showUpdates(context),
-          ),
-          const SizedBox(width: 4),
-          _HeaderIcon(
-            icon: LucideIcons.helpCircle,
-            label: 'Gig help',
-            onTap: () => AppSnackBar.success(
-                context, 'Booking support is available in Help & Support.'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
+}
+
+class _AvailabilityControl extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _AvailabilityControl({
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: 'You are $label',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            child: Ink(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+                border: Border.all(color: AppColors.border),
+                boxShadow: AppShadows.control,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration:
+                        BoxDecoration(color: color, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodyMedium.copyWith(fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  const Icon(
+                    LucideIcons.chevronDown,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 class _PartnerWordmark extends StatelessWidget {
@@ -209,23 +476,31 @@ class _HeaderIcon extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
         button: true,
         label: label,
-        child: IconButton(
-          onPressed: onTap,
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(icon, size: 23, color: AppColors.textPrimary),
-              if (showDot)
-                const Positioned(
-                  top: -1,
-                  right: -1,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                        color: AppColors.error, shape: BoxShape.circle),
-                    child: SizedBox(width: 7, height: 7),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: IconButton(
+            onPressed: onTap,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, size: 22, color: AppColors.textPrimary),
+                if (showDot)
+                  const Positioned(
+                    top: -1,
+                    right: -1,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        shape: BoxShape.circle,
+                      ),
+                      child: SizedBox(width: 7, height: 7),
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -290,7 +565,7 @@ class _IncentiveCard extends StatelessWidget {
                 context, 'Your incentive details are ready to view.'),
             borderRadius: BorderRadius.circular(AppRadius.card),
             child: Ink(
-              height: 126,
+              height: 136,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: background,
@@ -298,44 +573,59 @@ class _IncentiveCard extends StatelessWidget {
                 border: Border.all(color: Colors.white.withValues(alpha: .8)),
                 boxShadow: AppShadows.control,
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: iconColor,
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Icon(icon, size: 20, color: Colors.white),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              AppTypography.bodyMedium.copyWith(fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        LucideIcons.chevronRight,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    amount,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.numericMd.copyWith(
+                      fontSize: 22,
                       color: iconColor,
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: Icon(icon, size: 23, color: Colors.white),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title,
-                            style: AppTypography.bodyMedium
-                                .copyWith(fontSize: 13)),
-                        const SizedBox(height: 2),
-                        Text(amount,
-                            style: AppTypography.numericMd
-                                .copyWith(fontSize: 22, color: iconColor)),
-                        const Spacer(),
-                        Text(detail,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.caption.copyWith(
-                                fontSize: 10, color: AppColors.textSecondary)),
-                      ],
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 38),
-                    child: Icon(LucideIcons.chevronRight,
-                        size: 17, color: AppColors.textSecondary),
+                  const Spacer(),
+                  Text(
+                    detail,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.caption.copyWith(
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -345,24 +635,48 @@ class _IncentiveCard extends StatelessWidget {
       );
 }
 
-class _MonthDivider extends StatelessWidget {
-  final String month;
-  const _MonthDivider({required this.month});
+class _ScheduleSectionHeader extends StatelessWidget {
+  const _ScheduleSectionHeader();
 
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          const Expanded(child: Divider(color: AppColors.border)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text(month,
-                style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                    letterSpacing: 1.2,
-                    fontSize: 14)),
-          ),
-          const Expanded(child: Divider(color: AppColors.border)),
-        ],
+  Widget build(BuildContext context) => Semantics(
+        header: true,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Your schedule', style: AppTypography.h2),
+                  const SizedBox(height: 2),
+                  Text(
+                    '25–30 July · 6 days ahead',
+                    style: AppTypography.caption.copyWith(fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm + 2,
+                vertical: AppSpacing.xs + 2,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+              ),
+              child: Text(
+                'JULY',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: .8,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
 }
 
@@ -417,53 +731,71 @@ class _ScheduleCard extends StatelessWidget {
         child: InkWell(
           onTap: () => _onTap(context),
           borderRadius: BorderRadius.circular(AppRadius.card),
-          child: Ink(
-            height: 112,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: AppColors.border.withValues(alpha: .8)),
-              boxShadow: AppShadows.control,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 86,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: dateColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(AppRadius.card),
-                      bottomLeft: Radius.circular(AppRadius.card),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(day,
-                          style: AppTypography.numericLg.copyWith(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final dateWidth = constraints.maxWidth < 320
+                  ? 76.0
+                  : constraints.maxWidth < 400
+                      ? 88.0
+                      : 100.0;
+
+              return Ink(
+                height: 112,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border:
+                      Border.all(color: AppColors.border.withValues(alpha: .8)),
+                  boxShadow: AppShadows.control,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: dateWidth,
+                      height: double.infinity,
+                      decoration: BoxDecoration(
+                        color: dateColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(AppRadius.card),
+                          bottomLeft: Radius.circular(AppRadius.card),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            day,
+                            style: AppTypography.numericLg.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 30)),
-                      const SizedBox(height: 1),
-                      Text(weekday,
-                          style: AppTypography.bodyMedium
-                              .copyWith(color: Colors.white, fontSize: 15)),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 13, 12, 13),
-                    child: _DayContent(
-                      state: state,
-                      title: title,
-                      subtitle: subtitle,
+                              fontSize: 30,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            weekday,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: Colors.white,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+                        child: _DayContent(
+                          state: state,
+                          title: title,
+                          subtitle: subtitle,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -518,11 +850,13 @@ class _DayContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMedium
-                      .copyWith(fontSize: 17, fontWeight: FontWeight.w700)),
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodyMedium
+                    .copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
             ),
             if (!booked && state != _GigDayState.locked)
               const Icon(LucideIcons.chevronRight,
@@ -534,11 +868,13 @@ class _DayContent extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         if (booked)
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(subtitle,
                   style: AppTypography.caption.copyWith(fontSize: 12)),
-              const Spacer(),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

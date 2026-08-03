@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../routes/app_page_transition.dart';
 import 'app_colors.dart';
+import 'glass_theme.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
@@ -42,14 +43,14 @@ class AppTheme {
           titleTextStyle: AppTypography.h2,
         ),
         cardTheme: CardThemeData(
-          color: AppColors.surface,
+          color: GlassTheme.surfaceColor,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.card),
-            side: const BorderSide(color: AppColors.border),
+            side: BorderSide(color: GlassTheme.borderColor),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -123,16 +124,16 @@ class AppTheme {
           fillColor: WidgetStatePropertyAll(AppColors.secondary),
         ),
         bottomSheetTheme: BottomSheetThemeData(
-          backgroundColor: AppColors.surface,
+          backgroundColor: GlassTheme.surfaceColor,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sheet),
           ),
           showDragHandle: true,
-          dragHandleColor: AppColors.border,
+          dragHandleColor: GlassTheme.borderColor,
         ),
         dialogTheme: DialogThemeData(
-          backgroundColor: AppColors.surface,
+          backgroundColor: GlassTheme.surfaceColor,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sheet),
@@ -163,7 +164,7 @@ class AppTheme {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: AppColors.surface,
+          fillColor: GlassTheme.fieldColor,
           focusColor: AppColors.primarySoft,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
@@ -175,19 +176,9 @@ class AppTheme {
           labelStyle:
               AppTypography.caption.copyWith(color: AppColors.textSecondary),
           errorStyle: AppTypography.caption.copyWith(color: AppColors.error),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            borderSide:
-                const BorderSide(color: AppColors.secondary, width: 1.5),
-          ),
+          border: GlassTheme.inputBorder,
+          enabledBorder: GlassTheme.inputBorder,
+          focusedBorder: GlassTheme.inputFocusedBorder,
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.button),
             borderSide: const BorderSide(color: AppColors.error),

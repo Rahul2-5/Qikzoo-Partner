@@ -38,6 +38,8 @@ void main() {
     await tester.pumpWidget(buildApp());
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text("Today's Earnings"), findsOneWidget);
+    expect(find.text('Cash limit'), findsOneWidget);
+    expect(find.text('Deposit cash'), findsOneWidget);
     expect(find.text('₹2,345.50'), findsWidgets);
   });
 

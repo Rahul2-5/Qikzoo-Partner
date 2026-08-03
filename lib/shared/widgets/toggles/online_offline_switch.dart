@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
@@ -19,7 +20,10 @@ class OnlineOfflineSwitch extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.chip),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(
+            sigmaX: GlassTheme.blurSigma,
+            sigmaY: GlassTheme.blurSigma,
+          ),
           child: AnimatedContainer(
             duration: AppMotion.duration(context, AppMotion.standard),
             curve: AppMotion.enter,

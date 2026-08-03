@@ -15,36 +15,36 @@ import '../../../repositories/profile/profile_repository.dart';
 import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
+import '../../../shared/widgets/layout/glass_container.dart';
 import '../screens/selfie_camera_capture_screen.dart';
 
 Future<ImageSource?> showImageSourceSheet(BuildContext context) {
   return showModalBottomSheet<ImageSource>(
     context: context,
-    backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-    ),
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading:
-                  const Icon(LucideIcons.camera, color: AppColors.secondary),
-              title: Text('Take Photo', style: AppTypography.bodyMedium),
-              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
-            ),
-            ListTile(
-              leading:
-                  const Icon(LucideIcons.image, color: AppColors.secondary),
-              title:
-                  Text('Choose from Gallery', style: AppTypography.bodyMedium),
-              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
-            ),
-          ],
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => GlassBottomSheet(
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading:
+                    const Icon(LucideIcons.camera, color: AppColors.secondary),
+                title: Text('Take Photo', style: AppTypography.bodyMedium),
+                onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
+              ),
+              ListTile(
+                leading:
+                    const Icon(LucideIcons.image, color: AppColors.secondary),
+                title: Text('Choose from Gallery',
+                    style: AppTypography.bodyMedium),
+                onTap: () =>
+                    Navigator.of(sheetContext).pop(ImageSource.gallery),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -78,50 +78,48 @@ Future<void> showDocumentPreviewSheet(
 ) async {
   final action = await showModalBottomSheet<String>(
     context: context,
-    backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-    ),
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              child: Image.file(
-                File(document.fileUrl!),
-                width: 96,
-                height: 96,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => GlassBottomSheet(
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.control),
+                child: Image.file(
+                  File(document.fileUrl!),
                   width: 96,
                   height: 96,
-                  color: AppColors.surfaceMuted,
-                  child: const Icon(LucideIcons.fileText,
-                      color: AppColors.textSecondary),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 96,
+                    height: 96,
+                    color: AppColors.surfaceMuted,
+                    child: const Icon(LucideIcons.fileText,
+                        color: AppColors.textSecondary),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ListTile(
-              leading:
-                  const Icon(LucideIcons.refreshCw, color: AppColors.secondary),
-              title: Text('Replace', style: AppTypography.bodyMedium),
-              onTap: () => Navigator.of(sheetContext).pop('replace'),
-            ),
-            ListTile(
-              leading: const Icon(LucideIcons.trash2, color: AppColors.error),
-              title: Text(
-                'Remove',
-                style:
-                    AppTypography.bodyMedium.copyWith(color: AppColors.error),
+              const SizedBox(height: AppSpacing.md),
+              ListTile(
+                leading: const Icon(LucideIcons.refreshCw,
+                    color: AppColors.secondary),
+                title: Text('Replace', style: AppTypography.bodyMedium),
+                onTap: () => Navigator.of(sheetContext).pop('replace'),
               ),
-              onTap: () => Navigator.of(sheetContext).pop('remove'),
-            ),
-          ],
+              ListTile(
+                leading: const Icon(LucideIcons.trash2, color: AppColors.error),
+                title: Text(
+                  'Remove',
+                  style:
+                      AppTypography.bodyMedium.copyWith(color: AppColors.error),
+                ),
+                onTap: () => Navigator.of(sheetContext).pop('remove'),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -137,54 +135,52 @@ Future<void> showDocumentPreviewSheet(
 Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) {
   return showModalBottomSheet<bool>(
     context: context,
-    backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
-    ),
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipOval(
-              child: Image.file(
-                File(path),
-                width: 120,
-                height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => GlassBottomSheet(
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipOval(
+                child: Image.file(
+                  File(path),
                   width: 120,
                   height: 120,
-                  color: AppColors.surfaceMuted,
-                  child: const Icon(
-                    LucideIcons.userCircle,
-                    color: AppColors.textSecondary,
-                    size: 48,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 120,
+                    height: 120,
+                    color: AppColors.surfaceMuted,
+                    child: const Icon(
+                      LucideIcons.userCircle,
+                      color: AppColors.textSecondary,
+                      size: 48,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButtonCustom(
-                    label: 'Retake',
-                    onPressed: () => Navigator.of(sheetContext).pop(false),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButtonCustom(
+                      label: 'Retake',
+                      onPressed: () => Navigator.of(sheetContext).pop(false),
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: PrimaryCtaButton(
-                    label: 'Use Photo',
-                    onPressed: () => Navigator.of(sheetContext).pop(true),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: PrimaryCtaButton(
+                      label: 'Use Photo',
+                      onPressed: () => Navigator.of(sheetContext).pop(true),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ),

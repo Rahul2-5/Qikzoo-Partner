@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../models/profile/profile_summary.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../providers/profile/profile_provider.dart';
@@ -14,7 +15,7 @@ import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
-import '../../../shared/widgets/navigation/app_bottom_nav.dart';
+import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
 import '../widgets/partner_profile_components.dart';
 import '../widgets/personal_information_sheet.dart';
 
@@ -49,28 +50,22 @@ class ProfileScreen extends ConsumerWidget {
     final summaryAsync = ref.watch(profileSummaryProvider);
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ResponsiveFrame(
-                maxWidth: 520,
-                padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
-                child: summaryAsync.when(
-                  loading: () => const PageLoadingShimmer(
-                    padding: EdgeInsets.zero,
-                    itemCount: 3,
-                  ),
-                  error: (_, __) => _ProfileErrorState(
-                    onRetry: () => ref.invalidate(profileProvider),
-                  ),
-                  data: (profile) => _buildContent(context, ref, profile),
-                ),
-              ),
+      body: AppTabScaffold(
+        currentIndex: 4,
+        child: ResponsiveFrame(
+          maxWidth: 520,
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
+          child: summaryAsync.when(
+            loading: () => const PageLoadingShimmer(
+              padding: EdgeInsets.zero,
+              itemCount: 3,
             ),
-            const AppBottomNav(currentIndex: 4),
-          ],
+            error: (_, __) => _ProfileErrorState(
+              onRetry: () => ref.invalidate(profileProvider),
+            ),
+            data: (profile) => _buildContent(context, ref, profile),
+          ),
         ),
       ),
     );
@@ -186,6 +181,22 @@ class ProfileScreen extends ConsumerWidget {
               color: const Color(0xFFD34669),
               onTap: () =>
                   Get.toNamed('${AppRoutes.partnerBenefits}?source=profile'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Agreements',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            PartnerProfileMenuTile(
+              icon: LucideIcons.fileCheck2,
+              title: 'Agreement',
+              subtitle: 'Review your terms, privacy and partner policy',
+              color: AppColors.primary,
+              onTap: () => Get.toNamed(AppRoutes.agreement),
             ),
             const SizedBox(height: AppSpacing.sm),
             PartnerProfileMenuTile(
