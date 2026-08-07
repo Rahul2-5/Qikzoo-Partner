@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../motion/app_motion_widgets.dart';
 
 class IconButtonCustom extends StatelessWidget {
@@ -26,7 +26,7 @@ class IconButtonCustom extends StatelessWidget {
       enabled: onPressed != null,
       pressedScale: 0.94,
       child: Material(
-        color: backgroundColor ?? AppColors.surface,
+        color: backgroundColor ?? GlassTheme.surfaceColor,
         borderRadius: BorderRadius.circular(AppRadius.button),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.button),
@@ -37,8 +37,8 @@ class IconButtonCustom extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.button),
-              border: Border.all(color: AppColors.border),
-              boxShadow: AppShadows.control,
+              border: Border.all(color: GlassTheme.borderColor),
+              boxShadow: GlassTheme.surfaceShadow,
             ),
             child: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
           ),

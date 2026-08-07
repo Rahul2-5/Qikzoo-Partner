@@ -70,6 +70,9 @@ Widget buildApp({AuthRepository? authRepository}) => ProviderScope(
               name: AppRoutes.settings,
               page: () => const Scaffold(body: Text('Settings Screen'))),
           GetPage(
+              name: AppRoutes.agreement,
+              page: () => const Scaffold(body: Text('Agreement Screen'))),
+          GetPage(
               name: AppRoutes.welcome,
               page: () => const Scaffold(body: Text('Welcome Screen'))),
         ],
@@ -115,6 +118,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Settings Screen'), findsOneWidget);
+  });
+
+  testWidgets('Agreement menu navigates to the agreement route',
+      (tester) async {
+    setTallSurface(tester);
+    await tester.pumpWidget(buildApp());
+    await tester.tap(find.text('Agreement'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Agreement Screen'), findsOneWidget);
   });
 
   testWidgets('Tapping the profile summary opens the partner ID',

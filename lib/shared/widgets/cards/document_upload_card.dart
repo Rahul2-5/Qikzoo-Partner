@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../chips/status_chip.dart';
@@ -27,33 +27,38 @@ class DocumentUploadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
+        child: Ink(
+          decoration: GlassTheme.surface(
             borderRadius: BorderRadius.circular(AppRadius.card),
-            boxShadow: AppShadows.card,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(documentLabel, style: AppTypography.bodyMedium),
-                  StatusChip(label: statusLabel, color: statusColor, background: statusBackground),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(documentLabel, style: AppTypography.bodyMedium),
+                    StatusChip(
+                        label: statusLabel,
+                        color: statusColor,
+                        background: statusBackground),
+                  ],
+                ),
+                if (rejectionReason != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(rejectionReason!,
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.warning)),
                 ],
-              ),
-              if (rejectionReason != null) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(rejectionReason!,
-                    style: AppTypography.caption.copyWith(color: AppColors.warning)),
               ],
-            ],
+            ),
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_radius.dart';
+import 'glass_theme.dart';
 
 class AppShadows {
   AppShadows._();
@@ -25,9 +26,11 @@ class AppShadows {
     BoxShadow(color: Color(0x33536DFE), offset: Offset(0, 12), blurRadius: 24),
   ];
 
-  static BoxDecoration glass({double opacity = 0.65}) => BoxDecoration(
-        color: AppColors.surface.withValues(alpha: opacity),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.85)),
+  /// Deprecated compatibility helper. New glass surfaces should use
+  /// [GlassTheme] or [GlassContainer] so they share the same tokens.
+  static BoxDecoration glass({double opacity = 0.65}) => GlassTheme.surface(
         borderRadius: BorderRadius.circular(AppRadius.sheet),
+        color: AppColors.surface.withValues(alpha: opacity),
+        boxShadow: const [],
       );
 }

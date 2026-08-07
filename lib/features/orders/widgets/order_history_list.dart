@@ -5,7 +5,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../data/order_preview_data.dart';
 import '../../../models/orders/order_history_page_model.dart';
+import '../../../models/orders/rider_order_model.dart';
 import '../../../providers/orders/order_history_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
@@ -19,7 +21,8 @@ class OrderHistoryList extends ConsumerStatefulWidget {
   final OrderHistoryFilter filter;
   final void Function(String riderOrderId) onOpen;
 
-  const OrderHistoryList({super.key, required this.filter, required this.onOpen});
+  const OrderHistoryList(
+      {super.key, required this.filter, required this.onOpen});
 
   @override
   ConsumerState<OrderHistoryList> createState() => _OrderHistoryListState();
@@ -55,7 +58,8 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
       if (mounted) AppSnackBar.error(context, e.message);
     } catch (_) {
       if (mounted) {
-        AppSnackBar.error(context, 'Could not load more orders. Please try again.');
+        AppSnackBar.error(
+            context, 'Could not load more orders. Please try again.');
       }
     }
   }
@@ -63,6 +67,7 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
   @override
   Widget build(BuildContext context) {
     final stateAsync = ref.watch(orderHistoryProvider(widget.filter));
+    final showOrderPreviews = ref.watch(showOrderPreviewProvider);
 
     return stateAsync.when(
       loading: () => const PageLoadingShimmer(
@@ -70,11 +75,18 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
         itemCount: 3,
       ),
       error: (error, _) => ErrorWidgetCustom(
-        message: error is ApiException ? error.message : 'Could not load orders.',
-        onRetry: () => ref.read(orderHistoryProvider(widget.filter).notifier).refresh(),
+        message:
+            error is ApiException ? error.message : 'Could not load orders.',
+        onRetry: () =>
+            ref.read(orderHistoryProvider(widget.filter).notifier).refresh(),
       ),
       data: (state) {
-        if (state.items.isEmpty) {
+        final previewItems = showOrderPreviews && state.items.isEmpty
+            ? orderPreviewsFor(widget.filter)
+            : const <RiderOrderModel>[];
+        final displayedItems = state.items.isEmpty ? previewItems : state.items;
+
+        if (displayedItems.isEmpty) {
           return EmptyState(
             icon: LucideIcons.inbox,
             message: switch (widget.filter) {
@@ -86,22 +98,24 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
         }
         return RefreshIndicator(
           color: AppColors.secondary,
-          onRefresh: () => ref.read(orderHistoryProvider(widget.filter).notifier).refresh(),
+          onRefresh: () =>
+              ref.read(orderHistoryProvider(widget.filter).notifier).refresh(),
           child: ListView.separated(
             controller: _scrollController,
-            physics:
-                const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics()),
             padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-            itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+            itemCount: displayedItems.length +
+                (state.isLoadingMore && previewItems.isEmpty ? 1 : 0),
             separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
-              if (index >= state.items.length) {
+              if (index >= displayedItems.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                   child: LoadingSkeleton(height: 56),
                 );
               }
-              final order = state.items[index];
+              final order = displayedItems[index];
               return RiderOrderListTile(
                 order: order,
                 onTap: () => widget.onOpen(order.id),

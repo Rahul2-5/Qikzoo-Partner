@@ -4,10 +4,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
+import '../../../shared/widgets/layout/glass_container.dart';
 
 class AccountScreenHeader extends StatelessWidget {
   final String title;
@@ -63,15 +63,10 @@ class AccountSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassContainer(
       width: double.infinity,
       padding: padding,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.sheet),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppShadows.control,
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.sheet),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

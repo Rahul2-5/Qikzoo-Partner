@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 
@@ -24,12 +25,13 @@ class SearchBarCustom extends StatelessWidget {
       style: AppTypography.body,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 20),
+        prefixIcon: const Icon(LucideIcons.search,
+            color: AppColors.textSecondary, size: 20),
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: GlassTheme.fieldColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: GlassTheme.borderColor),
         ),
       ),
     );

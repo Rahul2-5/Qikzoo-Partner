@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../motion/app_motion_widgets.dart';
@@ -25,31 +24,32 @@ class OrderCard extends StatelessWidget {
     return AppPressEffect(
       enabled: onTap != null,
       child: Material(
-        color: AppColors.surface,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppRadius.card),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
+          child: Ink(
+            decoration: GlassTheme.surface(
               borderRadius: BorderRadius.circular(AppRadius.card),
-              boxShadow: AppShadows.card,
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: AppTypography.bodyMedium),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(subtitle, style: AppTypography.caption),
-                    ],
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: AppTypography.bodyMedium),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(subtitle, style: AppTypography.caption),
+                      ],
+                    ),
                   ),
-                ),
-                Text(amount, style: AppTypography.numericMd),
-              ],
+                  Text(amount, style: AppTypography.numericMd),
+                ],
+              ),
             ),
           ),
         ),

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/layout/glass_container.dart';
 
 /// Returns the locally selected message. Sending is intentionally deferred
 /// until a customer-message API is connected.
 class QuickMessageSheet {
   QuickMessageSheet._();
 
-  static Future<String?> show(BuildContext context) => showModalBottomSheet<String>(
+  static Future<String?> show(BuildContext context) =>
+      showModalBottomSheet<String>(
         context: context,
         isScrollControlled: true,
-        backgroundColor: AppColors.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        backgroundColor: Colors.transparent,
+        builder: (_) => const GlassBottomSheet(
+          child: _QuickMessageSheetContent(),
         ),
-        builder: (_) => const _QuickMessageSheetContent(),
       );
 }
 
@@ -25,7 +25,8 @@ class _QuickMessageSheetContent extends StatefulWidget {
   const _QuickMessageSheetContent();
 
   @override
-  State<_QuickMessageSheetContent> createState() => _QuickMessageSheetContentState();
+  State<_QuickMessageSheetContent> createState() =>
+      _QuickMessageSheetContentState();
 }
 
 class _QuickMessageSheetContentState extends State<_QuickMessageSheetContent> {
@@ -56,21 +57,24 @@ class _QuickMessageSheetContentState extends State<_QuickMessageSheetContent> {
   Widget build(BuildContext context) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.chat_bubble_outline, color: AppColors.secondary),
+                  const Icon(Icons.chat_bubble_outline,
+                      color: AppColors.secondary),
                   const SizedBox(width: AppSpacing.sm),
                   Text('Quick message', style: AppTypography.h2),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
               Text('Choose a message for the customer.',
-                  style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+                  style: AppTypography.caption
+                      .copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: AppSpacing.sm,
@@ -87,9 +91,11 @@ class _QuickMessageSheetContentState extends State<_QuickMessageSheetContent> {
               for (final template in _templates[_language]!)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.send_outlined, color: AppColors.secondary),
+                  leading: const Icon(Icons.send_outlined,
+                      color: AppColors.secondary),
                   title: Text(template, style: AppTypography.bodyMedium),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  trailing: const Icon(Icons.chevron_right,
+                      color: AppColors.textSecondary),
                   onTap: () => Navigator.of(context).pop(template),
                 ),
             ],

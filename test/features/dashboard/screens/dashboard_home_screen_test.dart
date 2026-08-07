@@ -313,6 +313,7 @@ void main() {
     expect(profileRepo.lastSelfiePath, '/tmp/selfie.jpg');
     expect(repo.goOnlineCalls, 1);
     expect(find.text('You are Online'), findsOneWidget);
+    expect(find.byKey(const Key('online-status-celebration')), findsOneWidget);
   });
 
   testWidgets(

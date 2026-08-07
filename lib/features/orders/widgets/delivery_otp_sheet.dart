@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/inputs/otp_field.dart';
+import '../../../shared/widgets/layout/glass_container.dart';
 
 /// Bottom sheet collecting the 6-digit delivery OTP the customer reads out
 /// to the rider. Returns the entered code, or `null` if dismissed.
@@ -19,11 +19,10 @@ class DeliveryOtpSheet {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GlassBottomSheet(
+        child: _DeliveryOtpSheetContent(attemptsRemaining: attemptsRemaining),
       ),
-      builder: (ctx) => _DeliveryOtpSheetContent(attemptsRemaining: attemptsRemaining),
     );
   }
 }
@@ -34,7 +33,8 @@ class _DeliveryOtpSheetContent extends StatefulWidget {
   const _DeliveryOtpSheetContent({required this.attemptsRemaining});
 
   @override
-  State<_DeliveryOtpSheetContent> createState() => _DeliveryOtpSheetContentState();
+  State<_DeliveryOtpSheetContent> createState() =>
+      _DeliveryOtpSheetContentState();
 }
 
 class _DeliveryOtpSheetContentState extends State<_DeliveryOtpSheetContent> {
@@ -57,7 +57,8 @@ class _DeliveryOtpSheetContentState extends State<_DeliveryOtpSheetContent> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Ask the customer for the 6-digit code sent to their phone.',
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            style:
+                AppTypography.caption.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.lg),
           OtpField(
@@ -68,7 +69,8 @@ class _DeliveryOtpSheetContentState extends State<_DeliveryOtpSheetContent> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             '${widget.attemptsRemaining} attempt${widget.attemptsRemaining == 1 ? '' : 's'} remaining',
-            style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+            style:
+                AppTypography.caption.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.lg),
           PrimaryCtaButton(

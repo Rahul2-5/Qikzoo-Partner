@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_typography.dart';
 
 class AppDropdown<T> extends StatelessWidget {
@@ -32,11 +31,8 @@ class AppDropdown<T> extends StatelessWidget {
         labelText: label,
         hintText: hint,
         filled: true,
-        fillColor: AppColors.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
+        fillColor: GlassTheme.fieldColor,
+        border: GlassTheme.inputBorder,
       ),
       items: items
           .map(

@@ -1,13 +1,13 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
+import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../motion/app_motion_widgets.dart';
+import '../layout/glass_container.dart';
 
 class NavItem {
   final IconData icon;
@@ -34,107 +34,141 @@ class FloatingBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Semantics(
         container: true,
         label: 'Main navigation',
-        child: ClipRRect(
+        child: GlassContainer(
+          blur: true,
           borderRadius: BorderRadius.circular(AppRadius.sheet + 2),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              height: 72,
-              decoration: AppShadows.glass(opacity: 0.88).copyWith(
-                boxShadow: AppShadows.card,
-              ),
-              child: Row(
-                children: List.generate(items.length, (index) {
-                  final isActive = index == currentIndex;
-                  final item = items[index];
-                  return Expanded(
-                    child: Semantics(
-                      button: true,
-                      selected: isActive,
-                      label: item.label,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => onTap(index),
+          boxShadow: GlassTheme.floatingShadow,
+          height: 76,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = constraints.maxWidth / items.length;
+
+              return Stack(
+                children: [
+                  AnimatedPositioned(
+                    key: const Key('active-navigation-indicator'),
+                    duration: AppMotion.duration(context, AppMotion.standard),
+                    curve: AppMotion.emphasizedCurve,
+                    left: itemWidth * currentIndex + AppSpacing.xs,
+                    top: AppSpacing.xs,
+                    width: itemWidth - (AppSpacing.xs * 2),
+                    height: constraints.maxHeight - (AppSpacing.xs * 2),
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: AppColors.ctaGradient,
+                          ),
                           borderRadius:
-                              BorderRadius.circular(AppRadius.control),
-                          child: AppPressEffect(
-                            pressedScale: 0.94,
-                            child: Center(
-                              child: AnimatedContainer(
-                                duration: AppMotion.duration(
-                                    context, AppMotion.standard),
-                                curve: AppMotion.enter,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.xs,
-                                  vertical: AppSpacing.xs + 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isActive
-                                      ? AppColors.secondary
-                                      : Colors.transparent,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.control),
-                                  boxShadow: isActive
-                                      ? const [
-                                          BoxShadow(
-                                            color: Color(0x24536DFE),
-                                            offset: Offset(0, 5),
-                                            blurRadius: 10,
+                              BorderRadius.circular(AppRadius.control + 2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x2E536DFE),
+                              offset: Offset(0, 6),
+                              blurRadius: 14,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: List.generate(items.length, (index) {
+                      final isActive = index == currentIndex;
+                      final item = items[index];
+                      return Expanded(
+                        child: Semantics(
+                          button: true,
+                          selected: isActive,
+                          label: item.label,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => onTap(index),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.control + 2),
+                              child: AppPressEffect(
+                                pressedScale: 0.94,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.xs,
+                                      vertical: AppSpacing.xs + 2,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        AnimatedScale(
+                                          duration: AppMotion.duration(
+                                            context,
+                                            AppMotion.quick,
                                           ),
-                                        ]
-                                      : null,
-                                ),
-                                child: AnimatedSwitcher(
-                                  duration: AppMotion.duration(
-                                    context,
-                                    AppMotion.quick,
-                                  ),
-                                  switchInCurve: AppMotion.enter,
-                                  switchOutCurve: AppMotion.exit,
-                                  child: Column(
-                                    key: ValueKey(isActive),
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isActive ? item.activeIcon : item.icon,
-                                        color: isActive
-                                            ? Colors.white
-                                            : AppColors.textSecondary,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          item.label,
-                                          maxLines: 1,
-                                          style: AppTypography.caption.copyWith(
-                                            color: isActive
-                                                ? Colors.white
-                                                : AppColors.textSecondary,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
+                                          curve: AppMotion.enter,
+                                          scale: isActive ? 1.1 : 1,
+                                          child: AnimatedSwitcher(
+                                            duration: AppMotion.duration(
+                                              context,
+                                              AppMotion.quick,
+                                            ),
+                                            switchInCurve: AppMotion.enter,
+                                            switchOutCurve: AppMotion.exit,
+                                            child: Icon(
+                                              key: ValueKey(isActive),
+                                              isActive
+                                                  ? item.activeIcon
+                                                  : item.icon,
+                                              color: isActive
+                                                  ? Colors.white
+                                                  : AppColors.textSecondary,
+                                              size: 20,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 3),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: AnimatedDefaultTextStyle(
+                                            duration: AppMotion.duration(
+                                              context,
+                                              AppMotion.quick,
+                                            ),
+                                            curve: AppMotion.enter,
+                                            style:
+                                                AppTypography.caption.copyWith(
+                                              color: isActive
+                                                  ? Colors.white
+                                                  : AppColors.textSecondary,
+                                              fontSize: 10.5,
+                                              fontWeight: isActive
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w700,
+                                            ),
+                                            child:
+                                                Text(item.label, maxLines: 1),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
+                      );
+                    }),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

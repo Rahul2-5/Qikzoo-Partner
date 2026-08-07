@@ -298,6 +298,275 @@ class TodayEarningsCard extends StatelessWidget {
       );
 }
 
+/// Gives partners an at-a-glance view of cash in hand and a clear path to
+/// deposit it before reaching their operational limit.
+class CashLimitAndDepositCard extends StatelessWidget {
+  final double cashCollected;
+  final double cashLimit;
+  final VoidCallback onDeposit;
+
+  const CashLimitAndDepositCard({
+    super.key,
+    required this.cashCollected,
+    required this.cashLimit,
+    required this.onDeposit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final usage = cashLimit <= 0
+        ? 0.0
+        : (cashCollected / cashLimit).clamp(0.0, 1.0).toDouble();
+    final remaining = math.max(0, cashLimit - cashCollected).toDouble();
+    final isAtLimit = cashCollected >= cashLimit;
+    final limitColor = isAtLimit ? AppColors.warning : AppColors.primary;
+    final statusLabel = isAtLimit
+        ? 'Cash limit reached'
+        : '${CurrencyFormatter.rupees(remaining)} remaining before your limit';
+
+    return Semantics(
+      label:
+          'Cash limit. ${CurrencyFormatter.rupees(cashCollected)} collected out of ${CurrencyFormatter.rupees(cashLimit)}.',
+      child: _SurfaceCard(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final useStackedLayout = constraints.maxWidth < 360 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.25;
+            final collectedMetric = _CashMetric(
+              label: 'Cash collected',
+              amount: CurrencyFormatter.rupees(cashCollected),
+              amountColor: AppColors.textPrimary,
+            );
+            final limitMetric = _CashMetric(
+              label: 'Cash limit',
+              amount: CurrencyFormatter.rupees(cashLimit),
+              amountColor: limitColor,
+            );
+            final depositAction = FilledButton.icon(
+              onPressed: onDeposit,
+              icon: const Icon(LucideIcons.landmark, size: 17),
+              label: const Text('Deposit cash', maxLines: 1),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.control),
+                ),
+                textStyle: AppTypography.bodyMedium.copyWith(fontSize: 12),
+              ),
+            );
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFF3E7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        LucideIcons.walletCards,
+                        color: Color(0xFFE6892E),
+                        size: 21,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cash management',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodyMedium.copyWith(
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Monitor collected cash and deposit it on time.',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                AppTypography.caption.copyWith(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                if (useStackedLayout)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      collectedMetric,
+                      const SizedBox(height: AppSpacing.sm),
+                      limitMetric,
+                    ],
+                  )
+                else
+                  IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        Expanded(child: collectedMetric),
+                        Container(
+                          width: 1,
+                          color: AppColors.border.withValues(alpha: .8),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(child: limitMetric),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
+                        child: LinearProgressIndicator(
+                          value: usage,
+                          minHeight: 9,
+                          backgroundColor: AppColors.surfaceMuted,
+                          valueColor: AlwaysStoppedAnimation(limitColor),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      '${(usage * 100).round()}%',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: limitColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  statusLabel,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(
+                    color: isAtLimit
+                        ? AppColors.warning
+                        : AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Divider(
+                  color: AppColors.border.withValues(alpha: .8),
+                  height: 1,
+                ),
+                const SizedBox(height: 12),
+                if (useStackedLayout)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _DepositCallout(),
+                      const SizedBox(height: 12),
+                      depositAction,
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      const Expanded(child: _DepositCallout()),
+                      const SizedBox(width: AppSpacing.sm),
+                      depositAction,
+                    ],
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _CashMetric extends StatelessWidget {
+  final String label;
+  final String amount;
+  final Color amountColor;
+
+  const _CashMetric({
+    required this.label,
+    required this.amount,
+    required this.amountColor,
+  });
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.caption.copyWith(fontSize: 11)),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              amount,
+              style: AppTypography.numericMd.copyWith(
+                color: amountColor,
+                fontSize: 21,
+              ),
+            ),
+          ),
+        ],
+      );
+}
+
+class _DepositCallout extends StatelessWidget {
+  const _DepositCallout();
+
+  @override
+  Widget build(BuildContext context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              LucideIcons.circleDollarSign,
+              size: 17,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cash deposit',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodyMedium.copyWith(fontSize: 13),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Deposit your collected cash at the assigned hub.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+}
+
 class GigProgressCard extends StatelessWidget {
   const GigProgressCard({super.key});
 

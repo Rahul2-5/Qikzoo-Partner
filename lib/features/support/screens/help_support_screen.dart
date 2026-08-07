@@ -12,6 +12,7 @@ import '../../../providers/support/support_provider.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/layout/glass_container.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../profile/widgets/account_screen_components.dart';
 
@@ -29,13 +30,10 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.sheet),
-        ),
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => const GlassBottomSheet(
+        child: _CreateTicketSheet(),
       ),
-      builder: (sheetContext) => const _CreateTicketSheet(),
     );
   }
 
