@@ -250,6 +250,7 @@ void main() {
 
     expect(find.text('Qikzoo'), findsOneWidget);
     expect(find.text('You are Offline'), findsOneWidget);
+    expect(find.text('Go online'), findsOneWidget);
     expect(find.textContaining('842'), findsOneWidget);
     expect(find.text('14'), findsOneWidget);
     expect(find.text('92%'), findsOneWidget);
@@ -313,6 +314,7 @@ void main() {
     expect(profileRepo.lastSelfiePath, '/tmp/selfie.jpg');
     expect(repo.goOnlineCalls, 1);
     expect(find.text('You are Online'), findsOneWidget);
+    expect(find.text('Go offline'), findsOneWidget);
     expect(find.byKey(const Key('online-status-celebration')), findsOneWidget);
   });
 

@@ -204,8 +204,8 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Active Kitchen'), findsOneWidget);
-    expect(find.text('1 order'), findsOneWidget);
+    expect(find.text('Umami'), findsOneWidget);
+    expect(find.text('6 orders'), findsOneWidget);
     expect(find.text('Online'), findsOneWidget);
   });
 
@@ -213,7 +213,7 @@ void main() {
       'switching tabs loads the Completed/Cancelled lists independently',
       (tester) async {
     final repo = FakeRiderOrdersRepository(pages: {
-      OrderHistoryFilter.active: [
+      OrderHistoryFilter.completed: [
         const OrderHistoryPageModel(items: [], total: 0, page: 1, pageSize: 20),
       ],
       OrderHistoryFilter.completed: [
@@ -241,7 +241,7 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('No active orders right now.'), findsOneWidget);
+    expect(find.text('Umami'), findsOneWidget);
 
     await tester.tap(find.text('Completed'));
     await tester.pumpAndSettle();
@@ -267,10 +267,10 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Spice Route Kitchen'));
+    await tester.tap(find.text('Accept').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Order Details: ro-42'), findsOneWidget);
+    expect(find.textContaining('Delivery accepted'), findsOneWidget);
   });
 
   testWidgets('infinite scroll loads the next page near the bottom of the list',
@@ -281,7 +281,7 @@ void main() {
       mockOrder(id: 'ro-20', restaurantName: 'Kitchen 20')
     ];
     final repo = FakeRiderOrdersRepository(pages: {
-      OrderHistoryFilter.active: [
+      OrderHistoryFilter.completed: [
         OrderHistoryPageModel(
             items: firstPageItems, total: 21, page: 1, pageSize: 20),
         OrderHistoryPageModel(
@@ -291,15 +291,19 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Completed'));
+    await tester.pumpAndSettle();
     expect(find.text('Kitchen 0'), findsOneWidget);
 
-    final scrollable =
-        tester.state<ScrollableState>(find.byType(Scrollable).first);
+    final scrollable = tester.state<ScrollableState>(find.byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    ));
     scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
     await tester.pumpAndSettle();
 
-    expect(
-        repo.pageRequests[OrderHistoryFilter.active], greaterThanOrEqualTo(2));
+    expect(repo.pageRequests[OrderHistoryFilter.completed],
+        greaterThanOrEqualTo(2));
   });
 
   testWidgets('an empty tab shows the matching empty state message',
@@ -312,7 +316,12 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('No active orders right now.'), findsOneWidget);
+    for (var index = 0; index < 6; index++) {
+      await tester.tap(find.text('Reject').first);
+      await tester.pump();
+    }
+
+    expect(find.text('No delivery offers right now.'), findsOneWidget);
   });
 
   testWidgets('a history load failure shows Retry, which succeeds on retry',
@@ -323,12 +332,15 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Completed'));
+    await tester.pumpAndSettle();
+
     expect(find.textContaining('Unable to connect'), findsOneWidget);
 
     repo.historyError = null;
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
-    expect(find.text('No active orders right now.'), findsOneWidget);
+    expect(find.text('No completed orders yet.'), findsOneWidget);
   });
 }

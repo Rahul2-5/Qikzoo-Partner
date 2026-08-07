@@ -20,9 +20,14 @@ import 'rider_order_list_tile.dart';
 class OrderHistoryList extends ConsumerStatefulWidget {
   final OrderHistoryFilter filter;
   final void Function(String riderOrderId) onOpen;
+  final int? maxItems;
 
-  const OrderHistoryList(
-      {super.key, required this.filter, required this.onOpen});
+  const OrderHistoryList({
+    super.key,
+    required this.filter,
+    required this.onOpen,
+    this.maxItems,
+  });
 
   @override
   ConsumerState<OrderHistoryList> createState() => _OrderHistoryListState();
@@ -45,6 +50,7 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
   }
 
   void _onScroll() {
+    if (widget.maxItems != null) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       _loadMore();
@@ -84,7 +90,10 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
         final previewItems = showOrderPreviews && state.items.isEmpty
             ? orderPreviewsFor(widget.filter)
             : const <RiderOrderModel>[];
-        final displayedItems = state.items.isEmpty ? previewItems : state.items;
+        final allItems = state.items.isEmpty ? previewItems : state.items;
+        final displayedItems = widget.maxItems == null
+            ? allItems
+            : allItems.take(widget.maxItems!).toList(growable: false);
 
         if (displayedItems.isEmpty) {
           return EmptyState(
@@ -105,8 +114,14 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
             physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics()),
             padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+            // A capped list deliberately cannot request more pages: the
+            // active Orders view represents one current assignment only.
             itemCount: displayedItems.length +
-                (state.isLoadingMore && previewItems.isEmpty ? 1 : 0),
+                (widget.maxItems == null &&
+                        state.isLoadingMore &&
+                        previewItems.isEmpty
+                    ? 1
+                    : 0),
             separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
               if (index >= displayedItems.length) {

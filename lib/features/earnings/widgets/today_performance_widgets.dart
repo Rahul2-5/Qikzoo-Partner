@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/assets/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
@@ -168,7 +169,11 @@ class TodayEarningsCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 20, 16, 18),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF17366F), Color(0xFF2457BF)],
+              colors: [
+                AppColors.primaryDark,
+                AppColors.primary,
+                AppColors.secondary
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -184,16 +189,23 @@ class TodayEarningsCard extends StatelessWidget {
           child: Stack(
             children: [
               Positioned(
-                right: -32,
-                top: -48,
+                right: -36,
+                top: -62,
                 child: _GlowCircle(
-                    size: 132, color: Colors.white.withValues(alpha: 0.07)),
+                    size: 176, color: Colors.white.withValues(alpha: 0.08)),
               ),
               Positioned(
-                right: 30,
-                bottom: 12,
-                child: Icon(LucideIcons.wallet,
-                    size: 52, color: Colors.white.withValues(alpha: 0.1)),
+                right: -4,
+                top: 2,
+                child: IgnorePointer(
+                  child: Image.asset(
+                    AppAssets.earningsWallet3d,
+                    width: 146,
+                    height: 146,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,12 +213,15 @@ class TodayEarningsCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          'Total Earnings',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: Colors.white.withValues(alpha: .88),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 92),
+                          child: Text(
+                            'Total Earnings',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: Colors.white.withValues(alpha: .9),
+                            ),
                           ),
                         ),
                       ),
@@ -214,8 +229,16 @@ class TodayEarningsCard extends StatelessWidget {
                       Icon(LucideIcons.info,
                           color: Colors.white.withValues(alpha: .72), size: 16),
                       const SizedBox(width: AppSpacing.sm),
-                      const Icon(LucideIcons.chevronRight,
-                          color: Colors.white, size: 24),
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(LucideIcons.chevronRight,
+                            color: Colors.white, size: 22),
+                      ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -226,69 +249,112 @@ class TodayEarningsCard extends StatelessWidget {
                       CurrencyFormatter.rupeesPrecise(total),
                       style: AppTypography.display.copyWith(
                         color: Colors.white,
-                        fontSize: 38,
-                        letterSpacing: -1.2,
+                        fontSize: 40,
+                        letterSpacing: -1.4,
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Divider(
-                      color: Colors.white.withValues(alpha: .18), height: 1),
+                  const SizedBox(height: 7),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: .2),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.trendingUp,
+                            size: 14, color: Color(0xFF6EEB91)),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            '18% more than yesterday',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.caption.copyWith(
+                              color: const Color(0xFF6EEB91),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.md),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final useStackedMetrics = constraints.maxWidth < 340 ||
-                          MediaQuery.textScalerOf(context).scale(1) > 1.3;
-                      final metrics = [
-                        _EarningValue(
-                          label: 'Order Earnings',
-                          amount: orderEarnings,
-                        ),
-                        _EarningValue(
-                          label: 'Incentives',
-                          amount: incentives,
-                          amountColor: const Color(0xFF6EEB91),
-                        ),
-                        _EarningValue(
-                          label: 'Tips',
-                          amount: tips,
-                          amountColor: const Color(0xFFB6D2FF),
-                        ),
-                      ];
-                      if (useStackedMetrics) {
-                        return Column(
-                          children: [
-                            for (var index = 0;
-                                index < metrics.length;
-                                index++) ...[
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: metrics[index],
-                              ),
-                              if (index < metrics.length - 1)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: AppSpacing.sm,
-                                  ),
-                                  child: Divider(
-                                    color: Colors.white.withValues(alpha: .18),
-                                    height: 1,
-                                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: .12),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: .14)),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final useStackedMetrics = constraints.maxWidth < 340 ||
+                            MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                        final metrics = [
+                          _EarningValue(
+                            icon: LucideIcons.shoppingBag,
+                            iconColor: AppColors.secondary,
+                            label: 'Order Earnings',
+                            amount: orderEarnings,
+                          ),
+                          _EarningValue(
+                            icon: LucideIcons.gift,
+                            iconColor: AppColors.success,
+                            label: 'Incentives',
+                            amount: incentives,
+                            amountColor: const Color(0xFF6EEB91),
+                          ),
+                          _EarningValue(
+                            icon: LucideIcons.circleDollarSign,
+                            iconColor: const Color(0xFF8C67F6),
+                            label: 'Tips',
+                            amount: tips,
+                            amountColor: Colors.white,
+                          ),
+                        ];
+                        if (useStackedMetrics) {
+                          return Column(
+                            children: [
+                              for (var index = 0;
+                                  index < metrics.length;
+                                  index++) ...[
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: metrics[index],
                                 ),
+                                if (index < metrics.length - 1)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: AppSpacing.sm,
+                                    ),
+                                    child: Divider(
+                                      color:
+                                          Colors.white.withValues(alpha: .18),
+                                      height: 1,
+                                    ),
+                                  ),
+                              ],
                             ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(child: metrics[0]),
+                            _Divider(
+                                color: Colors.white.withValues(alpha: .18)),
+                            Expanded(child: metrics[1]),
+                            _Divider(
+                                color: Colors.white.withValues(alpha: .18)),
+                            Expanded(child: metrics[2]),
                           ],
                         );
-                      }
-                      return Row(
-                        children: [
-                          Expanded(child: metrics[0]),
-                          _Divider(color: Colors.white.withValues(alpha: .18)),
-                          Expanded(child: metrics[1]),
-                          _Divider(color: Colors.white.withValues(alpha: .18)),
-                          Expanded(child: metrics[2]),
-                        ],
-                      );
-                    },
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -395,8 +461,7 @@ class CashLimitAndDepositCard extends StatelessWidget {
                             'Monitor collected cash and deposit it on time.',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                AppTypography.caption.copyWith(fontSize: 11),
+                            style: AppTypography.caption.copyWith(fontSize: 11),
                           ),
                         ],
                       ),
@@ -457,9 +522,8 @@ class CashLimitAndDepositCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.caption.copyWith(
-                    color: isAtLimit
-                        ? AppColors.warning
-                        : AppColors.textSecondary,
+                    color:
+                        isAtLimit ? AppColors.warning : AppColors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -617,18 +681,49 @@ class GigProgressCard extends StatelessWidget {
                 ),
               ],
             );
-            final illustration = Container(
+            const progressRing = SizedBox(
               width: 74,
               height: 74,
-              decoration: const BoxDecoration(
-                  color: _positiveSoft, shape: BoxShape.circle),
-              child: const Icon(LucideIcons.bike, size: 36, color: _positive),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 74,
+                    height: 74,
+                    child: CircularProgressIndicator(
+                      value: .75,
+                      strokeWidth: 8,
+                      backgroundColor: AppColors.primarySoft,
+                      valueColor: AlwaysStoppedAnimation(AppColors.success),
+                    ),
+                  ),
+                  Icon(LucideIcons.bike, size: 30, color: AppColors.success),
+                ],
+              ),
+            );
+            final illustration = SizedBox(
+              width: 94,
+              height: 76,
+              child: Image.asset(
+                AppAssets.gigMap3d,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  LucideIcons.mapPin,
+                  color: AppColors.success,
+                  size: 42,
+                ),
+              ),
             );
 
             if (useStackedLayout) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: progressRing,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   progressDetails,
                   const SizedBox(height: AppSpacing.md),
                   Align(alignment: Alignment.centerRight, child: illustration),
@@ -638,8 +733,10 @@ class GigProgressCard extends StatelessWidget {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(child: progressDetails),
+                progressRing,
                 const SizedBox(width: AppSpacing.md),
+                Expanded(child: progressDetails),
+                const SizedBox(width: AppSpacing.sm),
                 Align(
                   alignment: Alignment.center,
                   child: illustration,
@@ -965,29 +1062,57 @@ class _GlowCircle extends StatelessWidget {
 }
 
 class _EarningValue extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
   final String label;
   final double amount;
   final Color? amountColor;
   const _EarningValue(
-      {required this.label, required this.amount, this.amountColor});
+      {required this.icon,
+      required this.iconColor,
+      required this.label,
+      required this.amount,
+      this.amountColor});
 
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
-                  color: Colors.white.withValues(alpha: .74), fontSize: 11)),
-          const SizedBox(height: 5),
-          Text(CurrencyFormatter.rupeesPrecise(amount),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.bodyMedium.copyWith(
-                color: amountColor ?? Colors.white,
-                fontSize: 15,
-              )),
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: .88),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 17, color: Colors.white),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                            color: Colors.white.withValues(alpha: .74),
+                            fontSize: 10)),
+                    const SizedBox(height: 3),
+                    Text(CurrencyFormatter.rupeesPrecise(amount),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: amountColor ?? Colors.white,
+                          fontSize: 14,
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       );
 }

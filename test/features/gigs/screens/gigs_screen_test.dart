@@ -46,7 +46,7 @@ void main() {
     expect(find.text('Offline'), findsOneWidget);
   });
 
-  testWidgets('puts the weekly plan and next booking action up front',
+  testWidgets('puts the weekly plan and earning opportunities up front',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -59,10 +59,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Your week is taking shape'), findsOneWidget);
-    expect(find.text('Available to book'), findsOneWidget);
-    expect(find.text('2 Hour Delivery Gig'), findsOneWidget);
-    expect(find.text('Starts in 15 mins'), findsOneWidget);
+    expect(find.textContaining('Your week is taking shape'), findsOneWidget);
+    expect(find.text('Weekend Boost'), findsOneWidget);
+    expect(find.text('Extra Earnings'), findsOneWidget);
+    expect(find.text('Your Gigs This Week'), findsOneWidget);
   });
 
   testWidgets('keeps the schedule legible on a compact phone', (tester) async {

@@ -5,46 +5,32 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/orders/rider_order_model.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 
-(Color, Color) _statusColors(RiderOrderStatus status) => switch (status) {
-      RiderOrderStatus.delivered => (AppColors.success, AppColors.successBg),
-      RiderOrderStatus.cancelled => (
-          AppColors.error,
-          AppColors.error.withValues(alpha: 0.12)
-        ),
-      _ => (AppColors.secondary, AppColors.secondary.withValues(alpha: 0.12)),
-    };
-
 class RiderOrderListTile extends StatelessWidget {
+  const RiderOrderListTile({
+    super.key,
+    required this.order,
+    required this.onTap,
+  });
+
   final RiderOrderModel order;
   final VoidCallback onTap;
 
-  const RiderOrderListTile(
-      {super.key, required this.order, required this.onTap});
-
   @override
   Widget build(BuildContext context) {
-    final (color, background) = _statusColors(order.status);
-    final restaurantName =
-        order.restaurant.name ?? 'Order #${order.order.orderNumber}';
-    final restaurantAddress = _locationLabel(
-      order.restaurant.address,
-      order.restaurant.landmark,
-    );
-    final deliveryAddress = _locationLabel(
+    final visual = _OrderVisual.fromStatus(order.status);
+    final customerName = order.order.customerName.trim().isEmpty
+        ? 'Delivery customer'
+        : order.order.customerName;
+    final zone = _shortLocation(
       order.order.deliveryAddressLine,
-      [order.order.deliveryCity, order.order.deliveryPincode]
-          .whereType<String>()
-          .where((part) => part.trim().isNotEmpty)
-          .join(', '),
+      order.order.deliveryCity,
     );
-    final placedAt =
-        DateFormat('d MMM, h:mm a').format(order.assignedAt.toLocal());
+    final time = DateFormat('h:mm a').format(order.assignedAt.toLocal());
 
     return AppPressEffect(
       child: Material(
@@ -53,106 +39,77 @@ class RiderOrderListTile extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(14),
+          child: Ink(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.card),
               border:
-                  Border.all(color: AppColors.border.withValues(alpha: 0.72)),
+                  Border.all(color: AppColors.border.withValues(alpha: 0.55)),
               boxShadow: AppShadows.card,
             ),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        CurrencyFormatter.rupees(order.earningsPaise / 100.0),
-                        style: AppTypography.numericMd.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
+                _OrderIdentity(order: order, time: time, visual: visual),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _StatusBadge(visual: visual),
+                          const Spacer(),
+                          Text(
+                            CurrencyFormatter.rupees(order.earningsPaise / 100),
+                            style: AppTypography.numericMd.copyWith(
+                              color: visual.color,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            LucideIcons.moreVertical,
+                            size: 18,
+                            color: AppColors.textPrimary,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        customerName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Order #${order.order.orderNumber}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(fontSize: 10),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _StopDetail(
-                  icon: LucideIcons.store,
-                  title: restaurantName,
-                  distanceKm: order.distanceKm,
-                  address: restaurantAddress,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(
-                    height: 1,
-                    color: AppColors.border.withValues(alpha: 0.72),
+                      const SizedBox(height: 6),
+                      _OrderDetailLine(
+                        icon: LucideIcons.mapPin,
+                        label: zone.isEmpty ? 'Delivery location' : zone,
+                      ),
+                      const SizedBox(height: 5),
+                      _OrderDetailLine(
+                        icon: LucideIcons.store,
+                        label: order.restaurant.name ?? 'Restaurant order',
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _OrderMeta(
+                                visual: visual, distanceKm: order.distanceKm),
+                          ),
+                          const SizedBox(width: 8),
+                          _OrderAction(visual: visual, onTap: onTap),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-                _StopDetail(
-                  icon: LucideIcons.mapPin,
-                  title: order.order.customerName.isEmpty
-                      ? 'Delivery location'
-                      : order.order.customerName,
-                  address: deliveryAddress,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: background,
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                      ),
-                      child: Text(
-                        order.status.label,
-                        style: AppTypography.caption.copyWith(
-                          color: color,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      placedAt,
-                      style: AppTypography.caption.copyWith(fontSize: 10),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.success,
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                      ),
-                      child: Text(
-                        'View details',
-                        style: AppTypography.caption.copyWith(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -163,71 +120,231 @@ class RiderOrderListTile extends StatelessWidget {
   }
 }
 
-class _StopDetail extends StatelessWidget {
-  const _StopDetail({
-    required this.icon,
-    required this.title,
-    required this.address,
-    this.distanceKm,
+class _OrderIdentity extends StatelessWidget {
+  const _OrderIdentity({
+    required this.order,
+    required this.time,
+    required this.visual,
   });
 
+  final RiderOrderModel order;
+  final String time;
+  final _OrderVisual visual;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 72,
+        child: Column(
+          children: [
+            Container(
+              height: 76,
+              width: 72,
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: visual.background,
+                borderRadius: BorderRadius.circular(AppRadius.control + 4),
+              ),
+              child: Image.asset(visual.asset, fit: BoxFit.contain),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '#${order.order.orderNumber.replaceFirst('QK-', '')}',
+              maxLines: 1,
+              overflow: TextOverflow.fade,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textPrimary,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(time, style: AppTypography.caption.copyWith(fontSize: 10)),
+          ],
+        ),
+      );
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.visual});
+
+  final _OrderVisual visual;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: visual.background,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+        ),
+        child: Text(
+          visual.label.toUpperCase(),
+          style: AppTypography.caption.copyWith(
+            color: visual.color,
+            fontWeight: FontWeight.w800,
+            fontSize: 10,
+          ),
+        ),
+      );
+}
+
+class _OrderDetailLine extends StatelessWidget {
+  const _OrderDetailLine({required this.icon, required this.label});
+
   final IconData icon;
-  final String title;
-  final String address;
-  final double? distanceKm;
+  final String label;
 
   @override
   Widget build(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(icon, size: 15, color: AppColors.textSecondary),
-          ),
-          const SizedBox(width: AppSpacing.sm),
+          Icon(icon, size: 14, color: AppColors.textSecondary),
+          const SizedBox(width: 7),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodyMedium.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    if (distanceKm != null) ...[
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        '${distanceKm!.toStringAsFixed(1)} km',
-                        style: AppTypography.caption.copyWith(fontSize: 10),
-                      ),
-                    ],
-                  ],
-                ),
-                if (address.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    address,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.caption.copyWith(fontSize: 10),
-                  ),
-                ],
-              ],
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(fontSize: 11),
             ),
           ),
         ],
       );
 }
 
-String _locationLabel(String? primary, String? secondary) => [
-      primary,
-      secondary,
-    ].whereType<String>().where((part) => part.trim().isNotEmpty).join(', ');
+class _OrderMeta extends StatelessWidget {
+  const _OrderMeta({required this.visual, required this.distanceKm});
+
+  final _OrderVisual visual;
+  final double? distanceKm;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: visual.background,
+          borderRadius: BorderRadius.circular(AppRadius.control),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.shoppingBag, size: 15, color: visual.color),
+            const SizedBox(width: 6),
+            Text(
+              'Order',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+              ),
+            ),
+            if (distanceKm != null) ...[
+              const SizedBox(width: 8),
+              Icon(LucideIcons.map, size: 14, color: visual.color),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  '${distanceKm!.toStringAsFixed(1)} km',
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+}
+
+class _OrderAction extends StatelessWidget {
+  const _OrderAction({required this.visual, required this.onTap});
+
+  final _OrderVisual visual;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          onTap: onTap,
+          child: Container(
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: visual.isActive ? visual.color : AppColors.surface,
+              border: Border.all(color: visual.color),
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              visual.isActive ? 'Open order' : 'View details',
+              style: AppTypography.caption.copyWith(
+                color: visual.isActive ? Colors.white : visual.color,
+                fontWeight: FontWeight.w800,
+                fontSize: 10,
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+class _OrderVisual {
+  const _OrderVisual({
+    required this.label,
+    required this.color,
+    required this.background,
+    required this.asset,
+    required this.isActive,
+  });
+
+  final String label;
+  final Color color;
+  final Color background;
+  final String asset;
+  final bool isActive;
+
+  factory _OrderVisual.fromStatus(RiderOrderStatus status) => switch (status) {
+        RiderOrderStatus.delivered => _OrderVisual(
+            label: 'Completed',
+            color: AppColors.success,
+            background: AppColors.successBg,
+            asset: 'assets/images/orders/order_bag_delivered_3d.png',
+            isActive: false,
+          ),
+        RiderOrderStatus.cancelled => _OrderVisual(
+            label: 'Cancelled',
+            color: AppColors.error,
+            background: AppColors.error.withValues(alpha: 0.11),
+            asset: 'assets/images/orders/order_bag_cancelled_3d.png',
+            isActive: false,
+          ),
+        RiderOrderStatus.assigned => _OrderVisual(
+            label: 'New',
+            color: AppColors.warning,
+            background: AppColors.warningBg,
+            asset: 'assets/images/orders/order_bag_new_3d.png',
+            isActive: true,
+          ),
+        _ => _OrderVisual(
+            label: 'Ongoing',
+            color: AppColors.success,
+            background: AppColors.successBg,
+            asset: 'assets/images/orders/order_bag_active_3d.png',
+            isActive: true,
+          ),
+      };
+}
+
+String _shortLocation(String? primary, String? city) {
+  final normalized = primary?.trim() ?? '';
+  if (normalized.isNotEmpty) {
+    return normalized.split(',').first.trim();
+  }
+  return city?.trim() ?? '';
+}

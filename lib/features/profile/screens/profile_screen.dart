@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/assets/app_assets.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/profile/profile_summary.dart';
@@ -87,6 +89,7 @@ class ProfileScreen extends ConsumerWidget {
             PartnerProfileHeader(
               notificationCount: profile.notificationCount,
               onNotifications: () => Get.toNamed(AppRoutes.notifications),
+              partnerName: profile.name,
             ),
             const SizedBox(height: AppSpacing.lg),
             PartnerProfileIdentity(
@@ -96,114 +99,121 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
             PartnerStoreCard(onTap: () => Get.toNamed(AppRoutes.gigs)),
             const SizedBox(height: AppSpacing.md),
-            Row(
+            _ProfileQuickActions(
               children: [
-                Expanded(
-                  child: PartnerQuickAction(
-                    icon: LucideIcons.circleDollarSign,
-                    title: 'Gigs history',
-                    iconColor: const Color(0xFF1AA440),
-                    onTap: () => Get.toNamed(AppRoutes.gigs),
-                  ),
+                PartnerQuickAction(
+                  icon: LucideIcons.circleDollarSign,
+                  title: 'Gigs history',
+                  subtitle: 'View past gigs',
+                  assetPath: AppAssets.profileGigsHistory3d,
+                  iconColor: AppColors.success,
+                  onTap: () => Get.toNamed(AppRoutes.gigs),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: PartnerQuickAction(
-                    icon: LucideIcons.bike,
-                    title: 'Trips history',
-                    iconColor: const Color(0xFF2766DB),
-                    onTap: () => Get.toNamed(AppRoutes.orders),
-                  ),
+                PartnerQuickAction(
+                  icon: LucideIcons.bike,
+                  title: 'Trips history',
+                  subtitle: 'View past trips',
+                  assetPath: AppAssets.profileTripsScooter3d,
+                  iconColor: AppColors.info,
+                  onTap: () => Get.toNamed(AppRoutes.orders),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: PartnerQuickAction(
-                    icon: LucideIcons.ticket,
-                    title: 'Your offers',
-                    iconColor: const Color(0xFF8035B9),
-                    onTap: () => Get.toNamed(AppRoutes.incentives),
-                  ),
+                PartnerQuickAction(
+                  icon: LucideIcons.ticket,
+                  title: 'Your offers',
+                  subtitle: 'Active offers',
+                  assetPath: AppAssets.profileOffersTicket3d,
+                  iconColor: AppColors.secondary,
+                  onTap: () => Get.toNamed(AppRoutes.incentives),
+                ),
+                PartnerQuickAction(
+                  icon: LucideIcons.gift,
+                  title: 'Your benefits',
+                  subtitle: 'See what’s included',
+                  assetPath: AppAssets.profileBenefitsGift3d,
+                  iconColor: AppColors.accent,
+                  onTap: () => Get.toNamed(
+                      '${AppRoutes.partnerBenefits}?source=profile'),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.userCheck,
-              title: 'Your fleet coach',
-              subtitle: 'Contact your fleet support team',
-              color: const Color(0xFF17A84A),
-              trailing: Container(
-                width: 43,
-                height: 43,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3FBF5),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: PartnerProfileColors.border),
+            PartnerProfileMenuGroup(
+              children: [
+                PartnerProfileMenuTile(
+                  grouped: true,
+                  icon: LucideIcons.userCheck,
+                  title: 'Your fleet coach',
+                  subtitle: 'Contact your fleet support team',
+                  color: AppColors.success,
+                  trailing: const _ProfileActionButton(
+                    label: 'Contact',
+                    icon: LucideIcons.phone,
+                    color: AppColors.success,
+                  ),
+                  onTap: () => Get.toNamed(AppRoutes.support),
                 ),
-                child: const Icon(LucideIcons.phone,
-                    color: Color(0xFF17A84A), size: 21),
-              ),
-              onTap: () => Get.toNamed(AppRoutes.support),
+                PartnerProfileMenuTile(
+                  grouped: true,
+                  icon: LucideIcons.gift,
+                  title: 'Up to ₹7700 referral bonus',
+                  subtitle: 'Refer your friend and earn',
+                  assetPath: AppAssets.profileBenefitsGift3d,
+                  color: AppColors.accent,
+                  trailing: const _ProfileActionButton(
+                    label: 'Refer & Earn',
+                    icon: LucideIcons.chevronRight,
+                    color: AppColors.accent,
+                  ),
+                  onTap: () => Get.toNamed(AppRoutes.incentives),
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.gift,
-              title: 'Up to ₹7700 referral bonus',
-              subtitle: 'Refer your friend and earn',
-              color: const Color(0xFFF59B18),
-              onTap: () => Get.toNamed(AppRoutes.incentives),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.headphones,
-              title: 'Help centre',
-              color: const Color(0xFF2766DB),
-              onTap: () => Get.toNamed(AppRoutes.support),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.ticket,
-              title: 'Support tickets',
-              color: AppColors.textPrimary,
-              onTap: () => Get.toNamed(AppRoutes.support),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.bike,
-              title: 'Rent an EV',
-              color: const Color(0xFF8035B9),
-              onTap: () => Get.toNamed(AppRoutes.manageVehicleDetails),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.gift,
-              title: 'Your benefits',
-              color: const Color(0xFFD34669),
-              onTap: () =>
-                  Get.toNamed('${AppRoutes.partnerBenefits}?source=profile'),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Agreements',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.fileCheck2,
-              title: 'Agreement',
-              subtitle: 'Review your terms, privacy and partner policy',
-              color: AppColors.primary,
-              onTap: () => Get.toNamed(AppRoutes.agreement),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PartnerProfileMenuTile(
-              icon: LucideIcons.settings,
-              title: 'App settings',
-              color: AppColors.textSecondary,
-              onTap: () => Get.toNamed(AppRoutes.settings),
+            const SizedBox(height: AppSpacing.md),
+            PartnerProfileMenuGroup(
+              children: [
+                PartnerProfileMenuTile(
+                  grouped: true,
+                  icon: LucideIcons.headphones,
+                  title: 'Help centre',
+                  subtitle: 'Get help and support',
+                  assetPath: AppAssets.profileHelpHeadset3d,
+                  color: AppColors.info,
+                  onTap: () => Get.toNamed(AppRoutes.support),
+                ),
+                PartnerProfileMenuTile(
+                  grouped: true,
+                  icon: LucideIcons.ticket,
+                  title: 'Support tickets',
+                  subtitle: 'View and track your tickets',
+                  color: AppColors.secondary,
+                  onTap: () => Get.toNamed(AppRoutes.support),
+                ),
+                PartnerProfileMenuTile(
+                  grouped: true,
+                  icon: LucideIcons.bike,
+                  title: 'Rent an EV',
+                  subtitle: 'Rent electric vehicle',
+                  assetPath: AppAssets.profileEvScooter3d,
+                  color: AppColors.success,
+                  onTap: () => Get.toNamed(AppRoutes.manageVehicleDetails),
+                ),
+                PartnerProfileMenuTile(
+                  grouped: true,
+                  icon: LucideIcons.fileText,
+                  title: 'Agreements',
+                  subtitle: 'Terms, privacy & partner policy',
+                  color: AppColors.info,
+                  onTap: () => Get.toNamed(AppRoutes.agreement),
+                ),
+                PartnerProfileMenuTile(
+                  grouped: true,
+                  icon: LucideIcons.settings,
+                  title: 'App settings',
+                  subtitle: 'Manage app preferences',
+                  color: AppColors.textSecondary,
+                  onTap: () => Get.toNamed(AppRoutes.settings),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.md),
             OutlinedButton.icon(
@@ -246,6 +256,69 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+class _ProfileActionButton extends StatelessWidget {
+  const _ProfileActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 126),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerRight,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 7),
+                Text(label,
+                    style: AppTypography.bodyMedium.copyWith(color: color)),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+/// Uses two columns on phones so every quick action has enough room for its
+/// illustration and two-line label, without shrinking the touch target.
+class _ProfileQuickActions extends StatelessWidget {
+  const _ProfileQuickActions({required this.children});
+
+  final List<PartnerQuickAction> children;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 460 ? 4 : 2;
+          final itemWidth =
+              (constraints.maxWidth - (columns - 1) * AppSpacing.sm) / columns;
+
+          return Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final action in children)
+                SizedBox(width: itemWidth, child: action),
+            ],
+          );
+        },
+      );
+}
+
 class _ProfileErrorState extends StatelessWidget {
   const _ProfileErrorState({required this.onRetry});
 
@@ -282,5 +355,6 @@ class _ProfileErrorState extends StatelessWidget {
 }
 
 @Preview(name: 'Profile Screen', group: 'Profile', size: Size(390, 844))
+@Preview(name: 'Profile Screen — Wide', group: 'Profile', size: Size(640, 844))
 Widget profileScreenPreview() =>
     const ProviderScope(child: MaterialApp(home: ProfileScreen()));
