@@ -15,10 +15,12 @@ import '../../../models/dashboard/dashboard_stats_model.dart';
 import '../../../models/orders/order_history_page_model.dart';
 import '../../../models/orders/rider_order_model.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
+import '../../../providers/notifications/notifications_provider.dart';
 import '../../../providers/orders/active_order_provider.dart';
 import '../../../providers/orders/order_history_provider.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
+import '../../../shared/widgets/navigation/partner_app_header.dart';
 import '../data/order_preview_data.dart';
 import '../widgets/order_history_list.dart';
 
@@ -46,6 +48,12 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final historyAsync = ref.watch(orderHistoryProvider(_filter));
     final availability =
         ref.watch(dashboardStatsProvider).valueOrNull?.availabilityStatus;
+    final unreadNotificationCount = ref
+            .watch(notificationsProvider)
+            .valueOrNull
+            ?.where((notification) => !notification.isRead)
+            .length ??
+        0;
     final history = historyAsync.valueOrNull;
     final showOrderPreviews = ref.watch(showOrderPreviewProvider);
     final frontendOffers = orderPreviewsFor(OrderHistoryFilter.active)
@@ -68,11 +76,13 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       body: AppTabScaffold(
         currentIndex: 2,
         child: ResponsiveFrame(
-          maxWidth: 640,
+          // Keep dense order information readable on tablet and desktop
+          // windows instead of stretching each card across the screen.
+          maxWidth: 560,
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
+            12,
             AppSpacing.sm,
-            AppSpacing.md,
+            12,
             0,
           ),
           child: Column(
@@ -81,6 +91,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               _OrdersHeader(
                 orderCount: orderCount,
                 availability: availability,
+                unreadNotificationCount: unreadNotificationCount,
               ),
               const SizedBox(height: AppSpacing.md),
               activeOrderAsync.maybeWhen(
@@ -179,7 +190,10 @@ class _OrderOfferQueue extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final priceListWidth = constraints.maxWidth >= 560 ? 114.0 : 88.0;
+        // Preserve more horizontal room for pickup and drop details on
+        // narrow phones.
+        final priceListWidth = constraints.maxWidth >= 520 ? 96.0 : 72.0;
+        final compact = constraints.maxWidth < 400;
         final selectedId = offers.any((offer) => offer.id == selectedOfferId)
             ? selectedOfferId
             : offers.first.id;
@@ -204,6 +218,7 @@ class _OrderOfferQueue extends StatelessWidget {
                 itemBuilder: (context, index) => _OrderOfferCard(
                   order: offers[index],
                   selected: offers[index].id == selectedId,
+                  compact: compact,
                   onTap: () => onSelect(offers[index]),
                   onAccept: () => onAccept(offers[index]),
                   onReject: () => onReject(offers[index]),
@@ -254,14 +269,14 @@ class _OfferPriceList extends StatelessWidget {
                 child: InkWell(
                   onTap: () => onSelect(offer),
                   child: Container(
-                    height: 92,
+                    height: 72,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       border: selected
                           ? const Border(
                               left: BorderSide(
                                 color: AppColors.success,
-                                width: 6,
+                                width: 4,
                               ),
                             )
                           : null,
@@ -274,7 +289,7 @@ class _OfferPriceList extends StatelessWidget {
                           color: selected
                               ? AppColors.success
                               : AppColors.textPrimary,
-                          fontSize: 27,
+                          fontSize: 21,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -292,6 +307,7 @@ class _OrderOfferCard extends StatelessWidget {
   const _OrderOfferCard({
     required this.order,
     required this.selected,
+    required this.compact,
     required this.onTap,
     required this.onAccept,
     required this.onReject,
@@ -299,14 +315,15 @@ class _OrderOfferCard extends StatelessWidget {
 
   final RiderOrderModel order;
   final bool selected;
+  final bool compact;
   final VoidCallback onTap;
   final VoidCallback onAccept;
   final VoidCallback onReject;
 
   @override
   Widget build(BuildContext context) {
-    final pickup = order.restaurant.address?.trim().isNotEmpty == true
-        ? order.restaurant.address!
+    final pickup = order.restaurant.address.trim().isNotEmpty
+        ? order.restaurant.address
         : 'Pickup location shared after accepting';
     final drop = order.order.deliveryAddressLine?.trim().isNotEmpty == true
         ? order.order.deliveryAddressLine!
@@ -323,7 +340,7 @@ class _OrderOfferCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.card + 4),
         child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.card + 4),
             border: Border.all(
@@ -335,65 +352,65 @@ class _OrderOfferCard extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppRadius.card + 4),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _OfferStop(
-                    icon: Icons.restaurant_rounded,
-                    title: order.restaurant.name ?? 'Restaurant order',
-                    distance:
-                        '${(order.distanceKm ?? 0).toStringAsFixed(1)} km',
-                    address: pickup,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _OfferStop(
+                  icon: Icons.restaurant_rounded,
+                  title: order.restaurant.name ?? 'Restaurant order',
+                  distance: '${(order.distanceKm ?? 0).toStringAsFixed(1)} km',
+                  address: pickup,
+                  compact: compact,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Container(
+                    width: 2,
+                    height: compact ? 14 : 18,
+                    color: AppColors.border,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Container(
-                      width: 2,
-                      height: 22,
-                      color: AppColors.border,
+                ),
+                _OfferStop(
+                  icon: Icons.person_rounded,
+                  title: customer,
+                  distance: 'Drop-off',
+                  address: drop,
+                  compact: compact,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: onReject,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(44),
+                          foregroundColor: AppColors.error,
+                          side: BorderSide(
+                            color: AppColors.error.withValues(alpha: .2),
+                          ),
+                          backgroundColor:
+                              AppColors.error.withValues(alpha: .08),
+                          textStyle: AppTypography.bodyMedium,
+                        ),
+                        child: const Text('Reject'),
+                      ),
                     ),
-                  ),
-                  _OfferStop(
-                    icon: Icons.person_rounded,
-                    title: customer,
-                    distance: 'Drop-off',
-                    address: drop,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: onReject,
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            foregroundColor: AppColors.error,
-                            side: BorderSide(
-                              color: AppColors.error.withValues(alpha: .2),
-                            ),
-                            backgroundColor:
-                                AppColors.error.withValues(alpha: .08),
-                          ),
-                          child: const Text('Reject'),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: onAccept,
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(44),
+                          backgroundColor: AppColors.success,
+                          textStyle: AppTypography.bodyMedium,
                         ),
+                        child: const Text('Accept'),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: onAccept,
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            backgroundColor: AppColors.success,
-                          ),
-                          child: const Text('Accept'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -408,22 +425,24 @@ class _OfferStop extends StatelessWidget {
     required this.title,
     required this.distance,
     required this.address,
+    required this.compact,
   });
 
   final IconData icon;
   final String title;
   final String distance;
   final String address;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) => Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(icon, size: 21, color: AppColors.textSecondary),
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 18, color: AppColors.textSecondary),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: 7),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,20 +451,24 @@ class _OfferStop extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMedium.copyWith(fontSize: 17),
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontSize: compact ? 13 : 14,
+                    height: 1.25,
+                  ),
                 ),
                 Text(
                   distance,
                   style: AppTypography.caption
                       .copyWith(color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   address,
-                  maxLines: 2,
+                  maxLines: compact ? 1 : 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.body.copyWith(
                     color: AppColors.textSecondary,
+                    fontSize: 12,
                     height: 1.25,
                   ),
                 ),
@@ -499,10 +522,12 @@ class _OrdersHeader extends StatelessWidget {
   const _OrdersHeader({
     required this.orderCount,
     required this.availability,
+    required this.unreadNotificationCount,
   });
 
   final int? orderCount;
   final RiderAvailabilityStatus? availability;
+  final int unreadNotificationCount;
 
   @override
   Widget build(BuildContext context) {
@@ -514,33 +539,18 @@ class _OrdersHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 54,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _AvailabilityPill(availability: availability),
-              ),
-              const IgnorePointer(child: _PartnerWordmark()),
-              const Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _HeaderIcon(icon: LucideIcons.bell),
-                    SizedBox(width: AppSpacing.xs),
-                    _HeaderIcon(icon: LucideIcons.helpCircle),
-                  ],
-                ),
-              ),
-            ],
+        PartnerAppHeader(
+          unreadNotificationCount: unreadNotificationCount,
+          onNotifications: () => Get.toNamed(AppRoutes.notifications),
+          trailing: PartnerHeaderIconButton(
+            icon: LucideIcons.helpCircle,
+            label: 'Order help',
+            onPressed: () => Get.toNamed(AppRoutes.support),
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.sm),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
@@ -548,7 +558,7 @@ class _OrdersHeader extends StatelessWidget {
                 children: [
                   Semantics(
                     header: true,
-                    child: Text('Orders', style: AppTypography.display),
+                    child: Text('Orders', style: AppTypography.h1),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Row(
@@ -575,73 +585,31 @@ class _OrdersHeader extends StatelessWidget {
                 ],
               ),
             ),
-            const _HeaderIcon(icon: LucideIcons.search),
+            PartnerHeaderIconButton(
+              icon: LucideIcons.search,
+              label: 'Search orders',
+              onPressed: () {},
+            ),
             const SizedBox(width: AppSpacing.sm),
-            const _HeaderIcon(icon: LucideIcons.slidersHorizontal),
+            PartnerHeaderIconButton(
+              icon: LucideIcons.slidersHorizontal,
+              label: 'Filter orders',
+              onPressed: () {},
+            ),
           ],
         ),
+        const SizedBox(height: AppSpacing.xs),
+        _AvailabilityPill(availability: availability, compact: true),
       ],
     );
   }
 }
 
-class _PartnerWordmark extends StatelessWidget {
-  const _PartnerWordmark();
-
-  @override
-  Widget build(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Qikzoo',
-            style: AppTypography.h2.copyWith(
-              color: AppColors.primaryDark,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.8,
-            ),
-          ),
-          Text(
-            'PARTNER',
-            style: AppTypography.caption.copyWith(
-              color: AppColors.success,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-              fontSize: 8,
-            ),
-          ),
-        ],
-      );
-}
-
-class _HeaderIcon extends StatelessWidget {
-  const _HeaderIcon({required this.icon});
-
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: AppColors.surface,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () {},
-          child: Container(
-            width: 42,
-            height: 42,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: AppShadows.control,
-            ),
-            child: Icon(icon, size: 20, color: AppColors.textPrimary),
-          ),
-        ),
-      );
-}
-
 class _AvailabilityPill extends StatelessWidget {
-  const _AvailabilityPill({required this.availability});
+  const _AvailabilityPill({required this.availability, this.compact = false});
 
   final RiderAvailabilityStatus? availability;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -656,7 +624,10 @@ class _AvailabilityPill extends StatelessWidget {
     return Semantics(
       label: 'Availability: $label',
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 9 : 13,
+          vertical: compact ? 6 : 10,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -667,18 +638,20 @@ class _AvailabilityPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 9,
-              height: 9,
+              width: compact ? 7 : 9,
+              height: compact ? 7 : 9,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: compact ? 6 : 8),
             Text(
               label,
-              style: AppTypography.bodyMedium
-                  .copyWith(fontWeight: FontWeight.w700),
+              style: AppTypography.bodyMedium.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: compact ? 12 : 14,
+              ),
             ),
-            const SizedBox(width: 6),
-            const Icon(LucideIcons.chevronDown, size: 16),
+            SizedBox(width: compact ? 4 : 6),
+            Icon(LucideIcons.chevronDown, size: compact ? 14 : 16),
           ],
         ),
       ),
@@ -707,7 +680,7 @@ class _OrderFilterTab extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.chip),
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.chip),
               border: Border.all(
@@ -722,6 +695,7 @@ class _OrderFilterTab extends StatelessWidget {
                   label,
                   style: AppTypography.bodyMedium.copyWith(
                     color: selected ? AppColors.primary : AppColors.textPrimary,
+                    fontSize: 13,
                   ),
                 ),
                 if (count != null) ...[

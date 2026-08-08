@@ -12,6 +12,7 @@ import 'package:delivery_partner_app/features/dashboard/screens/dashboard_home_s
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/notifications/notification_model.dart';
 import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
 import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
 import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
@@ -20,6 +21,7 @@ import 'package:delivery_partner_app/repositories/authentication/auth_repository
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
 import 'package:delivery_partner_app/repositories/orders/dispatch_repository.dart';
+import 'package:delivery_partner_app/repositories/notifications/notifications_repository.dart';
 import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
 
 class FakeDashboardRepository implements DashboardRepository {
@@ -74,6 +76,18 @@ class FakeDispatchRepository implements DispatchRepository {
 
   @override
   Future<void> reject(String attemptId) => throw UnimplementedError();
+}
+
+class FakeNotificationsRepository implements NotificationsRepository {
+  FakeNotificationsRepository(this.notifications);
+
+  final List<NotificationModel> notifications;
+
+  @override
+  Future<List<NotificationModel>> getNotifications() async => notifications;
+
+  @override
+  Future<void> markAsRead(String id) async {}
 }
 
 class FakeProfileRepository implements ProfileRepository {
@@ -206,6 +220,7 @@ Widget buildApp({
   required FakeDashboardRepository dashboardRepository,
   FakeAuthRepository? authRepository,
   FakeDispatchRepository? dispatchRepository,
+  NotificationsRepository? notificationsRepository,
   FakeProfileRepository? profileRepository,
 }) {
   return ProviderScope(
@@ -213,6 +228,9 @@ Widget buildApp({
       dashboardRepositoryProvider.overrideWithValue(dashboardRepository),
       dispatchRepositoryProvider
           .overrideWithValue(dispatchRepository ?? FakeDispatchRepository()),
+      if (notificationsRepository != null)
+        notificationsRepositoryProvider
+            .overrideWithValue(notificationsRepository),
       if (authRepository != null)
         authRepositoryProvider.overrideWithValue(authRepository),
       profileRepositoryProvider
@@ -232,6 +250,10 @@ Widget buildApp({
           name: AppRoutes.welcome,
           page: () => const Scaffold(body: Text('Welcome Screen')),
         ),
+        GetPage(
+          name: AppRoutes.notifications,
+          page: () => const Scaffold(body: Text('Notifications Screen')),
+        ),
       ],
     ),
   );
@@ -244,20 +266,24 @@ void main() {
   testWidgets('loads the compact rider overview without the legacy stat grid',
       (tester) async {
     setTallSurface(tester);
-    final repo = FakeDashboardRepository(initial: mockStats());
+    final repo = FakeDashboardRepository(
+      initial: mockStats(availabilityStatus: RiderAvailabilityStatus.online),
+    );
     await tester.pumpWidget(buildApp(dashboardRepository: repo));
     await tester.pumpAndSettle();
 
     expect(find.text('Qikzoo'), findsOneWidget);
-    expect(find.text('You are Offline'), findsOneWidget);
-    expect(find.text('Go online'), findsOneWidget);
-    expect(find.textContaining('842'), findsOneWidget);
-    expect(find.text('14'), findsOneWidget);
+    expect(find.text('You are Online'), findsOneWidget);
+    expect(find.text('Go offline'), findsOneWidget);
+    expect(find.textContaining('842'), findsWidgets);
+    expect(find.text('14'), findsWidgets);
     expect(find.text('92%'), findsOneWidget);
     expect(find.text('4.7'), findsOneWidget);
     expect(find.text('Wallet balance'), findsNothing);
     expect(find.text('Completion rate'), findsNothing);
     expect(find.text('Working zone'), findsNothing);
+    expect(find.text("TODAY'S PROGRESS"), findsOneWidget);
+    expect(find.text('Top opportunities'), findsOneWidget);
     expect(find.text('Wallet'), findsOneWidget);
     expect(find.text('Incentives'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
@@ -265,11 +291,63 @@ void main() {
     expect(find.text('Support'), findsOneWidget);
   });
 
+  testWidgets('keeps earnings and gig content hidden while offline',
+      (tester) async {
+    setTallSurface(tester);
+    await tester.pumpWidget(
+      buildApp(
+        dashboardRepository: FakeDashboardRepository(initial: mockStats()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('You are Offline'), findsOneWidget);
+    expect(find.text("Today's Overview"), findsNothing);
+    expect(find.text("TODAY'S PROGRESS"), findsNothing);
+    expect(find.text('Top opportunities'), findsNothing);
+  });
+
+  testWidgets('shows the unread notification count and opens notifications',
+      (tester) async {
+    setTallSurface(tester);
+    final notifications = FakeNotificationsRepository([
+      NotificationModel(
+        id: 'unread-1',
+        title: 'New gig',
+        body: '',
+        isRead: false,
+        createdAt: DateTime.now(),
+        type: NotificationType.order,
+      ),
+      NotificationModel(
+        id: 'unread-2',
+        title: 'New bonus',
+        body: '',
+        isRead: false,
+        createdAt: DateTime.now(),
+        type: NotificationType.earnings,
+      ),
+    ]);
+    await tester.pumpWidget(
+      buildApp(
+        dashboardRepository: FakeDashboardRepository(initial: mockStats()),
+        notificationsRepository: notifications,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Notifications, 2 unread'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Notifications, 2 unread'));
+    await tester.pumpAndSettle();
+    expect(find.text('Notifications Screen'), findsOneWidget);
+  });
+
   testWidgets('shows — for acceptance/completion rate and zone when null',
       (tester) async {
     setTallSurface(tester);
     final repo = FakeDashboardRepository(
       initial: mockStats(
+        availabilityStatus: RiderAvailabilityStatus.online,
         acceptanceRatePercent: null,
         completionRatePercent: null,
         workingZone: null,
@@ -315,6 +393,9 @@ void main() {
     expect(repo.goOnlineCalls, 1);
     expect(find.text('You are Online'), findsOneWidget);
     expect(find.text('Go offline'), findsOneWidget);
+    expect(find.text("TODAY'S PROGRESS"), findsOneWidget);
+    expect(find.text("Today's Overview"), findsOneWidget);
+    expect(find.text('Top opportunities'), findsOneWidget);
     expect(find.byKey(const Key('online-status-celebration')), findsOneWidget);
   });
 

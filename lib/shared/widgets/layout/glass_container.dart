@@ -1,15 +1,13 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/glass_theme.dart';
 
-/// A reusable, performance-conscious glass surface.
+/// A reusable, performance-conscious light surface.
 ///
-/// Set [blur] only for short-lived or floating UI. Standard cards deliberately
-/// use the same translucent surface without a backdrop filter so long lists
-/// remain inexpensive to scroll.
+/// [blur] is retained for API compatibility and selects the slightly stronger
+/// floating-surface elevation; it intentionally does not add backdrop blur.
+/// Opaque surfaces keep text and actions crisp over the light app canvas.
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -59,18 +57,7 @@ class GlassContainer extends StatelessWidget {
       child: child,
     );
 
-    if (!blur) return surface;
-
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: GlassTheme.blurSigma,
-          sigmaY: GlassTheme.blurSigma,
-        ),
-        child: surface,
-      ),
-    );
+    return surface;
   }
 }
 

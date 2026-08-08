@@ -5,6 +5,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/navigation/partner_app_header.dart';
 
 class ProfileHeader extends StatelessWidget {
   final int notificationCount;
@@ -25,14 +26,7 @@ class ProfileHeader extends StatelessWidget {
         final compact = constraints.maxWidth < 400;
         return Row(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('QIKZOO',
-                    style: AppTypography.h2.copyWith(color: AppColors.primary)),
-                Text('Delivery Partner', style: AppTypography.caption),
-              ],
-            ),
+            const PartnerWordmark(),
             const Spacer(),
             if (!compact) const _OnlinePill(),
             if (!compact) const SizedBox(width: AppSpacing.sm),
@@ -86,42 +80,8 @@ class _NotificationButton extends StatelessWidget {
   const _NotificationButton({required this.count, required this.onPressed});
 
   @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: count > 0 ? 'Notifications, $count unread' : 'Notifications',
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: IconButton(
-              onPressed: onPressed,
-              tooltip: 'Notifications',
-              icon: const Icon(LucideIcons.bell,
-                  size: 21, color: AppColors.primary),
-            ),
-          ),
-          if (count > 0)
-            Positioned(
-              top: 5,
-              right: 3,
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                    color: AppColors.error, shape: BoxShape.circle),
-                child: Text(
-                  count > 99 ? '99+' : '$count',
-                  style: AppTypography.caption
-                      .copyWith(color: Colors.white, fontSize: 10, height: 1),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => PartnerNotificationButton(
+        unreadCount: count,
+        onPressed: onPressed,
+      );
 }

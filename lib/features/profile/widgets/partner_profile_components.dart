@@ -6,9 +6,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/utils/currency_formatter.dart';
 import '../../../models/profile/profile_summary.dart';
 import '../../../shared/widgets/misc/cached_avatar.dart';
+import '../../../shared/widgets/navigation/partner_app_header.dart';
 
 /// Shared visual treatment for the partner profile's raised, airy surfaces.
 class PartnerProfileColors {
@@ -23,119 +23,26 @@ class PartnerProfileHeader extends StatelessWidget {
     super.key,
     required this.notificationCount,
     required this.onNotifications,
+    required this.onProfile,
     required this.partnerName,
   });
 
   final int notificationCount;
   final VoidCallback onNotifications;
+  final VoidCallback onProfile;
   final String partnerName;
 
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Semantics(
-            label: 'Qikzoo Partner',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Qikzoo',
-                  style: AppTypography.h1.copyWith(
-                    color: AppColors.primaryDark,
-                    fontStyle: FontStyle.italic,
-                    fontSize: 27,
-                    letterSpacing: -1.4,
-                  ),
-                ),
-                Text(
-                  'PARTNER',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 10,
-                    letterSpacing: 1.8,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              IconButton(
-                tooltip: 'Notifications',
-                onPressed: onNotifications,
-                icon: const Icon(LucideIcons.bell, size: 25),
-              ),
-              if (notificationCount > 0)
-                Positioned(
-                  top: 3,
-                  right: 3,
-                  child: Container(
-                    width: 19,
-                    height: 19,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$notificationCount',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.onPrimary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 58,
-                height: 58,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.surface, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: .12),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  _initials(partnerName),
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.primaryDark,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 1,
-                bottom: 2,
-                child: Container(
-                  width: 15,
-                  height: 15,
-                  decoration: BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.surface, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+  Widget build(BuildContext context) => PartnerAppHeader(
+        subtitle: 'Your partner profile',
+        unreadNotificationCount: notificationCount,
+        onNotifications: onNotifications,
+        trailing: PartnerAvatarAction(
+          initials: _initials(partnerName),
+          label: '$partnerName profile',
+          onPressed: onProfile,
+          isOnline: true,
+        ),
       );
 
   static String _initials(String name) => name
@@ -160,34 +67,14 @@ class PartnerProfileIdentity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) {
-          // On phones, putting the cards side by side leaves both the profile
-          // details and earnings summary too cramped to scan comfortably.
-          final stacked = constraints.maxWidth < 420;
-          final compact = !stacked && constraints.maxWidth < 520;
-          final identity = _IdentityCard(
-            summary: summary,
-            onTap: onTap,
-            compact: compact,
-          );
-          final earnings = _EarningsSummary(summary: summary);
-          if (stacked) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [identity, const SizedBox(height: 12), earnings],
-            );
-          }
-          return IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(flex: 11, child: identity),
-                const SizedBox(width: 12),
-                Expanded(flex: 9, child: earnings),
-              ],
-            ),
-          );
-        },
+        builder: (context, constraints) => _IdentityCard(
+          summary: summary,
+          onTap: onTap,
+          // Retain the compact treatment only for very small phones. With the
+          // earnings panel removed, standard phones have room for the full
+          // partner identity rather than a dense side-by-side layout.
+          compact: constraints.maxWidth < 360,
+        ),
       );
 }
 
@@ -330,92 +217,6 @@ class _IdentityCard extends StatelessWidget {
       );
 }
 
-class _EarningsSummary extends StatelessWidget {
-  const _EarningsSummary({required this.summary});
-
-  final ProfileSummary summary;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 238,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(15, 16, 8, 14),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.successBg, AppColors.accentBg],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: AppColors.success.withValues(alpha: .14)),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -20,
-                bottom: -13,
-                child: Image.asset(
-                  AppAssets.profileEarningsWallet3d,
-                  width: 105,
-                  fit: BoxFit.contain,
-                  excludeFromSemantics: true,
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text("Today's Earnings",
-                          style:
-                              AppTypography.bodyMedium.copyWith(fontSize: 13)),
-                      const SizedBox(width: 5),
-                      const Icon(LucideIcons.info,
-                          size: 15, color: AppColors.textSecondary),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    CurrencyFormatter.rupees(summary.pendingAmount),
-                    style: AppTypography.numericLg
-                        .copyWith(color: AppColors.success, fontSize: 30),
-                  ),
-                  const Spacer(),
-                  Container(
-                      height: 1,
-                      color: AppColors.success.withValues(alpha: .18)),
-                  const SizedBox(height: 9),
-                  Text('This Week',
-                      style: AppTypography.caption
-                          .copyWith(color: AppColors.textPrimary)),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Text(
-                        CurrencyFormatter.rupees(summary.walletBalance),
-                        style: AppTypography.bodyMedium
-                            .copyWith(color: AppColors.success, fontSize: 18),
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: 35,
-                        height: 35,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                            color: AppColors.successBg, shape: BoxShape.circle),
-                        child: const Icon(LucideIcons.arrowRight,
-                            color: AppColors.success, size: 19),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-}
-
 class PartnerStoreCard extends StatelessWidget {
   const PartnerStoreCard({super.key, required this.onTap});
 
@@ -425,74 +226,77 @@ class PartnerStoreCard extends StatelessWidget {
   Widget build(BuildContext context) => Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(22),
-        child: Ink(
-          height: 150,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: AppColors.ctaGradient),
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: .24),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(22),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Image.asset(
-                    AppAssets.profileStorefront3d,
-                    width: 78,
-                    fit: BoxFit.contain,
-                    semanticLabel: 'Storefront',
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Your Store',
-                            style: AppTypography.body
-                                .copyWith(color: AppColors.onPrimary)),
-                        const SizedBox(height: 5),
-                        Text('Super Store Mumbai',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.h2.copyWith(
-                                color: AppColors.onPrimary, fontSize: 19)),
-                        const SizedBox(height: 7),
-                        Row(children: [
-                          const Icon(LucideIcons.mapPin,
-                              color: AppColors.onPrimary, size: 17),
-                          const SizedBox(width: 5),
-                          Expanded(
-                              child: Text('Kamranwar Nagar, ES1de, Mumbai',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.caption.copyWith(
-                                      color: AppColors.onPrimary
-                                          .withValues(alpha: .88)))),
-                        ]),
-                      ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 112),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: AppColors.ctaGradient),
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: .24),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(22),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      AppAssets.profileStorefront3d,
+                      width: 56,
+                      fit: BoxFit.contain,
+                      semanticLabel: 'Storefront',
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 13, vertical: 10),
-                    decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.all(Radius.circular(24))),
-                    child: const Icon(LucideIcons.chevronRight,
-                        color: AppColors.primary, size: 22),
-                  ),
-                ],
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Your Store',
+                              style: AppTypography.body
+                                  .copyWith(color: AppColors.onPrimary)),
+                          const SizedBox(height: 5),
+                          Text('Super Store Mumbai',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.h2.copyWith(
+                                  color: AppColors.onPrimary, fontSize: 17)),
+                          const SizedBox(height: 7),
+                          Row(children: [
+                            const Icon(LucideIcons.mapPin,
+                                color: AppColors.onPrimary, size: 17),
+                            const SizedBox(width: 5),
+                            Expanded(
+                                child: Text('Kamranwar Nagar, ES1de, Mumbai',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.caption.copyWith(
+                                        color: AppColors.onPrimary
+                                            .withValues(alpha: .88)))),
+                          ]),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.all(Radius.circular(24))),
+                      child: const Icon(LucideIcons.chevronRight,
+                          color: AppColors.primary, size: 20),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -526,51 +330,53 @@ class PartnerQuickAction extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Container(
-            constraints: const BoxConstraints.tightFor(height: 184),
-            padding: const EdgeInsets.fromLTRB(7, 13, 7, 10),
+            key: const ValueKey('partner-quick-action-card'),
+            constraints: const BoxConstraints(minHeight: 128),
+            padding: const EdgeInsets.fromLTRB(7, 9, 7, 8),
             decoration: BoxDecoration(
               border:
                   Border.all(color: AppColors.border.withValues(alpha: .45)),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
-                  width: 65,
-                  height: 65,
+                  width: 46,
+                  height: 46,
                   child: assetPath == null
                       ? Icon(icon, color: iconColor, size: 30)
                       : Image.asset(assetPath!,
                           fit: BoxFit.contain, excludeFromSemantics: true),
                 ),
-                const Spacer(),
+                const SizedBox(height: 6),
                 Text(
                   title,
-                  maxLines: 2,
+                  maxLines: 1,
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyMedium
-                      .copyWith(fontSize: 13, height: 1.2),
+                      .copyWith(fontSize: 12.5, height: 1.15),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: AppTypography.caption
-                        .copyWith(fontSize: 11, height: 1.2),
+                        .copyWith(fontSize: 10.5, height: 1.15),
                   ),
                 ],
-                const SizedBox(height: 9),
+                const SizedBox(height: 5),
                 Container(
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                       color: iconColor.withValues(alpha: .12),
                       shape: BoxShape.circle),
                   child: Icon(LucideIcons.chevronRight,
-                      color: iconColor, size: 18),
+                      color: iconColor, size: 17),
                 ),
               ],
             ),
@@ -604,26 +410,27 @@ class PartnerProfileMenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Container(
-      constraints: const BoxConstraints(minHeight: 76),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      key: const ValueKey('partner-profile-menu-tile'),
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 42,
+            height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
                 color: color.withValues(alpha: .10),
-                borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(12)),
             child: assetPath == null
-                ? Icon(icon, size: 24, color: color)
+                ? Icon(icon, size: 22, color: color)
                 : Image.asset(assetPath!,
-                    width: 45,
-                    height: 45,
+                    width: 34,
+                    height: 34,
                     fit: BoxFit.contain,
                     excludeFromSemantics: true),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -631,18 +438,18 @@ class PartnerProfileMenuTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMedium.copyWith(fontSize: 16),
+                  style: AppTypography.bodyMedium.copyWith(fontSize: 15),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 3),
                   Text(
                     subtitle!,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.body
-                        .copyWith(color: AppColors.textSecondary),
+                        .copyWith(color: AppColors.textSecondary, fontSize: 12),
                   ),
                 ],
               ],
@@ -657,7 +464,7 @@ class PartnerProfileMenuTile extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.only(left: AppSpacing.sm),
               child: Icon(LucideIcons.chevronRight,
-                  color: AppColors.textSecondary, size: 22),
+                  color: AppColors.textSecondary, size: 20),
             ),
         ],
       ),

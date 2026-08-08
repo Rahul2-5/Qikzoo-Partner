@@ -50,4 +50,25 @@ void main() {
     expect(content.width, 472);
     expect(tester.takeException(), isNull);
   });
+
+  test('uses a consistent adaptive gutter scale', () {
+    expect(ResponsiveFrame.horizontalGutterFor(320), 12);
+    expect(ResponsiveFrame.horizontalGutterFor(360), 16);
+    expect(ResponsiveFrame.horizontalGutterFor(600), 20);
+    expect(ResponsiveFrame.horizontalGutterFor(840), 24);
+  });
+
+  testWidgets('keeps medium-width content centered with a readable gutter',
+      (tester) async {
+    setSurfaceSize(tester, const Size(600, 800));
+
+    await tester.pumpWidget(buildFrame());
+
+    final content =
+        tester.getRect(find.byKey(const ValueKey('responsive-content')));
+    expect(content.left, 60);
+    expect(content.right, 540);
+    expect(content.width, 480);
+    expect(tester.takeException(), isNull);
+  });
 }

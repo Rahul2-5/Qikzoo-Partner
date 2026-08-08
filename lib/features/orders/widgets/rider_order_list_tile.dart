@@ -40,7 +40,7 @@ class RiderOrderListTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: onTap,
           child: Ink(
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.card),
@@ -52,7 +52,7 @@ class RiderOrderListTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _OrderIdentity(order: order, time: time, visual: visual),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +65,7 @@ class RiderOrderListTile extends StatelessWidget {
                             CurrencyFormatter.rupees(order.earningsPaise / 100),
                             style: AppTypography.numericMd.copyWith(
                               color: visual.color,
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -77,27 +77,27 @@ class RiderOrderListTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         customerName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.bodyMedium.copyWith(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       _OrderDetailLine(
                         icon: LucideIcons.mapPin,
                         label: zone.isEmpty ? 'Delivery location' : zone,
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 3),
                       _OrderDetailLine(
                         icon: LucideIcons.store,
                         label: order.restaurant.name ?? 'Restaurant order',
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
@@ -133,20 +133,20 @@ class _OrderIdentity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 72,
+        width: 60,
         child: Column(
           children: [
             Container(
-              height: 76,
-              width: 72,
-              padding: const EdgeInsets.all(7),
+              height: 62,
+              width: 60,
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: visual.background,
                 borderRadius: BorderRadius.circular(AppRadius.control + 4),
               ),
               child: Image.asset(visual.asset, fit: BoxFit.contain),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               '#${order.order.orderNumber.replaceFirst('QK-', '')}',
               maxLines: 1,
@@ -157,7 +157,7 @@ class _OrderIdentity extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
             Text(time, style: AppTypography.caption.copyWith(fontSize: 10)),
           ],
         ),

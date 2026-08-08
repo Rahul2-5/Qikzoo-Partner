@@ -8,6 +8,7 @@ class AppColors {
   static const primaryDark = Color(0xFF303F9F);
   static const primarySoft = Color(0xFFE8EAF6);
   static const secondary = Color(0xFF536DFE);
+  static const secondarySoft = Color(0xFFEEF0FF);
   static const onPrimary = Color(0xFFFFFFFF);
 
   /// Semantic colors make operational states understandable at a glance.
@@ -35,6 +36,6 @@ class AppColors {
 
   static final successBg = success.withValues(alpha: 0.12);
   static final warningBg = warning.withValues(alpha: 0.12);
-  static final secondaryBg = secondary.withValues(alpha: 0.12);
-  static final accentBg = accent.withValues(alpha: 0.14);
+  static const secondaryBg = secondarySoft;
+  static const accentBg = Color(0xFFFFF8E1);
 }

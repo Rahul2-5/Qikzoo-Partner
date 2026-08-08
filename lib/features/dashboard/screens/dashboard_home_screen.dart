@@ -20,6 +20,7 @@ import '../../../models/dashboard/dashboard_stats_model.dart';
 import '../../../models/orders/dispatch_offer_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
+import '../../../providers/notifications/notifications_provider.dart';
 import '../../../providers/orders/dispatch_offer_provider.dart';
 import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
@@ -27,6 +28,7 @@ import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
+import '../../../shared/widgets/navigation/partner_app_header.dart';
 import '../../gigs/widgets/available_gigs_section.dart';
 import '../../partner_registration/screens/selfie_verification_screen.dart';
 
@@ -145,11 +147,16 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
   @override
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(dashboardStatsProvider);
+    final unreadNotificationCount = ref
+        .watch(notificationsProvider)
+        .valueOrNull
+        ?.where((notification) => !notification.isRead)
+        .length ??
+        0;
     ref.listen(dispatchOfferProvider, _onOfferChanged);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const _DashboardDrawer(),
       body: AppTabScaffold(
         currentIndex: 0,
         child: ResponsiveFrame(
@@ -179,7 +186,10 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                 ),
                 children: [
                   AppReveal(
-                    child: _DashboardTopBar(riderName: stats.riderName),
+                    child: _DashboardTopBar(
+                      riderName: stats.riderName,
+                      unreadNotificationCount: unreadNotificationCount,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppReveal(
@@ -191,20 +201,30 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                           _onToggleAvailability(stats.availabilityStatus),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppReveal(
-                    delay: const Duration(milliseconds: 90),
-                    child: _PerformanceSummary(stats: stats),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const AppReveal(
-                    delay: Duration(milliseconds: 135),
-                    child: AvailableGigsSection(
-                      showAll: true,
-                      title: 'Top opportunities',
-                      actionLabel: 'View all',
+                  if (stats.availabilityStatus.isOnlineFacing) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    AppReveal(
+                      delay: const Duration(milliseconds: 75),
+                      child: _TodayProgressCard(stats: stats),
                     ),
-                  ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppReveal(
+                      delay: const Duration(milliseconds: 105),
+                      child: _PerformanceSummary(stats: stats),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const AppReveal(
+                      delay: Duration(milliseconds: 135),
+                      child: AvailableGigsSection(
+                        showAll: true,
+                        title: 'Top opportunities',
+                        subtitle:
+                            'Shifts selected for you — book before they fill.',
+                        actionLabel: 'View all',
+                        horizontal: true,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.lg),
                   const AppReveal(
                     delay: Duration(milliseconds: 180),
@@ -222,9 +242,13 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
 }
 
 class _DashboardTopBar extends StatelessWidget {
-  const _DashboardTopBar({required this.riderName});
+  const _DashboardTopBar({
+    required this.riderName,
+    required this.unreadNotificationCount,
+  });
 
   final String riderName;
+  final int unreadNotificationCount;
 
   String get _greeting {
     final hour = DateTime.now().hour;
@@ -241,140 +265,95 @@ class _DashboardTopBar extends StatelessWidget {
         ? 'Partner'
         : nameParts.first;
 
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.control),
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.78)),
-          ),
-          child: Builder(
-            builder: (context) => IconButton(
-              tooltip: 'Open menu',
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: const Icon(LucideIcons.menu, color: AppColors.textPrimary),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm + 2),
-        Expanded(
-          child: Semantics(
-            header: true,
-            label: 'Qikzoo Rider home',
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text('Qikzoo',
-                        style: AppTypography.h2.copyWith(fontSize: 18)),
-                    const SizedBox(width: AppSpacing.xs),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                      ),
-                      child: Text(
-                        'PARTNER',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$_greeting, $firstName',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.78)),
-          ),
-          child: IconButton(
-            tooltip: 'Notifications',
-            onPressed: () => Get.toNamed(AppRoutes.notifications),
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(LucideIcons.bell, color: AppColors.textPrimary),
-                Positioned(
-                  top: -1,
-                  right: -2,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Semantics(
-          button: true,
-          label: '${riderName.isEmpty ? 'Rider' : riderName} profile',
-          child: InkWell(
-            onTap: () => Get.toNamed(AppRoutes.profile),
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-            child: Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.primarySoft,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.surface, width: 2.5),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x14344054),
-                    offset: Offset(0, 3),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: Text(
-                initial.toUpperCase(),
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    return PartnerAppHeader(
+      subtitle: '$_greeting, $firstName',
+      unreadNotificationCount: unreadNotificationCount,
+      onNotifications: () => Get.toNamed(AppRoutes.notifications),
+      trailing: PartnerAvatarAction(
+        initials: initial,
+        label: '${riderName.isEmpty ? 'Rider' : riderName} profile',
+        onPressed: () => Get.toNamed(AppRoutes.profile),
+      ),
     );
   }
+}
+
+class _DashboardNotificationButton extends StatelessWidget {
+  const _DashboardNotificationButton({
+    required this.unreadCount,
+    required this.onPressed,
+  });
+
+  final int unreadCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        label: unreadCount > 0
+            ? 'Notifications, $unreadCount unread'
+            : 'Notifications',
+        child: Tooltip(
+          message: unreadCount > 0
+              ? '$unreadCount unread notifications'
+              : 'Notifications',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+              child: Ink(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.16),
+                  ),
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    const Icon(
+                      LucideIcons.bell,
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        top: 2,
+                        right: 1,
+                        child: Container(
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : '$unreadCount',
+                            style: AppTypography.caption.copyWith(
+                              color: Colors.white,
+                              fontSize: 8,
+                              height: 1,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 class _OnlineStatusBanner extends StatelessWidget {
@@ -395,7 +374,7 @@ class _OnlineStatusBanner extends StatelessWidget {
           ? 'You are online and ready to accept gigs'
           : 'You are offline. Turn on availability to accept gigs',
       child: SizedBox(
-        height: 246,
+        height: 194,
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -431,32 +410,13 @@ class _OnlineStatusBanner extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  right: 4,
-                  bottom: -4,
+                  right: -12,
+                  bottom: -20,
                   child: IgnorePointer(
                     child: Image.asset(
                       AppAssets.riderScooterIndigo3d,
-                      width: 244,
+                      width: 210,
                       fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                // A dedicated transparent 3D asset gives the hero a clear
-                // delivery-location cue without competing with the CTA.
-                Positioned(
-                  right: 12,
-                  top: 14,
-                  child: IgnorePointer(
-                    child: Opacity(
-                      opacity: 0.9,
-                      child: Image.asset(
-                        AppAssets.dashboardLocationBeacon3d,
-                        width: 92,
-                        height: 92,
-                        fit: BoxFit.contain,
-                        filterQuality: FilterQuality.high,
-                        excludeFromSemantics: true,
-                      ),
                     ),
                   ),
                 ),
@@ -486,7 +446,7 @@ class _OnlineStatusBanner extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
                     AppSpacing.md,
-                    132,
+                    116,
                     AppSpacing.md,
                   ),
                   child: Column(
@@ -586,6 +546,147 @@ class _OnlineStatusBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Compact at-a-glance shift totals. The dashboard API does not currently
+/// expose an accumulated online duration, so the time begins at zero until
+/// that field is available from the backend.
+class _TodayProgressCard extends StatelessWidget {
+  const _TodayProgressCard({required this.stats});
+
+  final DashboardStatsModel stats;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label:
+            "Today's progress: ${CurrencyFormatter.rupeesPrecise(stats.todaysEarningsPaise / 100)} earnings, 0 hours online, ${stats.todaysDeliveries} trips",
+        child: Container(
+          height: 104,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + 3,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.85)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A101828),
+                offset: Offset(0, 4),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Text(
+                "TODAY'S PROGRESS",
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _ProgressMetric(
+                        icon: LucideIcons.circleDollarSign,
+                        value: CurrencyFormatter.rupeesPrecise(
+                          stats.todaysEarningsPaise / 100,
+                        ),
+                        label: 'Earnings',
+                        color: AppColors.success,
+                      ),
+                    ),
+                    const _ProgressDivider(),
+                    const Expanded(
+                      child: _ProgressMetric(
+                        icon: LucideIcons.clock3,
+                        value: '0h 0m',
+                        label: 'Online time',
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const _ProgressDivider(),
+                    Expanded(
+                      child: _ProgressMetric(
+                        icon: LucideIcons.shoppingBag,
+                        value: '${stats.todaysDeliveries}',
+                        label: 'Trips',
+                        color: AppColors.warning,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _ProgressDivider extends StatelessWidget {
+  const _ProgressDivider();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 1,
+        height: 38,
+        color: AppColors.border.withValues(alpha: 0.8),
+      );
+}
+
+class _ProgressMetric extends StatelessWidget {
+  const _ProgressMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: AppTypography.numericMd.copyWith(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 11, color: color),
+              const SizedBox(width: 3),
+              Text(
+                label,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
 }
 
 class _ShiftBadge extends StatelessWidget {
@@ -1203,7 +1304,7 @@ class _PerformanceSummary extends StatelessWidget {
     return Semantics(
       label: "Today's performance summary",
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.sm + 4),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.sheet),
@@ -1211,8 +1312,8 @@ class _PerformanceSummary extends StatelessWidget {
           boxShadow: const [
             BoxShadow(
               color: Color(0x0A101828),
-              offset: Offset(0, 6),
-              blurRadius: 16,
+              offset: Offset(0, 4),
+              blurRadius: 12,
             ),
           ],
         ),
@@ -1224,14 +1325,14 @@ class _PerformanceSummary extends StatelessWidget {
                 const Icon(
                   LucideIcons.barChart3,
                   color: AppColors.primary,
-                  size: 18,
+                  size: 16,
                 ),
                 const SizedBox(width: AppSpacing.xs + 2),
                 Expanded(
                   child: Text(
                     "Today's Overview",
                     style: AppTypography.bodyMedium.copyWith(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -1257,7 +1358,7 @@ class _PerformanceSummary extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm + 2),
             LayoutBuilder(
               builder: (context, constraints) {
                 if (constraints.maxWidth >= 300) {
@@ -1277,7 +1378,7 @@ class _PerformanceSummary extends StatelessWidget {
                   child: Row(
                     children: [
                       for (var index = 0; index < metrics.length; index++) ...[
-                        SizedBox(width: 116, child: metrics[index]),
+                        SizedBox(width: 104, child: metrics[index]),
                         if (index < metrics.length - 1)
                           const SizedBox(width: AppSpacing.sm),
                       ],
@@ -1315,8 +1416,8 @@ class _PerformanceMetric extends StatelessWidget {
         label: '$label, $value',
         excludeSemantics: true,
         child: Container(
-          height: 252,
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 18),
+          height: 144,
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(AppRadius.sheet),
@@ -1324,18 +1425,18 @@ class _PerformanceMetric extends StatelessWidget {
           child: Column(
             children: [
               _DashboardMetricSprite(
-                size: 72,
+                size: 46,
                 assetPath: assetPath,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: 4),
               Text(
                 label,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: AppTypography.caption.copyWith(
                   color: AppColors.textPrimary,
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1346,17 +1447,17 @@ class _PerformanceMetric extends StatelessWidget {
                   value,
                   style: AppTypography.numericLg.copyWith(
                     color: valueColor,
-                    fontSize: 27,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: 2),
               Text(
                 detail,
                 style: AppTypography.caption.copyWith(
                   color: AppColors.textPrimary,
-                  fontSize: 11,
+                  fontSize: 9,
                 ),
               ),
             ],
@@ -1565,76 +1666,6 @@ class _QuickAccessTabTile extends StatelessWidget {
             ),
           ),
         ),
-      );
-}
-
-class _DashboardDrawer extends StatelessWidget {
-  const _DashboardDrawer();
-
-  @override
-  Widget build(BuildContext context) => Drawer(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Qikzoo Rider', style: AppTypography.h1),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Your partner workspace',
-                  style: AppTypography.caption,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                const _DrawerDestination(
-                  icon: LucideIcons.home,
-                  label: 'Home',
-                  route: AppRoutes.dashboard,
-                ),
-                const _DrawerDestination(
-                  icon: LucideIcons.calendarClock,
-                  label: 'Gigs',
-                  route: AppRoutes.gigs,
-                ),
-                const _DrawerDestination(
-                  icon: LucideIcons.barChart3,
-                  label: 'Earnings',
-                  route: AppRoutes.earnings,
-                ),
-                const _DrawerDestination(
-                  icon: LucideIcons.user,
-                  label: 'Profile',
-                  route: AppRoutes.profile,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-}
-
-class _DrawerDestination extends StatelessWidget {
-  const _DrawerDestination({
-    required this.icon,
-    required this.label,
-    required this.route,
-  });
-
-  final IconData icon;
-  final String label;
-  final String route;
-
-  @override
-  Widget build(BuildContext context) => ListTile(
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(label, style: AppTypography.bodyMedium),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.control),
-        ),
-        onTap: () {
-          Navigator.of(context).pop();
-          if (Get.currentRoute != route) Get.offAllNamed(route);
-        },
       );
 }
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/earnings/earnings_models.dart';
+import '../../../shared/widgets/navigation/partner_app_header.dart';
 import 'period_selector.dart';
 
 class EarningsHeader extends StatelessWidget {
@@ -19,14 +19,7 @@ class EarningsHeader extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 420;
-          final brand = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('QIKZOO',
-                  style: AppTypography.h2.copyWith(color: AppColors.primary)),
-              Text('Delivery Partner', style: AppTypography.caption),
-            ],
-          );
+          const brand = PartnerWordmark();
           final selector =
               PeriodSelector(value: period, onChanged: onPeriodChanged);
           return Column(

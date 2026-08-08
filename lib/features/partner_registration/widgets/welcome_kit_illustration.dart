@@ -11,12 +11,12 @@ class WelcomeKitIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SizedBox(
-      height: 184,
+      height: 164,
       child: Center(
         child: App3dIllustration(
           assetPath: AppAssets.welcomeKit3d,
           semanticLabel: 'Qikzoo delivery bag and safety helmet',
-          size: 210,
+          size: 176,
           glowColor: AppColors.secondary,
           fallbackIcon: LucideIcons.packageCheck,
         ),

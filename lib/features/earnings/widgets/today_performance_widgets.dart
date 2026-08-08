@@ -11,13 +11,21 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/earnings/earnings_models.dart';
+import '../../../shared/widgets/navigation/partner_app_header.dart';
 import 'period_selector.dart';
 
 const _positive = Color(0xFF20B957);
 const _positiveSoft = Color(0xFFEAF9EF);
 
 class TodayPerformanceHeader extends StatelessWidget {
-  const TodayPerformanceHeader({super.key});
+  const TodayPerformanceHeader({
+    super.key,
+    this.unreadNotificationCount = 0,
+    this.onNotifications,
+  });
+
+  final int unreadNotificationCount;
+  final VoidCallback? onNotifications;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -28,91 +36,10 @@ class TodayPerformanceHeader extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  _RoundIconButton(
-                    icon: LucideIcons.arrowLeft,
-                    label: 'Go back',
-                    onTap: () => Navigator.maybePop(context),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(LucideIcons.bike,
-                                color: AppColors.primary, size: 26),
-                            const SizedBox(width: 4),
-                            RichText(
-                              text: TextSpan(
-                                style: AppTypography.h2.copyWith(
-                                  color: AppColors.primaryDark,
-                                  letterSpacing: -0.6,
-                                ),
-                                children: [
-                                  const TextSpan(text: 'Qikzoo'),
-                                  TextSpan(
-                                    text: ' PARTNER',
-                                    style: AppTypography.caption.copyWith(
-                                      color: _positive,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.primarySoft,
-                          border: Border.all(
-                            color: AppColors.surface,
-                            width: 2,
-                          ),
-                        ),
-                        child: Text(
-                          'RS',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 1,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _positive,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.surface,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              PartnerAppHeader(
+                subtitle: 'Earnings overview',
+                unreadNotificationCount: unreadNotificationCount,
+                onNotifications: onNotifications ?? () {},
               ),
               const SizedBox(height: AppSpacing.lg),
               if (useStackedTitle) ...[
@@ -195,13 +122,13 @@ class TodayEarningsCard extends StatelessWidget {
                     size: 176, color: Colors.white.withValues(alpha: 0.08)),
               ),
               Positioned(
-                right: -4,
-                top: 2,
+                right: 2,
+                top: 8,
                 child: IgnorePointer(
                   child: Image.asset(
                     AppAssets.earningsWallet3d,
-                    width: 146,
-                    height: 146,
+                    width: 118,
+                    height: 118,
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                   ),
@@ -214,7 +141,7 @@ class TodayEarningsCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.only(right: 92),
+                          padding: const EdgeInsets.only(right: 72),
                           child: Text(
                             'Total Earnings',
                             maxLines: 1,

@@ -571,7 +571,7 @@ class _WideBrandPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final illustrationHeight = isCompact ? 136.0 : 232.0;
+    final illustrationHeight = isCompact ? 124.0 : 200.0;
     final decodeHeight =
         (illustrationHeight * MediaQuery.devicePixelRatioOf(context)).round();
 
