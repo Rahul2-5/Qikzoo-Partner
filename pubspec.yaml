@@ -55,6 +55,10 @@ flutter:
     - .env
     - assets/images/new_logo.png
     - assets/images/
+    - assets/images/earnings/
+    - assets/images/gigs/
+    - assets/images/orders/
+    - assets/images/profile/
     - assets/icons/
     - assets/illustrations/
     - assets/animations/

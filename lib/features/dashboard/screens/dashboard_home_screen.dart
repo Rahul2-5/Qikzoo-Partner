@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/assets/app_assets.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -45,7 +46,6 @@ class DashboardHomeScreen extends ConsumerStatefulWidget {
 class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
     with WidgetsBindingObserver {
   bool _isTogglingAvailability = false;
-  int _onlineTransitionId = 0;
   Timer? _offerPollTimer;
   String? _lastHandledOfferId;
 
@@ -84,16 +84,12 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
 
   Future<void> _setAvailability(RiderAvailabilityStatus current) async {
     if (_isTogglingAvailability) return;
-    final isStartingShift = !current.isOnlineFacing;
     setState(() => _isTogglingAvailability = true);
     try {
       if (current.isOnlineFacing) {
         await ref.read(dashboardStatsProvider.notifier).goOffline();
       } else {
         await ref.read(dashboardStatsProvider.notifier).goOnline();
-      }
-      if (isStartingShift && mounted) {
-        setState(() => _onlineTransitionId++);
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -191,52 +187,27 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                     child: _OnlineStatusBanner(
                       isOnline: stats.availabilityStatus.isOnlineFacing,
                       isBusy: _isTogglingAvailability,
-                      onlineTransitionId: _onlineTransitionId,
                       onPressed: () =>
                           _onToggleAvailability(stats.availabilityStatus),
-                      onHelp: () => Get.toNamed(AppRoutes.support),
-                      onEmergency: () => AppSnackBar.error(
-                        context,
-                        'For urgent help, call local emergency services and contact Qikzoo support.',
-                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppReveal(
                     delay: const Duration(milliseconds: 90),
-                    child: _NextGigHero(
-                      gig: availableGigs.first,
-                      isOnline: stats.availabilityStatus.isOnlineFacing,
-                      onPressed: () {
-                        if (stats.availabilityStatus.isOnlineFacing) {
-                          AppSnackBar.success(
-                            context,
-                            '${availableGigs.first.title} reserved. Check your schedule for details.',
-                          );
-                          return;
-                        }
-                        _onToggleAvailability(stats.availabilityStatus);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppReveal(
-                    delay: const Duration(milliseconds: 135),
                     child: _PerformanceSummary(stats: stats),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const AppReveal(
-                    delay: Duration(milliseconds: 180),
+                    delay: Duration(milliseconds: 135),
                     child: AvailableGigsSection(
                       showAll: true,
-                      startIndex: 1,
-                      title: 'More gigs',
-                      actionLabel: 'See all',
+                      title: 'Top opportunities',
+                      actionLabel: 'View all',
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const AppReveal(
-                    delay: Duration(milliseconds: 225),
+                    delay: Duration(milliseconds: 180),
                     child: _DashboardQuickAccessTabs(),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -406,62 +377,16 @@ class _DashboardTopBar extends StatelessWidget {
   }
 }
 
-class _OnlineStatusBanner extends StatefulWidget {
+class _OnlineStatusBanner extends StatelessWidget {
   const _OnlineStatusBanner({
     required this.isOnline,
     required this.isBusy,
-    required this.onlineTransitionId,
     required this.onPressed,
-    required this.onHelp,
-    required this.onEmergency,
   });
 
   final bool isOnline;
   final bool isBusy;
-  final int onlineTransitionId;
   final VoidCallback onPressed;
-  final VoidCallback onHelp;
-  final VoidCallback onEmergency;
-
-  @override
-  State<_OnlineStatusBanner> createState() => _OnlineStatusBannerState();
-}
-
-class _OnlineStatusBannerState extends State<_OnlineStatusBanner>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _celebrationController;
-
-  bool get isOnline => widget.isOnline;
-  bool get isBusy => widget.isBusy;
-  VoidCallback get onPressed => widget.onPressed;
-  VoidCallback get onHelp => widget.onHelp;
-  VoidCallback get onEmergency => widget.onEmergency;
-
-  @override
-  void initState() {
-    super.initState();
-    _celebrationController = AnimationController(
-      vsync: this,
-      duration: AppMotion.slow,
-      value: 1,
-    );
-  }
-
-  @override
-  void didUpdateWidget(covariant _OnlineStatusBanner oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.onlineTransitionId != oldWidget.onlineTransitionId &&
-        widget.isOnline &&
-        !AppMotion.reduceMotion(context)) {
-      _celebrationController.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _celebrationController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -470,163 +395,241 @@ class _OnlineStatusBannerState extends State<_OnlineStatusBanner>
           ? 'You are online and ready to accept gigs'
           : 'You are offline. Turn on availability to accept gigs',
       child: SizedBox(
-        height: 82,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: AnimatedContainer(
-                duration: AppMotion.duration(context, AppMotion.emphasized),
-                curve: AppMotion.enter,
-                constraints: const BoxConstraints(minHeight: 82),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isOnline
-                        ? const [Color(0xFF075A32), Color(0xFF063B32)]
-                        : const [Color(0xFF182B5B), Color(0xFF101C45)],
+        height: 246,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isOnline
+                  ? const [Color(0xFF087D48), Color(0xFF064F38)]
+                  : AppColors.ctaGradient,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.sheet + 4),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x283F51B5),
+                offset: Offset(0, 14),
+                blurRadius: 28,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sheet + 4),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -48,
+                  top: -64,
+                  child: Container(
+                    width: 220,
+                    height: 220,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.surface.withValues(alpha: 0.11),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(AppRadius.sheet),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1F243C7A),
-                      offset: Offset(0, 12),
-                      blurRadius: 24,
-                    ),
-                  ],
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -42,
-                      top: -46,
-                      child: Container(
-                        width: 142,
-                        height: 142,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: (isOnline
-                                  ? const Color(0xFF55E78B)
-                                  : AppColors.secondary)
-                              .withValues(alpha: 0.14),
-                        ),
+                Positioned(
+                  right: 4,
+                  bottom: -4,
+                  child: IgnorePointer(
+                    child: Image.asset(
+                      AppAssets.riderScooterIndigo3d,
+                      width: 244,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                // A dedicated transparent 3D asset gives the hero a clear
+                // delivery-location cue without competing with the CTA.
+                Positioned(
+                  right: 12,
+                  top: 14,
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.9,
+                      child: Image.asset(
+                        AppAssets.dashboardLocationBeacon3d,
+                        width: 92,
+                        height: 92,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                        excludeFromSemantics: true,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm + 2,
-                      ),
-                      child: Row(
-                        children: [
-                          _ShiftStatusIcon(
-                            isOnline: isOnline,
-                            celebration: _celebrationController,
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'YOUR SHIFT',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.caption.copyWith(
-                                    color: AppColors.surface
-                                        .withValues(alpha: 0.62),
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.9,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                AnimatedSwitcher(
-                                  duration: AppMotion.duration(
-                                    context,
-                                    AppMotion.quick,
-                                  ),
-                                  switchInCurve: AppMotion.enter,
-                                  switchOutCurve: AppMotion.exit,
-                                  child: Text(
-                                    key: ValueKey(isOnline),
-                                    isOnline
-                                        ? 'You are Online'
-                                        : 'You are Offline',
-                                    style: AppTypography.bodyMedium.copyWith(
-                                      color: AppColors.surface,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                  ),
+                ),
+                if (isOnline)
+                  Positioned(
+                    right: 22,
+                    top: 16,
+                    child: Container(
+                      key: const Key('online-status-celebration'),
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF55E78B),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF55E78B).withValues(
+                              alpha: 0.6,
                             ),
+                            blurRadius: 12,
                           ),
-                          const SizedBox(width: AppSpacing.xs),
-                          if (isBusy)
-                            const SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: CircularProgressIndicator(
-                                color: AppColors.surface,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          else
-                            SizedBox(
-                              width: 44,
-                              height: 36,
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Switch(
-                                  key: const Key('availability-toggle'),
-                                  value: isOnline,
-                                  onChanged: (_) => onPressed(),
-                                  activeThumbColor: AppColors.surface,
-                                  activeTrackColor: const Color(0xFF20B955),
-                                  inactiveThumbColor: AppColors.surface,
-                                  inactiveTrackColor: const Color(0xFF6675A7),
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.md,
+                    132,
+                    AppSpacing.md,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const _ShiftBadge(label: 'SHIFT STATUS'),
+                            const SizedBox(width: AppSpacing.xs),
+                            _ShiftBadge(
+                              label: isOnline ? 'ONLINE' : 'PAUSED',
+                              emphasized: true,
+                              online: isOnline,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          isOnline ? 'You are Online' : 'You are Offline',
+                          style: AppTypography.h1.copyWith(
+                            color: AppColors.surface,
+                            fontSize: 27,
+                            letterSpacing: -0.7,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        isOnline
+                            ? 'Ready to start receiving gigs'
+                            : 'Go online to start receiving gigs',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.surface.withValues(alpha: 0.86),
+                          fontSize: 12,
+                          height: 1.25,
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        height: 46,
+                        child: FilledButton.icon(
+                          key: const Key('availability-toggle'),
+                          onPressed: isBusy ? null : onPressed,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.surface,
+                            foregroundColor: isOnline
+                                ? AppColors.success
+                                : AppColors.primary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.control),
+                            ),
+                          ),
+                          icon: isBusy
+                              ? const SizedBox(
+                                  height: 17,
+                                  width: 17,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Icon(isOnline
+                                  ? LucideIcons.pause
+                                  : LucideIcons.power),
+                          label: Text(
+                            isOnline ? 'Go offline' : 'Go online',
+                            // AppTypography.button is white by default for
+                            // primary CTAs. The availability action has a
+                            // white surface, so use the matching foreground
+                            // colour to keep its state label visible.
+                            style: AppTypography.button.copyWith(
+                              fontSize: 13,
+                              color: isOnline
+                                  ? AppColors.success
+                                  : AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            _HomeUtilityButton(
-              icon: LucideIcons.headphones,
-              label: 'Help',
-              tooltip: 'Help and support',
-              onPressed: onHelp,
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            _HomeUtilityButton(
-              icon: LucideIcons.siren,
-              label: 'SOS',
-              tooltip: 'Emergency support',
-              isEmergency: true,
-              onPressed: onEmergency,
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
+class _ShiftBadge extends StatelessWidget {
+  const _ShiftBadge({
+    required this.label,
+    this.emphasized = false,
+    this.online = false,
+  });
+
+  final String label;
+  final bool emphasized;
+  final bool online;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: emphasized
+              ? (online ? const Color(0xFFB9F4CC) : const Color(0xFFFFEEF0))
+              : AppColors.surface.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.caption.copyWith(
+            color: emphasized
+                ? (online ? AppColors.success : AppColors.error)
+                : AppColors.surface,
+            fontSize: 8.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.4,
+          ),
+        ),
+      );
+}
+
+// ignore: unused_element
 class _HomeUtilityButton extends StatelessWidget {
   const _HomeUtilityButton({
     required this.icon,
     required this.label,
     required this.tooltip,
     required this.onPressed,
+    // ignore: unused_element_parameter
     this.isEmergency = false,
   });
 
@@ -687,6 +690,7 @@ class _HomeUtilityButton extends StatelessWidget {
       );
 }
 
+// ignore: unused_element
 class _ShiftStatusIcon extends StatelessWidget {
   const _ShiftStatusIcon({
     required this.isOnline,
@@ -789,6 +793,7 @@ class _ShiftStatusIcon extends StatelessWidget {
 /// The first open gig gets the visual priority of a dispatch card while the
 /// complete list remains directly below it. This keeps booking a gig as the
 /// focal action without turning Home into a second Gigs tab.
+// ignore: unused_element
 class _NextGigHero extends StatelessWidget {
   const _NextGigHero({
     required this.gig,
@@ -1160,30 +1165,38 @@ class _PerformanceSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final metrics = [
       _PerformanceMetric(
-        icon: LucideIcons.wallet,
-        color: AppColors.success,
+        assetPath: AppAssets.profileEarningsWallet3d,
         value: CurrencyFormatter.rupeesPrecise(stats.todaysEarningsPaise / 100),
-        label: "Today's earnings",
+        label: 'Earnings',
+        detail: 'Today',
+        cardColor: const Color(0xFFF1FBF4),
+        valueColor: AppColors.success,
       ),
       _PerformanceMetric(
-        icon: LucideIcons.packageCheck,
-        color: AppColors.warning,
+        assetPath: AppAssets.dashboardGigsCompleted3d,
         value: '${stats.todaysDeliveries}',
-        label: 'Gigs completed',
+        label: 'Gigs Completed',
+        detail: 'Today',
+        cardColor: const Color(0xFFFFF7F0),
+        valueColor: AppColors.textPrimary,
       ),
       _PerformanceMetric(
-        icon: LucideIcons.target,
-        color: AppColors.secondary,
+        assetPath: AppAssets.dashboardAcceptance3d,
         value: stats.acceptanceRatePercent == null
             ? '—'
             : '${stats.acceptanceRatePercent!.toStringAsFixed(0)}%',
         label: 'Acceptance',
+        detail: 'Rate',
+        cardColor: const Color(0xFFF2F6FF),
+        valueColor: AppColors.textPrimary,
       ),
       _PerformanceMetric(
-        icon: LucideIcons.star,
-        color: const Color(0xFF7C3AED),
+        assetPath: AppAssets.dashboardRating3d,
         value: stats.rating.toStringAsFixed(1),
-        label: 'Your rating',
+        label: 'Rating',
+        detail: 'Out of 5',
+        cardColor: const Color(0xFFF8F2FF),
+        valueColor: AppColors.textPrimary,
       ),
     ];
 
@@ -1216,7 +1229,7 @@ class _PerformanceSummary extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs + 2),
                 Expanded(
                   child: Text(
-                    "Today's progress",
+                    "Today's Overview",
                     style: AppTypography.bodyMedium.copyWith(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -1233,7 +1246,7 @@ class _PerformanceSummary extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                   child: Text(
-                    'LIVE',
+                    '●  Live Data',
                     style: AppTypography.caption.copyWith(
                       color: AppColors.success,
                       fontSize: 9,
@@ -1247,47 +1260,29 @@ class _PerformanceSummary extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             LayoutBuilder(
               builder: (context, constraints) {
-                if (constraints.maxWidth >= 480) {
+                if (constraints.maxWidth >= 300) {
                   return Row(
                     children: [
                       for (var index = 0; index < metrics.length; index++) ...[
                         Expanded(child: metrics[index]),
                         if (index < metrics.length - 1)
-                          Container(
-                            width: 1,
-                            height: 76,
-                            color: AppColors.border,
-                          ),
+                          const SizedBox(width: AppSpacing.sm),
                       ],
                     ],
                   );
                 }
 
-                return Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: metrics[0]),
-                        Container(
-                            width: 1, height: 72, color: AppColors.border),
-                        Expanded(child: metrics[1]),
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (var index = 0; index < metrics.length; index++) ...[
+                        SizedBox(width: 116, child: metrics[index]),
+                        if (index < metrics.length - 1)
+                          const SizedBox(width: AppSpacing.sm),
                       ],
-                    ),
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Divider(
-                          color: AppColors.border.withValues(alpha: 0.72)),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(child: metrics[2]),
-                        Container(
-                            width: 1, height: 72, color: AppColors.border),
-                        Expanded(child: metrics[3]),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -1300,57 +1295,117 @@ class _PerformanceSummary extends StatelessWidget {
 
 class _PerformanceMetric extends StatelessWidget {
   const _PerformanceMetric({
-    required this.icon,
-    required this.color,
+    required this.assetPath,
     required this.value,
     required this.label,
+    required this.detail,
+    required this.cardColor,
+    required this.valueColor,
   });
 
-  final IconData icon;
-  final Color color;
+  final String assetPath;
   final String value;
   final String label;
+  final String detail;
+  final Color cardColor;
+  final Color valueColor;
 
   @override
   Widget build(BuildContext context) => Semantics(
         label: '$label, $value',
         excludeSemantics: true,
-        child: Column(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.11),
-                shape: BoxShape.circle,
+        child: Container(
+          height: 252,
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 18),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(AppRadius.sheet),
+          ),
+          child: Column(
+            children: [
+              _DashboardMetricSprite(
+                size: 72,
+                assetPath: assetPath,
               ),
-              child: Icon(icon, size: 18, color: color),
-            ),
-            const SizedBox(height: AppSpacing.xs + 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: AppTypography.bodyMedium.copyWith(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Text(
-                label,
-                maxLines: 2,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.caption.copyWith(fontSize: 9.5),
+              const Spacer(),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  style: AppTypography.numericLg.copyWith(
+                    color: valueColor,
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                detail,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
         ),
+      );
+}
+
+/// Crops an icon from the generated 2 × 2 metric sprite without needing four
+/// nearly identical bitmap files in the app bundle.
+class _DashboardMetricSprite extends StatelessWidget {
+  const _DashboardMetricSprite({
+    required this.size,
+    required this.assetPath,
+  });
+
+  final double size;
+  final String assetPath;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+        assetPath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        excludeFromSemantics: true,
+      );
+}
+
+/// Crops one of the five generated quick-access objects from a single source
+/// image. Keeping the source together makes their 3D lighting consistent.
+class _DashboardQuickAccessSprite extends StatelessWidget {
+  const _DashboardQuickAccessSprite({
+    required this.size,
+    required this.assetPath,
+  });
+
+  final double size;
+  final String assetPath;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+        assetPath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        excludeFromSemantics: true,
       );
 }
 
@@ -1362,31 +1417,31 @@ class _DashboardQuickAccessTabs extends StatelessWidget {
   static const _tabs = [
     _DashboardQuickAccessTab(
       label: 'Wallet',
-      icon: LucideIcons.wallet,
+      assetPath: AppAssets.profileEarningsWallet3d,
       color: Color(0xFF16A34A),
       route: AppRoutes.wallet,
     ),
     _DashboardQuickAccessTab(
       label: 'Incentives',
-      icon: LucideIcons.gift,
+      assetPath: AppAssets.dashboardIncentives3d,
       color: Color(0xFFF97316),
       route: AppRoutes.incentives,
     ),
     _DashboardQuickAccessTab(
       label: 'Performance',
-      icon: LucideIcons.barChart3,
+      assetPath: AppAssets.dashboardPerformance3d,
       color: Color(0xFF2563EB),
       route: AppRoutes.earnings,
     ),
     _DashboardQuickAccessTab(
       label: 'Schedule',
-      icon: LucideIcons.calendarDays,
+      assetPath: AppAssets.dashboardSchedule3d,
       color: Color(0xFF9333EA),
       route: AppRoutes.gigs,
     ),
     _DashboardQuickAccessTab(
       label: 'Support',
-      icon: LucideIcons.headphones,
+      assetPath: AppAssets.profileHelpHeadset3d,
       color: Color(0xFF14B8A6),
       route: AppRoutes.support,
     ),
@@ -1405,27 +1460,12 @@ class _DashboardQuickAccessTabs extends StatelessWidget {
                   'Quick access',
                   style: AppTypography.h2.copyWith(fontSize: 18),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    'Your partner tools',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm + 2),
             LayoutBuilder(
               builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 560
-                    ? 5
-                    : constraints.maxWidth >= 420
-                        ? 3
-                        : 2;
+                final columns = constraints.maxWidth >= 340 ? 5 : 3;
                 const gap = AppSpacing.sm;
                 final itemWidth =
                     (constraints.maxWidth - (gap * (columns - 1))) / columns;
@@ -1451,13 +1491,13 @@ class _DashboardQuickAccessTabs extends StatelessWidget {
 class _DashboardQuickAccessTab {
   const _DashboardQuickAccessTab({
     required this.label,
-    required this.icon,
+    required this.assetPath,
     required this.color,
     required this.route,
   });
 
   final String label;
-  final IconData icon;
+  final String assetPath;
   final Color color;
   final String route;
 }
@@ -1480,16 +1520,16 @@ class _QuickAccessTabTile extends StatelessWidget {
             child: AppPressEffect(
               pressedScale: 0.97,
               child: Ink(
-                height: 84,
+                height: 112,
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.xs,
-                  vertical: AppSpacing.sm,
+                  vertical: AppSpacing.md,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: tab.color.withValues(alpha: 0.075),
                   borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
-                    color: tab.color.withValues(alpha: 0.15),
+                    color: tab.color.withValues(alpha: 0.08),
                   ),
                   boxShadow: const [
                     BoxShadow(
@@ -1502,15 +1542,9 @@ class _QuickAccessTabTile extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: tab.color.withValues(alpha: 0.11),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(tab.icon, size: 16, color: tab.color),
+                    _DashboardQuickAccessSprite(
+                      size: 52,
+                      assetPath: tab.assetPath,
                     ),
                     const SizedBox(height: AppSpacing.xs + 2),
                     FittedBox(

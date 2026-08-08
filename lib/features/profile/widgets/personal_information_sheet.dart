@@ -162,10 +162,12 @@ class PartnerIdSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               'Valid partner ID',
-              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+              style:
+                  AppTypography.body.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xl),
-            Text(information.fullName, style: AppTypography.h1.copyWith(fontSize: 30)),
+            Text(information.fullName,
+                style: AppTypography.h1.copyWith(fontSize: 30)),
             const SizedBox(height: AppSpacing.xs),
             Text(information.partnerId, style: AppTypography.bodyMedium),
             const SizedBox(height: AppSpacing.xl),
@@ -187,10 +189,14 @@ class PartnerIdSheet extends StatelessWidget {
                 children: [
                   const Icon(LucideIcons.circle, color: AppColors.secondary),
                   const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Currently not delivering any order',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.info,
+                  Expanded(
+                    child: Text(
+                      'Currently not delivering any order',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.info,
+                      ),
                     ),
                   ),
                 ],

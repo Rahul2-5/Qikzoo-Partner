@@ -114,7 +114,7 @@ void main() {
   testWidgets('Settings menu navigates to the settings route', (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
-    await tester.tap(find.text('App language'));
+    await tester.tap(find.text('App settings'));
     await tester.pumpAndSettle();
 
     expect(find.text('Settings Screen'), findsOneWidget);
@@ -124,7 +124,7 @@ void main() {
       (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp());
-    await tester.tap(find.text('Agreement'));
+    await tester.tap(find.text('Agreements'));
     await tester.pumpAndSettle();
 
     expect(find.text('Agreement Screen'), findsOneWidget);
