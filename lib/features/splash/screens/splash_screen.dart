@@ -34,7 +34,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   /// loop if the backend is down.
   Future<void> _bootstrap() async {
     final delay = Future.delayed(const Duration(milliseconds: 1000));
-    final result = await ref.read(authSessionProvider.notifier).restoreSession();
+    final result =
+        await ref.read(authSessionProvider.notifier).restoreSession();
     await delay;
     if (!mounted) return;
     _handleResult(result);
@@ -73,8 +74,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final reduceMotion = AppMotion.reduceMotion(context);
     final screenHeight = MediaQuery.sizeOf(context).height;
     final isCompact = screenHeight < 720;
-    final riderHeight =
-        isCompact ? 245.0 : screenHeight >= 900 ? 340.0 : 310.0;
+    final riderHeight = isCompact
+        ? 245.0
+        : screenHeight >= 900
+            ? 340.0
+            : 310.0;
     const logoRed = Color(0xFFFF3D1F);
     const logoBlue = Color(0xFF0E43B7);
     const splashBackground = Color(0xFFF8FBFF);
@@ -135,90 +139,95 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             scale: _exiting ? 0.92 : 1,
             duration: AppMotion.duration(context, AppMotion.standard),
             curve: AppMotion.enter,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (reduceMotion)
-                      glow
-                    else
-                      glow
-                          .animate(onPlay: (c) => c.repeat(reverse: true))
-                          .scaleXY(
-                            begin: 0.85,
-                            end: 1.15,
-                            duration: 1400.ms,
-                            curve: Curves.easeInOut,
-                          )
-                          .fadeIn(duration: 600.ms),
-                    if (reduceMotion)
-                      riderIllustration
-                    else
-                      riderIllustration
-                          .animate()
-                          .scale(
-                            begin: const Offset(0.82, 0.82),
-                            end: const Offset(1, 1),
-                            duration: 650.ms,
-                            curve: Curves.easeOutBack,
-                          )
-                          .fadeIn(duration: 400.ms),
-                  ],
-                ),
-                SizedBox(height: isCompact ? AppSpacing.xs : AppSpacing.sm),
-                if (reduceMotion)
-                  logo
-                else
-                  logo
-                      .animate(delay: 280.ms)
-                      .fadeIn(duration: 350.ms)
-                      .slideY(
-                        begin: 0.15,
-                        end: 0,
-                        duration: 350.ms,
-                        curve: Curves.easeOut,
-                      ),
-                const SizedBox(height: AppSpacing.xs),
-                if (reduceMotion)
-                  appDescriptor
-                else
-                  appDescriptor
-                      .animate(delay: 500.ms)
-                      .fadeIn(duration: 400.ms)
-                      .slideY(
-                        begin: 0.3,
-                        end: 0,
-                        duration: 400.ms,
-                        curve: Curves.easeOut,
-                      ),
-                const SizedBox(height: AppSpacing.sm),
-                if (reduceMotion)
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 340),
-                    child: tagline,
-                  )
-                else
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 340),
-                    child: tagline
-                        .animate(delay: 720.ms)
-                        .fadeIn(duration: 420.ms)
-                        .slideY(
-                          begin: 0.25,
+            // Scales the whole brand-moment layout down as one unit rather
+            // than overflowing — `isCompact` above only reacts to height
+            // brackets, not the tighter budget a landscape window forces
+            // (e.g. a 320px-tall window), so this is the backstop for any
+            // viewport shorter than the content's natural height.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (reduceMotion)
+                        glow
+                      else
+                        glow
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .scaleXY(
+                              begin: 0.85,
+                              end: 1.15,
+                              duration: 1400.ms,
+                              curve: Curves.easeInOut,
+                            )
+                            .fadeIn(duration: 600.ms),
+                      if (reduceMotion)
+                        riderIllustration
+                      else
+                        riderIllustration
+                            .animate()
+                            .scale(
+                              begin: const Offset(0.82, 0.82),
+                              end: const Offset(1, 1),
+                              duration: 650.ms,
+                              curve: Curves.easeOutBack,
+                            )
+                            .fadeIn(duration: 400.ms),
+                    ],
+                  ),
+                  SizedBox(height: isCompact ? AppSpacing.xs : AppSpacing.sm),
+                  if (reduceMotion)
+                    logo
+                  else
+                    logo.animate(delay: 280.ms).fadeIn(duration: 350.ms).slideY(
+                          begin: 0.15,
                           end: 0,
-                          duration: 420.ms,
+                          duration: 350.ms,
                           curve: Curves.easeOut,
                         ),
+                  const SizedBox(height: AppSpacing.xs),
+                  if (reduceMotion)
+                    appDescriptor
+                  else
+                    appDescriptor
+                        .animate(delay: 500.ms)
+                        .fadeIn(duration: 400.ms)
+                        .slideY(
+                          begin: 0.3,
+                          end: 0,
+                          duration: 400.ms,
+                          curve: Curves.easeOut,
+                        ),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (reduceMotion)
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 340),
+                      child: tagline,
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 340),
+                      child: tagline
+                          .animate(delay: 720.ms)
+                          .fadeIn(duration: 420.ms)
+                          .slideY(
+                            begin: 0.25,
+                            end: 0,
+                            duration: 420.ms,
+                            curve: Curves.easeOut,
+                          ),
+                    ),
+                  SizedBox(height: isCompact ? AppSpacing.lg : AppSpacing.xl),
+                  _PulsingDots(
+                    activeColor: logoRed,
+                    idleColor: logoBlue,
+                    motionEnabled: !reduceMotion,
                   ),
-                SizedBox(height: isCompact ? AppSpacing.lg : AppSpacing.xl),
-                _PulsingDots(
-                  activeColor: logoRed,
-                  idleColor: logoBlue,
-                  motionEnabled: !reduceMotion,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
