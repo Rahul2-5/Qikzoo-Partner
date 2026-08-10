@@ -157,7 +157,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       // predictable next onboarding step rather than leaving the rider on a
       // loading button while an independent status request is unavailable.
       return profile.hasCompleteAddress
-          ? AppRoutes.vehicleSelection
+          ? AppRoutes.vehicleRegistration
           : AppRoutes.address;
     }
   }

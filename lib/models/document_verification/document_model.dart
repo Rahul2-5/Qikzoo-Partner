@@ -2,14 +2,17 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+/// One combined `governmentId` slot, not separate Aadhaar/PAN slots — the
+/// backend's `RiderKyc` stores a single `governmentIdType` (whichever one
+/// the rider chose in KYC) + one document, not one of each. No backend
+/// field exists for a standalone "vehicle photo" document, so that type
+/// was dropped rather than fabricated.
 enum DocumentType {
   profilePhoto,
-  aadhaar,
-  pan,
+  governmentId,
   drivingLicense,
   vehicleRc,
   vehicleInsurance,
-  vehiclePhoto,
   bankProof,
 }
 
@@ -52,18 +55,14 @@ extension DocumentTypeDisplay on DocumentType {
     switch (this) {
       case DocumentType.profilePhoto:
         return 'Profile Photo';
-      case DocumentType.aadhaar:
-        return 'Aadhaar Card';
-      case DocumentType.pan:
-        return 'PAN Card';
+      case DocumentType.governmentId:
+        return 'Government ID';
       case DocumentType.drivingLicense:
         return 'Driving License';
       case DocumentType.vehicleRc:
         return 'Vehicle RC';
       case DocumentType.vehicleInsurance:
         return 'Insurance';
-      case DocumentType.vehiclePhoto:
-        return 'Vehicle Photo';
       case DocumentType.bankProof:
         return 'Bank Details';
     }
@@ -76,18 +75,14 @@ extension DocumentTypeDisplay on DocumentType {
     switch (this) {
       case DocumentType.profilePhoto:
         return LucideIcons.userCircle;
-      case DocumentType.aadhaar:
+      case DocumentType.governmentId:
         return LucideIcons.fingerprint;
-      case DocumentType.pan:
-        return LucideIcons.contact;
       case DocumentType.drivingLicense:
         return LucideIcons.creditCard;
       case DocumentType.vehicleRc:
         return LucideIcons.car;
       case DocumentType.vehicleInsurance:
         return LucideIcons.shieldCheck;
-      case DocumentType.vehiclePhoto:
-        return LucideIcons.camera;
       case DocumentType.bankProof:
         return LucideIcons.landmark;
     }

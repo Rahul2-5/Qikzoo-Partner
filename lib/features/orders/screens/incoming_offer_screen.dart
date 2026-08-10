@@ -25,12 +25,10 @@ import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/misc/error_widget_custom.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
 
-/// Shown when the dashboard's offer poll detects a WAITING_RIDER attempt.
-/// The backend's `GET /rider/dispatch/current` only returns the bare
-/// DispatchAttempt row (id, distanceKm, broadcast, expiresAt, ...) — no
-/// restaurant name, address, ETA, or estimated earnings are available at
-/// this stage, so this screen only ever shows what the backend actually
-/// provides rather than inventing the rest.
+/// Shown when a WAITING_RIDER attempt is detected — either by the dashboard/
+/// screen poll, or immediately on tapping an incoming FCM push (see
+/// push_service.dart, which refreshes dispatchOfferProvider before routing
+/// here so this screen never has to wait on the next poll tick).
 class IncomingOfferScreen extends ConsumerStatefulWidget {
   const IncomingOfferScreen({super.key});
 
@@ -191,6 +189,8 @@ class _OfferView extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text('New delivery request', style: AppTypography.h1),
+        const SizedBox(height: AppSpacing.xs),
+        Text(offer.restaurantName, style: AppTypography.bodyMedium),
         const SizedBox(height: AppSpacing.sm),
         CountdownTimer(
           key: ValueKey(offer.id),
@@ -208,9 +208,25 @@ class _OfferView extends StatelessWidget {
           child: Column(
             children: [
               _InfoRow(
+                icon: LucideIcons.indianRupee,
+                label: 'You earn',
+                value: '₹${offer.payout.toStringAsFixed(0)}',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _InfoRow(
+                icon: LucideIcons.store,
+                label: 'Pickup from',
+                value: offer.restaurantAddress.isEmpty
+                    ? '${offer.distanceKm.toStringAsFixed(1)} km away'
+                    : offer.restaurantAddress,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _InfoRow(
                 icon: LucideIcons.mapPin,
-                label: 'Distance to pickup',
-                value: '${offer.distanceKm.toStringAsFixed(1)} km',
+                label: 'Deliver to',
+                value: offer.userAddress.isEmpty
+                    ? '${offer.dropDistanceKm.toStringAsFixed(1)} km away'
+                    : offer.userAddress,
               ),
               if (offer.broadcast) ...[
                 const SizedBox(height: AppSpacing.sm),

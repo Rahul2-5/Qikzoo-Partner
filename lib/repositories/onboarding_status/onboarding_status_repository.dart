@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
-import '../../core/constants/app_constants.dart';
 import '../../models/onboarding_status/onboarding_status_model.dart';
 import '../../providers/core/api_providers.dart';
 
@@ -25,30 +24,6 @@ abstract class OnboardingStatusRepository {
   /// IN_PROGRESS without wiping existing KYC/vehicle data. Same raw-row
   /// caveat as [submitOnboarding] — call [getStatus] again afterward.
   Future<void> reapply();
-}
-
-class MockOnboardingStatusRepository implements OnboardingStatusRepository {
-  @override
-  Future<OnboardingStatusModel> getStatus() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return const OnboardingStatusModel(
-      accountStatus: RiderAccountStatus.active,
-      onboardingStatus: RiderOnboardingStatus.approved,
-    );
-  }
-
-  @override
-  Future<void> submitOnboarding({
-    required String termsVersion,
-    required String privacyPolicyVersion,
-  }) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-  }
-
-  @override
-  Future<void> reapply() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-  }
 }
 
 class DioOnboardingStatusRepository implements OnboardingStatusRepository {

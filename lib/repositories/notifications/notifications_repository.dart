@@ -1,39 +1,51 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/app_constants.dart';
+import '../../core/api/api_client.dart';
+import '../../core/api/api_endpoints.dart';
 import '../../models/notifications/notification_model.dart';
+import '../../providers/core/api_providers.dart';
 
 abstract class NotificationsRepository {
   Future<List<NotificationModel>> getNotifications();
   Future<void> markAsRead(String id);
 }
 
-class MockNotificationsRepository implements NotificationsRepository {
-  final List<NotificationModel> _notifications = [
-    NotificationModel(
-      id: 'n1',
-      title: 'New incentive available',
-      body: 'Complete 5 more orders today to earn a bonus.',
-      isRead: false,
-      createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
-      type: NotificationType.promotion,
-    ),
-  ];
+/// Backed by the rider notification inbox (`RiderNotificationInboxController`
+/// / `NotificationInboxService`) — the same `NotificationLog` rows created
+/// whenever `DeviceTokensService.notifyUser` fires a push. Not a separate
+/// notification system; this is the only place the rider app reads that
+/// history from.
+class DioNotificationsRepository implements NotificationsRepository {
+  const DioNotificationsRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
+  final ApiClient _apiClient;
 
   @override
   Future<List<NotificationModel>> getNotifications() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return _notifications;
+    final response = await _apiClient
+        .get<Map<String, dynamic>>(ApiEndpoints.riderNotifications);
+    final payload = _unwrap(response.data);
+    final items = payload['items'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map(NotificationModel.fromJson)
+        .toList();
   }
 
   @override
   Future<void> markAsRead(String id) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    final index = _notifications.indexWhere((n) => n.id == id);
-    if (index != -1) {
-      _notifications[index] = _notifications[index].copyWith(isRead: true);
-    }
+    await _apiClient.patch<void>(ApiEndpoints.riderNotificationRead(id));
+  }
+
+  Map<String, dynamic> _unwrap(Map<String, dynamic>? body) {
+    if (body == null) return const {};
+    final nested = body['data'];
+    return nested is Map<String, dynamic> ? nested : body;
   }
 }
 
-final notificationsRepositoryProvider =
-    Provider<NotificationsRepository>((ref) => MockNotificationsRepository());
+final notificationsRepositoryProvider = Provider<NotificationsRepository>(
+  (ref) =>
+      DioNotificationsRepository(apiClient: ref.watch(apiClientProvider)),
+);

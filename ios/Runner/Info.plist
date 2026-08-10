@@ -55,6 +55,13 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Scaffolding for background FCM delivery once a real
+	     GoogleService-Info.plist + APNs key are supplied — not sufficient on
+	     its own; Firebase is not initialized on iOS yet (see push_service.dart). -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

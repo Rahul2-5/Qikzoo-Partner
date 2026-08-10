@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
-import 'package:delivery_partner_app/features/orders/data/order_preview_data.dart';
 import 'package:delivery_partner_app/features/orders/screens/orders_screen.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
 import 'package:delivery_partner_app/models/orders/order_history_page_model.dart';
@@ -137,7 +136,6 @@ Widget buildApp({required FakeRiderOrdersRepository repository}) {
     overrides: [
       riderOrdersRepositoryProvider.overrideWithValue(repository),
       dashboardRepositoryProvider.overrideWithValue(FakeDashboardRepository()),
-      showOrderPreviewProvider.overrideWithValue(false),
     ],
     child: GetMaterialApp(
       initialRoute: AppRoutes.orders,
@@ -185,27 +183,21 @@ void main() {
     expect(find.text('You have an order in progress'), findsNothing);
   });
 
-  testWidgets('defaults to the Active tab and lists its orders',
+  testWidgets(
+      'defaults to the Active tab; a live active order drives the banner and count',
       (tester) async {
-    final repo = FakeRiderOrdersRepository(pages: {
-      OrderHistoryFilter.active: [
-        OrderHistoryPageModel(
-          items: [
-            mockOrder(
-                restaurantName: 'Active Kitchen',
-                status: RiderOrderStatus.accepted)
-          ],
-          total: 1,
-          page: 1,
-          pageSize: 20,
-        ),
-      ],
-    });
+    // orderCount for the Active tab is deliberately tied to activeOrderProvider
+    // (the single real assignment slot), not the paginated history list —
+    // see the comment in orders_screen.dart.
+    final repo = FakeRiderOrdersRepository(
+      activeOrder:
+          mockOrder(restaurantName: 'Active Kitchen', status: RiderOrderStatus.accepted),
+    );
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Umami'), findsOneWidget);
-    expect(find.text('6 orders'), findsOneWidget);
+    expect(find.text('You have an order in progress'), findsOneWidget);
+    expect(find.text('1 order'), findsOneWidget);
     expect(find.text('Online'), findsOneWidget);
   });
 
@@ -213,9 +205,6 @@ void main() {
       'switching tabs loads the Completed/Cancelled lists independently',
       (tester) async {
     final repo = FakeRiderOrdersRepository(pages: {
-      OrderHistoryFilter.completed: [
-        const OrderHistoryPageModel(items: [], total: 0, page: 1, pageSize: 20),
-      ],
       OrderHistoryFilter.completed: [
         OrderHistoryPageModel(
           items: [mockOrder(restaurantName: 'Completed Kitchen')],
@@ -241,7 +230,7 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Umami'), findsOneWidget);
+    expect(find.text('No active orders right now.'), findsOneWidget);
 
     await tester.tap(find.text('Completed'));
     await tester.pumpAndSettle();
@@ -267,10 +256,10 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Accept').first);
+    await tester.tap(find.text('Spice Route Kitchen'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Delivery accepted'), findsOneWidget);
+    expect(find.text('Order Details: ro-42'), findsOneWidget);
   });
 
   testWidgets('infinite scroll loads the next page near the bottom of the list',
@@ -316,12 +305,7 @@ void main() {
     await tester.pumpWidget(buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    for (var index = 0; index < 6; index++) {
-      await tester.tap(find.text('Reject').first);
-      await tester.pump();
-    }
-
-    expect(find.text('No delivery offers right now.'), findsOneWidget);
+    expect(find.text('No active orders right now.'), findsOneWidget);
   });
 
   testWidgets('a history load failure shows Retry, which succeeds on retry',

@@ -11,7 +11,7 @@ void main() {
     var tapped = false;
     await tester.pumpWidget(wrap(DocumentUploadTile(
       document: const DocumentModel(
-          type: DocumentType.aadhaar, status: DocumentStatus.notUploaded),
+          type: DocumentType.governmentId, status: DocumentStatus.notUploaded),
       onTap: () => tapped = true,
     )));
 
@@ -24,7 +24,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(wrap(DocumentUploadTile(
       document: const DocumentModel(
-          type: DocumentType.aadhaar, status: DocumentStatus.uploading),
+          type: DocumentType.governmentId, status: DocumentStatus.uploading),
       onTap: () {},
     )));
 
@@ -34,7 +34,7 @@ void main() {
   testWidgets('uploaded shows Uploaded label', (tester) async {
     await tester.pumpWidget(wrap(DocumentUploadTile(
       document: const DocumentModel(
-        type: DocumentType.aadhaar,
+        type: DocumentType.governmentId,
         status: DocumentStatus.pendingVerification,
         fileUrl: '/tmp/a.jpg',
       ),
@@ -47,7 +47,7 @@ void main() {
   testWidgets('rejected shows the rejection reason', (tester) async {
     await tester.pumpWidget(wrap(DocumentUploadTile(
       document: const DocumentModel(
-        type: DocumentType.aadhaar,
+        type: DocumentType.governmentId,
         status: DocumentStatus.rejected,
         rejectionReason: 'Image is blurry',
       ),
@@ -69,10 +69,10 @@ void main() {
     expect(find.textContaining('(Optional)'), findsOneWidget);
   });
 
-  testWidgets('PAN card shows the required suffix', (tester) async {
+  testWidgets('Government ID shows the required suffix', (tester) async {
     await tester.pumpWidget(wrap(DocumentUploadTile(
       document: const DocumentModel(
-          type: DocumentType.pan, status: DocumentStatus.notUploaded),
+          type: DocumentType.governmentId, status: DocumentStatus.notUploaded),
       onTap: () {},
     )));
 

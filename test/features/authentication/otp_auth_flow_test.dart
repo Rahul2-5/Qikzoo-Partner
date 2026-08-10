@@ -3,6 +3,7 @@ import 'package:delivery_partner_app/features/authentication/screens/otp_verific
 import 'package:delivery_partner_app/models/authentication/auth_flow.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
+import 'package:delivery_partner_app/providers/authentication/auth_provider.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,11 @@ Widget buildFlow(AuthFlow flow) {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(SuccessfulAuthRepository()),
+      // The real mobile-number screen sets this as the rider types (see
+      // mobile_number_screen.dart), and it's what the OTP screen's _phone
+      // getter reads first — without it, _onOtpCompleted bails out early on
+      // "Phone number missing" and verifyOtp() is never actually invoked.
+      phoneNumberUiProvider.overrideWith((ref) => '9876543210'),
     ],
     child: GetMaterialApp(
       initialRoute: '/verify',
@@ -54,11 +60,20 @@ Widget buildFlow(AuthFlow flow) {
 }
 
 Future<void> enterOtp(WidgetTester tester) async {
-  for (final digit in ['1', '2', '3', '4']) {
-    await tester.tap(find.text(digit));
-    await tester.pump();
+  // The OTP screen uses pin_code_fields' PinCodeTextField, which renders
+  // one underlying TextFormField per box and distributes pasted/entered
+  // text across all of them from the first field (same pattern already
+  // used for the delivery OTP sheet in active_order_screen_test.dart), not
+  // tappable digit buttons. Its active-box cursor animation repeats
+  // indefinitely once focused, so pumpAndSettle() never converges —
+  // bounded pumps drive the same frames without waiting on it.
+  await tester.enterText(find.byType(TextFormField).first, '1234');
+  await tester.pump();
+  // Bounded, not pumpAndSettle: enough for the verify call plus the page
+  // transition's own animation to finish landing on the next route.
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
   }
-  await tester.pumpAndSettle();
 }
 
 void main() {

@@ -270,8 +270,8 @@ Widget buildApp({
             name: AppRoutes.personalInfo,
             page: () => const PersonalInfoScreen()),
         GetPage(
-          name: AppRoutes.vehicleSelection,
-          page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
+          name: AppRoutes.vehicleRegistration,
+          page: () => const Scaffold(body: Text('Vehicle Registration Screen')),
         ),
         GetPage(
           name: AppRoutes.address,
@@ -446,7 +446,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Dashboard Screen'), findsOneWidget);
-    expect(find.text('Vehicle Selection Screen'), findsNothing);
+    expect(find.text('Vehicle Registration Screen'), findsNothing);
   });
 
   testWidgets(
@@ -495,7 +495,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('can no longer be edited'), findsWidgets);
-    expect(find.text('Vehicle Selection Screen'), findsNothing);
+    expect(find.text('Vehicle Registration Screen'), findsNothing);
   });
 
   testWidgets('a hard 401 logs the rider out and navigates to welcome',

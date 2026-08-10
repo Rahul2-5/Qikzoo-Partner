@@ -18,8 +18,7 @@ import '../widgets/document_upload_actions.dart';
 import '../widgets/document_upload_tile.dart';
 
 const documentDisplayOrder = [
-  DocumentType.aadhaar,
-  DocumentType.pan,
+  DocumentType.governmentId,
   DocumentType.drivingLicense,
   DocumentType.vehicleRc,
   DocumentType.vehicleInsurance,
@@ -27,8 +26,7 @@ const documentDisplayOrder = [
 ];
 
 const _requiredDocumentTypes = [
-  DocumentType.aadhaar,
-  DocumentType.pan,
+  DocumentType.governmentId,
   DocumentType.drivingLicense,
   DocumentType.vehicleRc,
 ];
@@ -101,7 +99,7 @@ class DocumentUploadScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'PAN card is required. Bank details and insurance are optional.',
+                'A government ID, driving licence and vehicle RC are required. Bank details and insurance are optional.',
                 style:
                     AppTypography.body.copyWith(color: AppColors.textSecondary),
               ),
@@ -141,9 +139,17 @@ class DocumentUploadScreen extends ConsumerWidget {
                         final isUploaded = _isUploaded(document.status);
                         return DocumentUploadTile(
                           document: document,
-                          onTap: () => isUploaded
-                              ? showDocumentPreviewSheet(context, ref, document)
-                              : pickAndUploadDocument(context, ref, type),
+                          onTap: () {
+                            // Bank details are text fields entered on their
+                            // own screen, not an uploaded document.
+                            if (type == DocumentType.bankProof) {
+                              Get.toNamed(AppRoutes.bankDetails);
+                            } else if (isUploaded) {
+                              showDocumentPreviewSheet(context, ref, document);
+                            } else {
+                              pickAndUploadDocument(context, ref, type);
+                            }
+                          },
                         );
                       },
                     );

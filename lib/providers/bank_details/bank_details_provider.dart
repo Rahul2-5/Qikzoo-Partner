@@ -6,11 +6,13 @@ class BankDetailsNotifier extends AsyncNotifier<BankDetailsModel?> {
   @override
   Future<BankDetailsModel?> build() => ref.watch(bankDetailsRepositoryProvider).getBankDetails();
 
-  Future<void> save(BankDetailsModel details) async {
+  Future<void> save(BankDetailsModel details, {required String accountNumber}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(bankDetailsRepositoryProvider).saveBankDetails(details);
-      return details;
+      await ref
+          .read(bankDetailsRepositoryProvider)
+          .saveBankDetails(details, accountNumber: accountNumber);
+      return ref.read(bankDetailsRepositoryProvider).getBankDetails();
     });
   }
 }

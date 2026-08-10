@@ -87,17 +87,14 @@ bool _allStepsCompleted(List<VerificationStepModel>? steps) =>
     steps.isNotEmpty &&
     steps.every((s) => s.state == VerificationStepState.completed);
 
-/// "HDFC ····1234" — the IFSC's first four characters are the bank code and
-/// the last four account digits are shown; `null` when no bank is on file.
+/// "HDFC Bank •••• 1234" — `null` when no bank is on file. The masked
+/// account number comes pre-masked from the backend; never re-derived here.
 String? _bankLabel(BankDetailsModel? bank) {
-  if (bank == null) return null;
-  final account = bank.accountNumber.trim();
-  final last4 =
-      account.length >= 4 ? account.substring(account.length - 4) : account;
-  final ifsc = bank.ifsc.trim().toUpperCase();
-  final bankCode = ifsc.length >= 4 ? ifsc.substring(0, 4) : ifsc;
-  if (bankCode.isEmpty) return '····$last4';
-  return '$bankCode ····$last4';
+  if (bank == null || bank.accountNumberMasked == null) return null;
+  final bankName = bank.bankName.trim();
+  return bankName.isEmpty
+      ? bank.accountNumberMasked
+      : '$bankName ${bank.accountNumberMasked}';
 }
 
 String _genderLabel(Gender? gender) => switch (gender) {

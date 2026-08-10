@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 
-enum VerificationStepType { identity, vehicle, bank, training, finalApproval }
+/// No backend "training" section/step exists — dropped rather than
+/// fabricated. `identity` and `bank` both map to the backend's single KYC
+/// section (it stores government ID and bank payout details together).
+enum VerificationStepType { identity, vehicle, bank, finalApproval }
 
 enum VerificationStepState { pending, inProgress, completed }
 

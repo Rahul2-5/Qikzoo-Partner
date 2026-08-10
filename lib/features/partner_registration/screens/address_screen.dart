@@ -180,7 +180,7 @@ class _AddressScreenState extends ConsumerState<AddressScreen> {
           await ref.read(onboardingStatusRepositoryProvider).getStatus();
       return NextOnboardingStepResolver.resolve(status, profile: profile);
     } catch (_) {
-      return AppRoutes.vehicleSelection;
+      return AppRoutes.vehicleRegistration;
     }
   }
 

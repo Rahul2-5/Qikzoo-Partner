@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
-import '../../core/constants/app_constants.dart';
 import '../../models/wallet/wallet_model.dart';
 import '../../models/wallet/transaction_model.dart';
 import '../../providers/core/api_providers.dart';
@@ -9,28 +8,6 @@ import '../../providers/core/api_providers.dart';
 abstract class WalletRepository {
   Future<WalletModel> getWallet();
   Future<List<TransactionModel>> getTransactions();
-}
-
-class MockWalletRepository implements WalletRepository {
-  @override
-  Future<WalletModel> getWallet() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return const WalletModel(balance: 3120, pendingAmount: 240);
-  }
-
-  @override
-  Future<List<TransactionModel>> getTransactions() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return [
-      TransactionModel(
-        id: 'txn_1',
-        type: TransactionType.credit,
-        amount: 96,
-        description: 'Order #order_1 payout',
-        date: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-    ];
-  }
 }
 
 /// `GET /rider/wallet` returns the rider's wallet balances in paise

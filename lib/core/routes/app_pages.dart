@@ -11,11 +11,8 @@ import '../../features/partner_registration/screens/emergency_contact_screen.dar
 import '../../features/partner_registration/screens/kyc_screen.dart';
 import '../../features/partner_registration/screens/personal_info_screen.dart';
 import '../../features/partner_registration/screens/review_screen.dart';
-import '../../features/partner_registration/screens/select_city_screen.dart';
 import '../../features/partner_registration/screens/vehicle_registration_screen.dart';
 import '../../features/partner_registration/screens/verification_status_screen.dart';
-import '../../features/partner_registration/screens/vehicle_selection_screen.dart';
-import '../../features/partner_registration/screens/vehicle_details_screen.dart';
 import '../../features/partner_registration/screens/document_upload_screen.dart';
 import '../../features/partner_registration/screens/selfie_verification_screen.dart';
 import '../../features/partner_registration/screens/welcome_kit_screen.dart';
@@ -78,13 +75,6 @@ class AppPages {
         name: AppRoutes.emergencyContact,
         page: () => const EmergencyContactScreen()),
     GetPage(name: AppRoutes.review, page: () => const ReviewScreen()),
-    GetPage(
-        name: AppRoutes.vehicleSelection,
-        page: () => const VehicleSelectionScreen()),
-    GetPage(
-        name: AppRoutes.vehicleDetails,
-        page: () => const VehicleDetailsScreen()),
-    GetPage(name: AppRoutes.deliveryZone, page: () => const SelectCityScreen()),
     GetPage(
         name: AppRoutes.documentUpload,
         page: () => const DocumentUploadScreen()),

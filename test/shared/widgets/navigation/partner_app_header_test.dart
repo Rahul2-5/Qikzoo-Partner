@@ -5,6 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('renders the shared brand and unread notification treatment',
       (tester) async {
+    // bySemanticsLabel needs the semantics tree actually built — Flutter
+    // widget tests don't generate it by default.
+    final semantics = tester.ensureSemantics();
     var notificationTapped = false;
 
     await tester.pumpWidget(
@@ -25,14 +28,20 @@ void main() {
     expect(find.text('Qikzoo'), findsOneWidget);
     expect(find.text('PARTNER'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
+
+    // The button's Semantics doesn't set `container: true`, so its label
+    // merges with the descendant unread-count Text's own semantics (a
+    // trailing "\n3") rather than staying exactly "Notifications, 3 unread".
+    final notificationButtonLabel = RegExp(r'^Notifications, 3 unread\n3$');
     expect(
-      find.bySemanticsLabel('Notifications, 3 unread'),
+      find.bySemanticsLabel(notificationButtonLabel),
       findsOneWidget,
     );
 
-    await tester.tap(find.bySemanticsLabel('Notifications, 3 unread'));
+    await tester.tap(find.bySemanticsLabel(notificationButtonLabel));
     expect(notificationTapped, isTrue);
     expect(tester.takeException(), isNull);
+    semantics.dispose();
   });
 
   testWidgets('keeps the notification action at an accessible touch size',

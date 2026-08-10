@@ -132,7 +132,7 @@ void main() {
     )));
 
     expect(find.text('3'), findsOneWidget);
-    await tester.tap(find.byTooltip('Notifications'));
+    await tester.tap(find.byTooltip('3 unread notifications'));
     expect(tapped, isTrue);
   });
 

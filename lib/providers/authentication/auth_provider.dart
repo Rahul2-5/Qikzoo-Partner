@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/dio_service.dart';
 import '../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../core/push/push_service.dart';
 import '../../repositories/authentication/auth_repository.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/onboarding_status/onboarding_status_repository.dart';
@@ -27,6 +30,9 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
     state = await AsyncValue.guard(
       () => ref.read(authRepositoryProvider).verifyOtp(phoneNumber, otp, name: name),
     );
+    if (state.valueOrNull?.isAuthenticated == true) {
+      unawaited(PushService.instance.registerCurrentToken());
+    }
   }
 
   /// Called once on app start. If a refresh token is stored, silently
@@ -74,6 +80,7 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
           isAuthenticated: true,
         ),
       );
+      unawaited(PushService.instance.registerCurrentToken());
       return SessionRestoreResult(
         onboarding.isActive
             ? SessionRestoreOutcome.active
@@ -97,6 +104,7 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
   /// Ends the session: best-effort revokes it server-side, always clears
   /// local tokens, and resets [state] to signed-out.
   Future<void> logout() async {
+    await PushService.instance.removeCurrentToken();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncData(AuthSessionModel.empty);
   }

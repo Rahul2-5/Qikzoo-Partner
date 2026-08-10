@@ -32,9 +32,9 @@ void main() {
         documentRepositoryProvider.overrideWithValue(
           FakeDocumentRepository([
             const DocumentModel(
-              type: DocumentType.aadhaar,
+              type: DocumentType.governmentId,
               status: DocumentStatus.pendingVerification,
-              fileUrl: '/tmp/aadhaar.jpg',
+              fileUrl: '/tmp/government-id.jpg',
             ),
           ]),
         ),
@@ -43,7 +43,7 @@ void main() {
     addTearDown(container.dispose);
 
     await container.read(documentsProvider.future);
-    container.read(documentsProvider.notifier).remove(DocumentType.aadhaar);
+    container.read(documentsProvider.notifier).remove(DocumentType.governmentId);
 
     final updated = container.read(documentsProvider).value!.single;
     expect(updated.status, DocumentStatus.notUploaded);

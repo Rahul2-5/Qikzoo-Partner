@@ -233,9 +233,13 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
                     if (order.status == RiderOrderStatus.outForDelivery) ...[
                       const SizedBox(height: AppSpacing.sm),
                       DeliveryHandoffCard(
-                        preference: 'Call on arrival',
-                        buildingSummary: 'Tower B · Gate 2',
-                        instruction: 'Please hand over to security if unavailable.',
+                        buildingSummary:
+                            order.order.deliveryAddressLine?.trim().isNotEmpty == true
+                                ? order.order.deliveryAddressLine!
+                                : (order.order.deliveryCity ?? 'Address shared with pickup'),
+                        instruction: order.order.customerNote?.trim().isNotEmpty == true
+                            ? order.order.customerNote!
+                            : 'No delivery instructions provided.',
                         onCall: order.order.customerPhone == null
                             ? null
                             : () => launchPhoneCall(context, order.order.customerPhone!),
