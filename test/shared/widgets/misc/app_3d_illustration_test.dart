@@ -61,4 +61,25 @@ void main() {
     expect(tester.takeException(), isNull);
     semantics.dispose();
   });
+
+  testWidgets('keeps artwork visually smaller than its reserved layout space',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: App3dIllustration(
+            assetPath: AppAssets.welcomeKit3d,
+            semanticLabel: 'Welcome kit artwork',
+            size: 100,
+            glowColor: AppColors.secondary,
+            fallbackIcon: LucideIcons.packageCheck,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.getSize(find.byType(Image)), const Size(86, 86));
+    expect(tester.takeException(), isNull);
+  });
 }

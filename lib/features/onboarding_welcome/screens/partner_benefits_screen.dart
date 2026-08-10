@@ -348,7 +348,7 @@ class _InsuranceSpotlight extends StatelessWidget {
                   child: App3dIllustration(
                     assetPath: AppAssets.applicationSubmitted3d,
                     semanticLabel: 'Medical and health insurance protection',
-                    size: compact ? 116 : 132,
+                    size: compact ? 100 : 114,
                     glowColor: const Color(0xFFAAB7FF),
                     fallbackIcon: LucideIcons.shieldCheck,
                   ),
@@ -432,7 +432,7 @@ class _BenefitTile extends StatelessWidget {
       label: '$title. $description',
       child: Container(
         width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 100),
+        constraints: const BoxConstraints(minHeight: 96),
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.sm,
           AppSpacing.sm,
@@ -450,7 +450,7 @@ class _BenefitTile extends StatelessWidget {
             App3dIllustration(
               assetPath: assetPath,
               semanticLabel: title,
-              size: 80,
+              size: 68,
               glowColor: glowColor,
               fallbackIcon: fallbackIcon,
             ),

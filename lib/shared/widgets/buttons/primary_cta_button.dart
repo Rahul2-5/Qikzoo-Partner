@@ -52,11 +52,7 @@ class PrimaryCtaButton extends StatelessWidget {
                         border: Border.all(color: AppColors.border),
                       )
                     : BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: AppColors.ctaGradient,
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
                 child: InkWell(

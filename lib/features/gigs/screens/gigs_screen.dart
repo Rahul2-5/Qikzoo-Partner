@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/assets/app_assets.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
@@ -11,9 +13,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/dashboard/dashboard_stats_model.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
+import '../../../providers/notifications/notifications_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
+import '../../../shared/widgets/navigation/partner_app_header.dart';
 
 /// The partner's weekly gig schedule and earning opportunities.
 class GigsScreen extends ConsumerWidget {
@@ -23,6 +27,12 @@ class GigsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final availability =
         ref.watch(dashboardStatsProvider).valueOrNull?.availabilityStatus;
+    final unreadNotificationCount = ref
+        .watch(notificationsProvider)
+        .valueOrNull
+        ?.where((notification) => !notification.isRead)
+        .length ??
+        0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -39,7 +49,10 @@ class GigsScreen extends ConsumerWidget {
               AppSpacing.xl,
             ),
             children: [
-              _GigsHeader(availability: availability),
+              _GigsHeader(
+                availability: availability,
+                unreadNotificationCount: unreadNotificationCount,
+              ),
               const SizedBox(height: AppSpacing.md),
               const _WeekOverview(),
               const SizedBox(height: AppSpacing.lg),
@@ -69,9 +82,13 @@ class GigsScreen extends ConsumerWidget {
 }
 
 class _GigsHeader extends StatelessWidget {
-  const _GigsHeader({this.availability});
+  const _GigsHeader({
+    this.availability,
+    required this.unreadNotificationCount,
+  });
 
   final RiderAvailabilityStatus? availability;
+  final int unreadNotificationCount;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +108,7 @@ class _GigsHeader extends StatelessWidget {
           // The previous stacked header let its left and right controls cover
           // the wordmark on narrow phones. A regular row gives every control a
           // real width, while retaining the brand on standard phone widths.
-          final showWordmark = constraints.maxWidth >= 280;
+          final showWordmark = constraints.maxWidth >= 330;
 
           return Row(
             children: [
@@ -112,12 +129,9 @@ class _GigsHeader extends StatelessWidget {
                 const Spacer(),
               ] else
                 const Spacer(),
-              _HeaderAction(
-                icon: LucideIcons.bell,
-                label: 'Gig notifications',
-                showDot: true,
-                onTap: () => AppSnackBar.success(
-                    context, 'You have no new gig updates.'),
+              PartnerNotificationButton(
+                unreadCount: unreadNotificationCount,
+                onPressed: () => Get.toNamed(AppRoutes.notifications),
               ),
               _HeaderAction(
                 icon: LucideIcons.helpCircle,
@@ -202,29 +216,7 @@ class _PartnerWordmark extends StatelessWidget {
   const _PartnerWordmark();
 
   @override
-  Widget build(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Qikzoo',
-            style: AppTypography.h1.copyWith(
-              color: AppColors.primaryDark,
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -.8,
-            ),
-          ),
-          Text(
-            'PARTNER',
-            style: AppTypography.caption.copyWith(
-              color: AppColors.success,
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.65,
-            ),
-          ),
-        ],
-      );
+  Widget build(BuildContext context) => const PartnerWordmark();
 }
 
 class _HeaderAction extends StatelessWidget {
@@ -232,41 +224,16 @@ class _HeaderAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.showDot = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool showDot;
-
   @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
+  Widget build(BuildContext context) => PartnerHeaderIconButton(
+        icon: icon,
         label: label,
-        child: IconButton(
-          onPressed: onTap,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints.tightFor(width: 36, height: 44),
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(icon, size: 22, color: AppColors.textPrimary),
-              if (showDot)
-                const Positioned(
-                  right: -2,
-                  top: -2,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                    child: SizedBox(width: 8, height: 8),
-                  ),
-                ),
-            ],
-          ),
-        ),
+        onPressed: onTap,
       );
 }
 
@@ -278,7 +245,7 @@ class _WeekOverview extends StatelessWidget {
         label:
             'This week: 6 gigs booked, 11 hours planned, estimated payout ₹922 or more.',
         child: Container(
-          height: 284,
+          height: 258,
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -301,14 +268,14 @@ class _WeekOverview extends StatelessWidget {
                   const Positioned(
                       right: 154, top: 22, child: _Sparkle(size: 10)),
                   Positioned(
-                    right: compact ? -12 : -28,
-                    bottom: compact ? -4 : -24,
+                    right: compact ? -6 : -18,
+                    bottom: compact ? 2 : -10,
                     child: Opacity(
                       opacity: .96,
                       child: Image.asset(
                         AppAssets.gigCalendar3d,
-                    width: compact ? 154 : 190,
-                    cacheWidth: compact ? 308 : 424,
+                        width: compact ? 132 : 164,
+                        cacheWidth: compact ? 264 : 328,
                         fit: BoxFit.contain,
                         semanticLabel: 'Booked schedule calendar',
                       ),
@@ -570,70 +537,80 @@ class _OpportunityCard extends StatelessWidget {
                 AppSnackBar.info(context, '$title details are coming soon.'),
             borderRadius: BorderRadius.circular(AppRadius.sheet),
             child: Ink(
-              height: 150,
+              height: 148,
+              padding: const EdgeInsets.all(AppSpacing.sm + 2),
               decoration: BoxDecoration(
                 color: background,
                 borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(color: valueColor.withValues(alpha: .16)),
               ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    left: -12,
-                    bottom: 6,
-                    child: Image.asset(
-                      asset,
-                      width: 112,
-                      height: 112,
-                      cacheWidth: 224,
-                    ),
-                  ),
-                  Positioned(
-                    left: 82,
-                    right: 10,
-                    top: 18,
-                    child: Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMedium.copyWith(fontSize: 12),
-                    ),
-                  ),
-                  Positioned(
-                    left: 82,
-                    right: 8,
-                    top: 45,
-                    child: FittedBox(
-                      alignment: Alignment.centerLeft,
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        value,
-                        style: AppTypography.numericMd.copyWith(
-                          color: valueColor,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 180;
+                  // Keep the reward artwork prominent, while retaining a
+                  // dedicated text column in the two-card phone layout.
+                  final illustrationSize = compact ? 72.0 : 86.0;
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: illustrationSize,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Image.asset(
+                            asset,
+                            width: illustrationSize,
+                            height: illustrationSize,
+                            cacheWidth: (illustrationSize * 2).round(),
+                            fit: BoxFit.contain,
+                            excludeFromSemantics: true,
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 82,
-                    right: 8,
-                    bottom: 16,
-                    child: Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption
-                          .copyWith(fontSize: 9.5, height: 1.45),
-                    ),
-                  ),
-                  Positioned(
-                    right: 10,
-                    bottom: 10,
-                    child: _RoundArrow(color: valueColor),
-                  ),
-                ],
+                      const SizedBox(width: AppSpacing.xs + 2),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontSize: compact ? 11.5 : 12,
+                                height: 1.15,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            FittedBox(
+                              alignment: Alignment.centerLeft,
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                value,
+                                style: AppTypography.numericMd.copyWith(
+                                  color: valueColor,
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.caption.copyWith(
+                                fontSize: compact ? 9 : 9.5,
+                                height: 1.25,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),

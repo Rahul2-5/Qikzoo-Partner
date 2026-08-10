@@ -13,7 +13,7 @@ class SubmittedIllustration extends StatelessWidget {
     return const App3dIllustration(
       assetPath: AppAssets.applicationSubmitted3d,
       semanticLabel: 'Verified application checklist',
-      size: 220,
+      size: 184,
       glowColor: AppColors.success,
       fallbackIcon: LucideIcons.clipboardCheck,
     );

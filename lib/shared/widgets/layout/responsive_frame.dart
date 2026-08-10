@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_spacing.dart';
 
 class ResponsiveFrame extends StatelessWidget {
+  /// Layout breakpoints are based on the space this frame receives, rather
+  /// than a physical device type. This also makes the frame work correctly in
+  /// split-screen and resizable windows.
+  static const compactBreakpoint = 360.0;
+  static const mediumBreakpoint = 600.0;
+  static const expandedBreakpoint = 840.0;
+
   /// The maximum width of the complete frame, including its horizontal
   /// padding. Keeping that contract consistent avoids content jumping between
   /// screens that use different internal layouts.
@@ -19,15 +26,26 @@ class ResponsiveFrame extends StatelessWidget {
     this.alignment = Alignment.topCenter,
   });
 
+  /// Returns the standard horizontal gutter for the available content width.
+  ///
+  /// Callers can still supply [padding] for intentional screen-specific
+  /// layouts, but the default keeps the visual rhythm consistent everywhere.
+  static double horizontalGutterFor(double availableWidth) {
+    if (availableWidth < compactBreakpoint) {
+      return AppSpacing.sm + AppSpacing.xs;
+    }
+    if (availableWidth < mediumBreakpoint) return AppSpacing.md;
+    if (availableWidth < expandedBreakpoint) {
+      return AppSpacing.md + AppSpacing.xs;
+    }
+    return AppSpacing.lg;
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final horizontalPadding = switch (constraints.maxWidth) {
-          < 360 => AppSpacing.sm + AppSpacing.xs,
-          < 600 => AppSpacing.md,
-          _ => AppSpacing.lg,
-        };
+        final horizontalPadding = horizontalGutterFor(constraints.maxWidth);
 
         return Align(
           alignment: alignment,

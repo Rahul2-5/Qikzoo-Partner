@@ -86,6 +86,7 @@ void main() {
     await tester.pumpWidget(buildApp());
 
     expect(find.text('Rahul Verma'), findsOneWidget);
+    expect(find.text("Today's Earnings"), findsNothing);
     for (final title in [
       'Gigs history',
       'Trips history',

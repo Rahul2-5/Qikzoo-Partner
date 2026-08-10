@@ -14,7 +14,11 @@ import '../../../core/theme/app_theme.dart';
 class App3dIllustration extends StatelessWidget {
   final String assetPath;
   final String semanticLabel;
+  /// Space reserved for the illustration. The artwork itself is intentionally
+  /// rendered slightly smaller so it reads as supporting iconography rather
+  /// than the dominant element in a card or status state.
   final double size;
+  final double visualScale;
   final Color glowColor;
   final IconData fallbackIcon;
 
@@ -23,14 +27,16 @@ class App3dIllustration extends StatelessWidget {
     required this.assetPath,
     required this.semanticLabel,
     required this.size,
+    this.visualScale = 0.86,
     required this.glowColor,
     required this.fallbackIcon,
-  });
+  }) : assert(visualScale > 0 && visualScale <= 1);
 
   @override
   Widget build(BuildContext context) {
     final pixelRatio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1;
-    final cacheSize = (size * pixelRatio).round().clamp(1, 640);
+    final artworkSize = size * visualScale;
+    final cacheSize = (artworkSize * pixelRatio).round().clamp(1, 640);
 
     return Semantics(
       image: true,
@@ -43,8 +49,8 @@ class App3dIllustration extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Container(
-                width: size * 0.76,
-                height: size * 0.76,
+                width: artworkSize * 0.78,
+                height: artworkSize * 0.78,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -58,8 +64,8 @@ class App3dIllustration extends StatelessWidget {
               ),
               Image.asset(
                 assetPath,
-                width: size,
-                height: size,
+                width: artworkSize,
+                height: artworkSize,
                 fit: BoxFit.contain,
                 cacheWidth: cacheSize,
                 cacheHeight: cacheSize,
@@ -68,8 +74,8 @@ class App3dIllustration extends StatelessWidget {
                 excludeFromSemantics: true,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    width: size * 0.62,
-                    height: size * 0.62,
+                    width: artworkSize * 0.64,
+                    height: artworkSize * 0.64,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: glowColor.withValues(alpha: 0.12),
@@ -78,7 +84,7 @@ class App3dIllustration extends StatelessWidget {
                     child: Icon(
                       fallbackIcon,
                       color: glowColor,
-                      size: size * 0.27,
+                      size: artworkSize * 0.3,
                     ),
                   );
                 },
@@ -94,7 +100,7 @@ class App3dIllustration extends StatelessWidget {
 @Preview(
   name: '3D status icon set',
   group: 'Brand assets',
-  size: Size(390, 420),
+  size: Size(390, 300),
 )
 Widget app3dIllustrationSetPreview() {
   return MaterialApp(
@@ -111,28 +117,28 @@ Widget app3dIllustrationSetPreview() {
               App3dIllustration(
                 assetPath: AppAssets.partnerStatusOffline3d,
                 semanticLabel: 'Offline status',
-                size: 150,
+                size: 96,
                 glowColor: AppColors.primary,
                 fallbackIcon: LucideIcons.power,
               ),
               App3dIllustration(
                 assetPath: AppAssets.orderSearch3d,
                 semanticLabel: 'Searching for orders',
-                size: 150,
+                size: 96,
                 glowColor: AppColors.secondary,
                 fallbackIcon: LucideIcons.bike,
               ),
               App3dIllustration(
                 assetPath: AppAssets.applicationSubmitted3d,
                 semanticLabel: 'Application submitted',
-                size: 150,
+                size: 96,
                 glowColor: AppColors.success,
                 fallbackIcon: LucideIcons.clipboardCheck,
               ),
               App3dIllustration(
                 assetPath: AppAssets.welcomeKit3d,
                 semanticLabel: 'Partner welcome kit',
-                size: 150,
+                size: 96,
                 glowColor: AppColors.secondary,
                 fallbackIcon: LucideIcons.packageCheck,
               ),

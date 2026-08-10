@@ -66,7 +66,7 @@ class _PaymentComingSoonScreenState extends State<PaymentComingSoonScreen> {
                   const App3dIllustration(
                     assetPath: AppAssets.welcomeKit3d,
                     semanticLabel: 'Welcome kit payment coming soon',
-                    size: 180,
+                    size: 156,
                     glowColor: AppColors.secondary,
                     fallbackIcon: LucideIcons.clock,
                   ),

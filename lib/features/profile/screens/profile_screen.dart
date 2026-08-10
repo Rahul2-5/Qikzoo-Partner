@@ -89,16 +89,17 @@ class ProfileScreen extends ConsumerWidget {
             PartnerProfileHeader(
               notificationCount: profile.notificationCount,
               onNotifications: () => Get.toNamed(AppRoutes.notifications),
+              onProfile: () => _showPartnerId(context, ref),
               partnerName: profile.name,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
             PartnerProfileIdentity(
               summary: profile,
               onTap: () => _showPartnerId(context, ref),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            PartnerStoreCard(onTap: () => Get.toNamed(AppRoutes.gigs)),
             const SizedBox(height: AppSpacing.md),
+            PartnerStoreCard(onTap: () => Get.toNamed(AppRoutes.gigs)),
+            const SizedBox(height: 12),
             _ProfileQuickActions(
               children: [
                 PartnerQuickAction(
@@ -136,7 +137,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
             PartnerProfileMenuGroup(
               children: [
                 PartnerProfileMenuTile(
@@ -168,7 +169,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
             PartnerProfileMenuGroup(
               children: [
                 PartnerProfileMenuTile(
@@ -221,7 +222,7 @@ class ProfileScreen extends ConsumerWidget {
               icon: const Icon(LucideIcons.logOut, size: 21),
               label: const Text('Logout'),
               style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
+                minimumSize: const Size.fromHeight(48),
                 foregroundColor: AppColors.error,
                 side: const BorderSide(color: AppColors.info),
                 shape: RoundedRectangleBorder(
@@ -229,7 +230,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
             const Text(
               'Qikzoo Partner App',
               textAlign: TextAlign.center,
@@ -303,7 +304,9 @@ class _ProfileQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          final columns = constraints.maxWidth >= 460 ? 4 : 2;
+          // Three compact cards retain useful text width on a 520dp frame;
+          // four columns made each action feel tall and cramped.
+          final columns = constraints.maxWidth >= 480 ? 3 : 2;
           final itemWidth =
               (constraints.maxWidth - (columns - 1) * AppSpacing.sm) / columns;
 
@@ -355,6 +358,11 @@ class _ProfileErrorState extends StatelessWidget {
 }
 
 @Preview(name: 'Profile Screen', group: 'Profile', size: Size(390, 844))
+@Preview(
+  name: 'Profile Screen - Compact',
+  group: 'Profile',
+  size: Size(320, 844),
+)
 @Preview(name: 'Profile Screen — Wide', group: 'Profile', size: Size(640, 844))
 Widget profileScreenPreview() =>
     const ProviderScope(child: MaterialApp(home: ProfileScreen()));

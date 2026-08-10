@@ -15,7 +15,7 @@ import '../../../core/theme/app_typography.dart';
 class RiderHeroIllustration extends StatelessWidget {
   final double height;
 
-  const RiderHeroIllustration({super.key, this.height = 244});
+  const RiderHeroIllustration({super.key, this.height = 220});
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +80,7 @@ class RiderHeroIllustration extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: Image.asset(
                       AppAssets.riderScooterIndigo3d,
+                      width: height * 1.12,
                       fit: BoxFit.contain,
                       excludeFromSemantics: true,
                     ),

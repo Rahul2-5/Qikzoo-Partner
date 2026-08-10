@@ -8,16 +8,18 @@ class AppTypography {
 
   static TextStyle get display => const TextStyle(
         fontFamily: fontFamily,
-        fontSize: 30,
+        fontSize: 32,
         fontWeight: FontWeight.w800,
         height: 1.12,
+        letterSpacing: -0.7,
         color: AppColors.textPrimary,
       );
   static TextStyle get h1 => const TextStyle(
         fontFamily: fontFamily,
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: FontWeight.w800,
         height: 1.18,
+        letterSpacing: -0.45,
         color: AppColors.textPrimary,
       );
   static TextStyle get h2 => const TextStyle(
@@ -25,6 +27,20 @@ class AppTypography {
         fontSize: 20,
         fontWeight: FontWeight.w700,
         height: 1.25,
+        color: AppColors.textPrimary,
+      );
+  static TextStyle get h3 => const TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        height: 1.35,
+        color: AppColors.textPrimary,
+      );
+  static TextStyle get bodyLarge => const TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
         color: AppColors.textPrimary,
       );
   static TextStyle get body => const TextStyle(
@@ -46,6 +62,14 @@ class AppTypography {
         fontSize: 12,
         fontWeight: FontWeight.w500,
         height: 1.35,
+        color: AppColors.textSecondary,
+      );
+  static TextStyle get label => const TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
+        letterSpacing: 0.15,
         color: AppColors.textSecondary,
       );
   static TextStyle get button => const TextStyle(

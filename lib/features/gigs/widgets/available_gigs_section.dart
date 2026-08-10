@@ -86,15 +86,19 @@ class AvailableGigsSection extends StatelessWidget {
   /// Use [startIndex] when a higher-priority gig is already shown as a Home
   /// hero, so the same booking opportunity is not repeated immediately.
   final bool showAll;
+  final bool horizontal;
   final int startIndex;
   final String title;
+  final String? subtitle;
   final String? actionLabel;
 
   const AvailableGigsSection({
     super.key,
     this.showAll = false,
+    this.horizontal = false,
     this.startIndex = 0,
     this.title = 'Available Gigs',
+    this.subtitle,
     this.actionLabel,
   });
 
@@ -115,11 +119,46 @@ class AvailableGigsSection extends StatelessWidget {
               ? null
               : () => Get.toNamed(AppRoutes.gigs),
         ),
-        const SizedBox(height: AppSpacing.sm + 2),
-        for (var index = 0; index < gigs.length; index++) ...[
-          GigOfferCard(gig: gigs[index]),
-          if (index < gigs.length - 1) const SizedBox(height: AppSpacing.md),
+        if (subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            subtitle!,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
+        const SizedBox(height: AppSpacing.sm + 2),
+        if (horizontal)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth =
+                  (constraints.maxWidth - AppSpacing.md)
+                      .clamp(280.0, 348.0)
+                      .toDouble();
+              return SizedBox(
+                height: 236,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  clipBehavior: Clip.none,
+                  itemCount: gigs.length,
+                    separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppSpacing.sm + 2),
+                  itemBuilder: (context, index) => SizedBox(
+                    width: cardWidth,
+                    child: GigOfferCard(gig: gigs[index]),
+                  ),
+                ),
+              );
+            },
+          )
+        else
+          for (var index = 0; index < gigs.length; index++) ...[
+            GigOfferCard(gig: gigs[index]),
+            if (index < gigs.length - 1) const SizedBox(height: AppSpacing.md),
+          ],
       ],
     );
   }
