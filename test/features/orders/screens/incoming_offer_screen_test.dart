@@ -72,6 +72,12 @@ DispatchOfferModel mockOffer({
       broadcast: broadcast,
       offeredAt: DateTime.now(),
       expiresAt: DateTime.now().add(remaining),
+      payout: 50,
+      restaurantName: 'Test Restaurant',
+      restaurantAddress: '1 Test Street',
+      customerName: 'Test Customer',
+      userAddress: '2 Test Avenue',
+      dropDistanceKm: 3.0,
     );
 
 Widget buildApp({
@@ -113,7 +119,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('New delivery request'), findsOneWidget);
-    expect(find.textContaining('2.5 km'), findsOneWidget);
+    expect(find.text('Test Restaurant'), findsOneWidget);
+    expect(find.textContaining('₹50'), findsOneWidget);
+    expect(find.text('1 Test Street'), findsOneWidget);
+    expect(find.text('2 Test Avenue'), findsOneWidget);
     expect(find.text('Accept'), findsOneWidget);
     expect(find.text('Reject'), findsOneWidget);
     expect(find.textContaining('00:'), findsOneWidget);

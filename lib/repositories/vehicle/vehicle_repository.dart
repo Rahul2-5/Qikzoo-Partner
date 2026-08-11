@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
-import '../../core/constants/app_constants.dart';
 import '../../models/vehicle/rider_vehicle_model.dart';
 import '../../providers/core/api_providers.dart';
 
@@ -43,99 +42,6 @@ abstract class VehicleRepository {
     void Function(int sent, int total)? onSendProgress,
     CancelToken? cancelToken,
   });
-}
-
-class MockVehicleRepository implements VehicleRepository {
-  final List<RiderVehicleModel> _vehicles = [];
-  int _nextId = 1;
-
-  @override
-  Future<List<RiderVehicleModel>> listVehicles() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return List.unmodifiable(_vehicles.reversed);
-  }
-
-  @override
-  Future<RiderVehicleModel> createVehicle({
-    required VehicleType type,
-    required String registrationNumber,
-    String? insuranceNumber,
-    DateTime? insuranceExpiry,
-    String? rcNumber,
-  }) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    final vehicle = RiderVehicleModel(
-      id: 'vehicle_${_nextId++}',
-      type: type,
-      registrationNumber: registrationNumber,
-      insuranceNumber: insuranceNumber,
-      insuranceExpiry: insuranceExpiry,
-      rcNumber: rcNumber,
-      isActive: true,
-    );
-    _vehicles.add(vehicle);
-    return vehicle;
-  }
-
-  @override
-  Future<RiderVehicleModel> setActive(String vehicleId) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    final index = _vehicles.indexWhere((v) => v.id == vehicleId);
-    final updated = _vehicles[index];
-    for (var i = 0; i < _vehicles.length; i++) {
-      _vehicles[i] = _copyWith(_vehicles[i], isActive: i == index);
-    }
-    return _vehicles[index].isActive ? _vehicles[index] : updated;
-  }
-
-  @override
-  Future<RiderVehicleModel> uploadInsuranceDocument(
-    String vehicleId,
-    File file, {
-    void Function(int sent, int total)? onSendProgress,
-    CancelToken? cancelToken,
-  }) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    onSendProgress?.call(1, 1);
-    final index = _vehicles.indexWhere((v) => v.id == vehicleId);
-    _vehicles[index] =
-        _copyWith(_vehicles[index], insuranceDocumentUrl: file.path);
-    return _vehicles[index];
-  }
-
-  @override
-  Future<RiderVehicleModel> uploadRcDocument(
-    String vehicleId,
-    File file, {
-    void Function(int sent, int total)? onSendProgress,
-    CancelToken? cancelToken,
-  }) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    onSendProgress?.call(1, 1);
-    final index = _vehicles.indexWhere((v) => v.id == vehicleId);
-    _vehicles[index] = _copyWith(_vehicles[index], rcDocumentUrl: file.path);
-    return _vehicles[index];
-  }
-
-  RiderVehicleModel _copyWith(
-    RiderVehicleModel v, {
-    bool? isActive,
-    String? insuranceDocumentUrl,
-    String? rcDocumentUrl,
-  }) =>
-      RiderVehicleModel(
-        id: v.id,
-        type: v.type,
-        registrationNumber: v.registrationNumber,
-        insuranceNumber: v.insuranceNumber,
-        insuranceExpiry: v.insuranceExpiry,
-        insuranceDocumentUrl: insuranceDocumentUrl ?? v.insuranceDocumentUrl,
-        rcNumber: v.rcNumber,
-        rcDocumentUrl: rcDocumentUrl ?? v.rcDocumentUrl,
-        isActive: isActive ?? v.isActive,
-        status: v.status,
-        rejectionReason: v.rejectionReason,
-      );
 }
 
 class DioVehicleRepository implements VehicleRepository {

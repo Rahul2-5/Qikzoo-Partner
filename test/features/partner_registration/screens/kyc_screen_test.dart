@@ -396,8 +396,12 @@ Widget buildApp({
       getPages: [
         GetPage(name: AppRoutes.kyc, page: () => const KycScreen()),
         GetPage(
-          name: AppRoutes.vehicleSelection,
-          page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
+          name: AppRoutes.vehicleRegistration,
+          page: () => const Scaffold(body: Text('Vehicle Registration Screen')),
+        ),
+        GetPage(
+          name: AppRoutes.address,
+          page: () => const Scaffold(body: Text('Address Screen')),
         ),
         GetPage(
           name: AppRoutes.dashboard,
@@ -608,7 +612,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.submitCalls, 0);
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+    expect(find.text('Vehicle Registration Screen'), findsOneWidget);
   });
 
   testWidgets('picking a government ID document uploads it and marks it uploaded',
@@ -760,7 +764,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('can no longer be edited'), findsWidgets);
-    expect(find.text('Vehicle Selection Screen'), findsNothing);
+    expect(find.text('Vehicle Registration Screen'), findsNothing);
   });
 
   testWidgets('a hard 401 on submit logs the rider out and navigates to welcome',
@@ -879,11 +883,11 @@ void main() {
         profileRepositoryProvider.overrideWithValue(FakeProfileRepository(mockProfile())),
       ],
       child: GetMaterialApp(
-        initialRoute: AppRoutes.vehicleSelection,
+        initialRoute: AppRoutes.vehicleRegistration,
         getPages: [
           GetPage(
-            name: AppRoutes.vehicleSelection,
-            page: () => const Scaffold(body: Text('Vehicle Selection Screen')),
+            name: AppRoutes.vehicleRegistration,
+            page: () => const Scaffold(body: Text('Vehicle Registration Screen')),
           ),
           GetPage(name: AppRoutes.kyc, page: () => const KycScreen()),
         ],
@@ -905,7 +909,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(KycScreen), findsNothing);
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+    expect(find.text('Vehicle Registration Screen'), findsOneWidget);
     expect(repo.submitCalls, 0);
   });
 

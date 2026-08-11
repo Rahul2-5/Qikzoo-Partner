@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -15,12 +17,10 @@ import '../../partner_registration/widgets/document_upload_tile.dart';
 import '../../profile/widgets/account_screen_components.dart';
 
 const managedDocumentTypes = [
-  DocumentType.aadhaar,
-  DocumentType.pan,
+  DocumentType.governmentId,
   DocumentType.drivingLicense,
   DocumentType.vehicleRc,
   DocumentType.vehicleInsurance,
-  DocumentType.vehiclePhoto,
   DocumentType.bankProof,
 ];
 
@@ -36,6 +36,12 @@ class ManageDocumentsScreen extends ConsumerWidget {
     WidgetRef ref,
     DocumentModel document,
   ) async {
+    // Bank details are text fields entered on their own screen, not an
+    // uploaded document — route there instead of opening a file picker.
+    if (document.type == DocumentType.bankProof) {
+      Get.toNamed(AppRoutes.bankDetails);
+      return;
+    }
     if (_isAvailable(document) && document.fileUrl != null) {
       await showDocumentPreviewSheet(context, ref, document);
     } else {
@@ -131,8 +137,7 @@ class ManageDocumentsScreen extends ConsumerWidget {
                               style: AppTypography.bodyMedium),
                           const SizedBox(height: AppSpacing.sm),
                           for (final type in const [
-                            DocumentType.aadhaar,
-                            DocumentType.pan,
+                            DocumentType.governmentId,
                             DocumentType.drivingLicense,
                           ]) ...[
                             DocumentUploadTile(
@@ -160,7 +165,6 @@ class ManageDocumentsScreen extends ConsumerWidget {
                           for (final type in const [
                             DocumentType.vehicleRc,
                             DocumentType.vehicleInsurance,
-                            DocumentType.vehiclePhoto,
                           ]) ...[
                             DocumentUploadTile(
                               document: byType[type] ??

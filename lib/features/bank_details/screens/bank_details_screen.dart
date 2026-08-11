@@ -26,25 +26,25 @@ class BankDetailsScreen extends ConsumerStatefulWidget {
 
 class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
   final _holderController = TextEditingController();
+  final _bankNameController = TextEditingController();
   final _accountController = TextEditingController();
   final _confirmAccountController = TextEditingController();
   final _ifscController = TextEditingController();
-  final _upiController = TextEditingController();
 
   bool _didPopulate = false;
   String? _holderError;
+  String? _bankNameError;
   String? _accountError;
   String? _confirmAccountError;
   String? _ifscError;
-  String? _upiError;
 
   @override
   void dispose() {
     _holderController.dispose();
+    _bankNameController.dispose();
     _accountController.dispose();
     _confirmAccountController.dispose();
     _ifscController.dispose();
-    _upiController.dispose();
     super.dispose();
   }
 
@@ -53,21 +53,22 @@ class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
     _didPopulate = true;
     if (details == null) return;
     _holderController.text = details.accountHolderName;
-    _accountController.text = details.accountNumber;
-    _confirmAccountController.text = details.accountNumber;
+    _bankNameController.text = details.bankName;
     _ifscController.text = details.ifsc;
-    _upiController.text = details.upiId ?? '';
+    // The backend never returns the real account number, only a masked
+    // form — the rider must re-enter it to change bank details.
   }
 
   bool _validate() {
     final holder = _holderController.text.trim();
+    final bankName = _bankNameController.text.trim();
     final account = _accountController.text.trim();
     final confirmation = _confirmAccountController.text.trim();
     final ifsc = _ifscController.text.trim().toUpperCase();
-    final upi = _upiController.text.trim();
 
     setState(() {
       _holderError = holder.length < 3 ? 'Enter the account holder name' : null;
+      _bankNameError = bankName.length < 2 ? 'Enter your bank name' : null;
       _accountError = account.length < 9 || account.length > 18
           ? 'Enter a valid account number'
           : null;
@@ -76,33 +77,30 @@ class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
       _ifscError = Validators.isValidIfsc(ifsc)
           ? null
           : 'Enter a valid 11-character IFSC code';
-      _upiError = upi.isNotEmpty &&
-              !RegExp(r'^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+$').hasMatch(upi)
-          ? 'Enter a valid UPI ID'
-          : null;
     });
 
     return [
       _holderError,
+      _bankNameError,
       _accountError,
       _confirmAccountError,
       _ifscError,
-      _upiError,
     ].every((error) => error == null);
   }
 
   Future<void> _save() async {
     if (!_validate()) return;
 
+    final accountNumber = _accountController.text.trim();
     final details = BankDetailsModel(
       accountHolderName: _holderController.text.trim(),
-      accountNumber: _accountController.text.trim(),
+      accountNumberMasked: null,
       ifsc: _ifscController.text.trim().toUpperCase(),
-      upiId: _upiController.text.trim().isEmpty
-          ? null
-          : _upiController.text.trim(),
+      bankName: _bankNameController.text.trim(),
     );
-    await ref.read(bankDetailsProvider.notifier).save(details);
+    await ref
+        .read(bankDetailsProvider.notifier)
+        .save(details, accountNumber: accountNumber);
     if (!mounted) return;
 
     final result = ref.read(bankDetailsProvider);
@@ -146,11 +144,16 @@ class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
                         physics: const BouncingScrollPhysics(),
                         child: Column(
                           children: [
-                            const AccountInfoBanner(
+                            AccountInfoBanner(
                               icon: LucideIcons.shieldCheck,
-                              title: 'Your details are protected',
-                              message:
-                                  'Bank information is encrypted and used only for partner payouts.',
+                              title: detailsAsync.valueOrNull?.accountNumberMasked !=
+                                      null
+                                  ? 'On file: ${detailsAsync.valueOrNull!.accountNumberMasked}'
+                                  : 'Your details are protected',
+                              message: detailsAsync.valueOrNull?.accountNumberMasked !=
+                                      null
+                                  ? 'Re-enter your account number below to change it.'
+                                  : 'Bank information is encrypted and used only for partner payouts.',
                             ),
                             const SizedBox(height: AppSpacing.md),
                             AccountSectionCard(
@@ -166,6 +169,20 @@ class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
                                         TextCapitalization.words,
                                     prefixIcon: const Icon(
                                       LucideIcons.user,
+                                      color: AppColors.secondary,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+                                  AppTextField(
+                                    label: 'Bank name',
+                                    hint: 'e.g. HDFC Bank',
+                                    controller: _bankNameController,
+                                    errorText: _bankNameError,
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                    prefixIcon: const Icon(
+                                      LucideIcons.landmark,
                                       color: AppColors.secondary,
                                       size: 20,
                                     ),
@@ -226,22 +243,6 @@ class _BankDetailsScreenState extends ConsumerState<BankDetailsScreen> {
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            AccountSectionCard(
-                              title: 'UPI (optional)',
-                              child: AppTextField(
-                                label: 'UPI ID',
-                                hint: 'name@bank',
-                                controller: _upiController,
-                                errorText: _upiError,
-                                keyboardType: TextInputType.emailAddress,
-                                prefixIcon: const Icon(
-                                  LucideIcons.indianRupee,
-                                  color: AppColors.secondary,
-                                  size: 20,
-                                ),
                               ),
                             ),
                             const SizedBox(height: AppSpacing.lg),

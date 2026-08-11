@@ -29,7 +29,6 @@ import '../../../shared/widgets/misc/loading_skeleton.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
 import '../../../shared/widgets/navigation/partner_app_header.dart';
-import '../../gigs/widgets/available_gigs_section.dart';
 import '../../partner_registration/screens/selfie_verification_screen.dart';
 
 /// Rider dashboard home for active partner accounts.
@@ -212,18 +211,6 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                       delay: const Duration(milliseconds: 105),
                       child: _PerformanceSummary(stats: stats),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    const AppReveal(
-                      delay: Duration(milliseconds: 135),
-                      child: AvailableGigsSection(
-                        showAll: true,
-                        title: 'Top opportunities',
-                        subtitle:
-                            'Shifts selected for you — book before they fill.',
-                        actionLabel: 'View all',
-                        horizontal: true,
-                      ),
-                    ),
                   ],
                   const SizedBox(height: AppSpacing.lg),
                   const AppReveal(
@@ -276,84 +263,6 @@ class _DashboardTopBar extends StatelessWidget {
       ),
     );
   }
-}
-
-class _DashboardNotificationButton extends StatelessWidget {
-  const _DashboardNotificationButton({
-    required this.unreadCount,
-    required this.onPressed,
-  });
-
-  final int unreadCount;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: unreadCount > 0
-            ? 'Notifications, $unreadCount unread'
-            : 'Notifications',
-        child: Tooltip(
-          message: unreadCount > 0
-              ? '$unreadCount unread notifications'
-              : 'Notifications',
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onPressed,
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-              child: Ink(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.16),
-                  ),
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    const Icon(
-                      LucideIcons.bell,
-                      size: 20,
-                      color: AppColors.primary,
-                    ),
-                    if (unreadCount > 0)
-                      Positioned(
-                        top: 2,
-                        right: 1,
-                        child: Container(
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            color: AppColors.error,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            unreadCount > 99 ? '99+' : '$unreadCount',
-                            style: AppTypography.caption.copyWith(
-                              color: Colors.white,
-                              fontSize: 8,
-                              height: 1,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
 }
 
 class _OnlineStatusBanner extends StatelessWidget {
@@ -670,20 +579,28 @@ class _ProgressMetric extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 11, color: color),
-              const SizedBox(width: 3),
-              Text(
-                label,
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
+          // Scales the icon+label as one unit rather than truncating — the
+          // longest label ("Online time") is what overflows this column's
+          // ~110px share of the row on narrow screens (RenderFlex overflow),
+          // same fix already applied to `value` above.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 11, color: color),
+                const SizedBox(width: 3),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       );
@@ -887,372 +804,6 @@ class _ShiftStatusIcon extends StatelessWidget {
                 ),
               ),
           ],
-        ),
-      );
-}
-
-/// The first open gig gets the visual priority of a dispatch card while the
-/// complete list remains directly below it. This keeps booking a gig as the
-/// focal action without turning Home into a second Gigs tab.
-// ignore: unused_element
-class _NextGigHero extends StatelessWidget {
-  const _NextGigHero({
-    required this.gig,
-    required this.isOnline,
-    required this.onPressed,
-  });
-
-  final GigOffer gig;
-  final bool isOnline;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) {
-          final artworkWidth = constraints.maxWidth < 370 ? 96.0 : 126.0;
-
-          return Semantics(
-            button: true,
-            label: isOnline
-                ? 'Next gig near you, ${gig.title}, ${gig.zone}, guaranteed ${gig.guaranteedPay}'
-                : 'Next gig near you. Go online to book ${gig.title}',
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onPressed,
-                borderRadius: BorderRadius.circular(AppRadius.sheet),
-                child: Ink(
-                  height: 260,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5FCF7),
-                    borderRadius: BorderRadius.circular(AppRadius.sheet),
-                    border: Border.all(color: const Color(0xFFBDE8CB)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x12246B3E),
-                        offset: Offset(0, 12),
-                        blurRadius: 24,
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned(
-                        right: -30,
-                        top: -36,
-                        child: Container(
-                          width: 176,
-                          height: 176,
-                          decoration: const BoxDecoration(
-                            color: Color(0x1821B956),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 10,
-                        top: 38,
-                        child: IgnorePointer(
-                          child: _GigBagArtwork(width: artworkWidth),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          AppSpacing.md,
-                          AppSpacing.md,
-                          artworkWidth + AppSpacing.md + 4,
-                          AppSpacing.md,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: AppSpacing.xs + 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFE641),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.control),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x1F9F8B00),
-                                    offset: Offset(0, 3),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                'NEXT GIG NEAR YOU',
-                                style: AppTypography.caption.copyWith(
-                                  color: const Color(0xFF3A3300),
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.65,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.sm + 3),
-                            Text(
-                              gig.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.h1.copyWith(
-                                fontSize: 22,
-                                letterSpacing: -0.55,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs + 1),
-                            Row(
-                              children: [
-                                Icon(
-                                  LucideIcons.mapPin,
-                                  size: 15,
-                                  color: gig.color,
-                                ),
-                                const SizedBox(width: AppSpacing.xs),
-                                Expanded(
-                                  child: Text(
-                                    gig.zone,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.sm + 3),
-                            _GigTimingPill(
-                              icon: LucideIcons.clock3,
-                              label: gig.startsAt,
-                              color: gig.color,
-                            ),
-                            const Spacer(),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'GUARANTEED',
-                                        style: AppTypography.caption.copyWith(
-                                          color: AppColors.textSecondary,
-                                          fontSize: 8.5,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 0.85,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 1),
-                                      Text(
-                                        gig.guaranteedPay,
-                                        style: AppTypography.numericMd.copyWith(
-                                          color: gig.color,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                FilledButton(
-                                  onPressed: onPressed,
-                                  style: FilledButton.styleFrom(
-                                    minimumSize: const Size(0, 46),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.md,
-                                    ),
-                                    backgroundColor: isOnline
-                                        ? gig.color
-                                        : AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.control,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        isOnline ? 'Book gig' : 'Go online',
-                                        style: AppTypography.button.copyWith(
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      const SizedBox(width: AppSpacing.xs),
-                                      const Icon(
-                                        LucideIcons.arrowRight,
-                                        size: 15,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
-}
-
-class _GigTimingPill extends StatelessWidget {
-  const _GigTimingPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs + 1,
-        ),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: color),
-            const SizedBox(width: AppSpacing.xs),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.caption.copyWith(
-                  color: color,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-}
-
-/// A lightweight parcel illustration keeps the hero expressive without an
-/// external image asset or a network dependency.
-class _GigBagArtwork extends StatelessWidget {
-  const _GigBagArtwork({required this.width});
-
-  final double width;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: width,
-        height: width * 1.08,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 0,
-              bottom: 4,
-              child: Transform.rotate(
-                angle: -0.13,
-                child: _ParcelBag(
-                  width: width * 0.53,
-                  height: width * 0.72,
-                  color: const Color(0xFFB97A3E),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Transform.rotate(
-                angle: 0.10,
-                child: _ParcelBag(
-                  width: width * 0.68,
-                  height: width * 0.82,
-                  color: const Color(0xFFD49A56),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: width * 0.25,
-              child: const Icon(
-                LucideIcons.sparkles,
-                size: 16,
-                color: Color(0xFFF1BC2E),
-              ),
-            ),
-          ],
-        ),
-      );
-}
-
-class _ParcelBag extends StatelessWidget {
-  const _ParcelBag({
-    required this.width,
-    required this.height,
-    required this.color,
-  });
-
-  final double width;
-  final double height;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(width * 0.16),
-            topRight: Radius.circular(width * 0.16),
-            bottomLeft: Radius.circular(width * 0.08),
-            bottomRight: Radius.circular(width * 0.08),
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x263A2109),
-              offset: Offset(0, 8),
-              blurRadius: 10,
-            ),
-          ],
-        ),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Container(
-            width: width * 0.18,
-            height: width * 0.18,
-            margin: EdgeInsets.only(top: width * 0.18),
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFDF6E7),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.packageCheck,
-              size: width * 0.1,
-              color: AppColors.success,
-            ),
-          ),
         ),
       );
 }

@@ -114,7 +114,7 @@ void main() {
       overrides: [
         documentRepositoryProvider.overrideWithValue(
           FakeDocumentRepository([
-            const DocumentModel(type: DocumentType.aadhaar, status: DocumentStatus.notUploaded),
+            const DocumentModel(type: DocumentType.governmentId, status: DocumentStatus.notUploaded),
           ]),
         ),
         documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
@@ -130,7 +130,7 @@ void main() {
           home: Consumer(
             builder: (context, ref, _) => Scaffold(
               body: ElevatedButton(
-                onPressed: () => pickAndUploadDocument(context, ref, DocumentType.aadhaar),
+                onPressed: () => pickAndUploadDocument(context, ref, DocumentType.governmentId),
                 child: const Text('open'),
               ),
             ),
@@ -151,7 +151,7 @@ void main() {
     final updated = container
         .read(documentsProvider)
         .value!
-        .firstWhere((doc) => doc.type == DocumentType.aadhaar);
+        .firstWhere((doc) => doc.type == DocumentType.governmentId);
     expect(updated.status, DocumentStatus.pendingVerification);
     expect(updated.fileUrl, '/tmp/picked.jpg');
   });
@@ -162,7 +162,7 @@ void main() {
         documentRepositoryProvider.overrideWithValue(
           FakeDocumentRepository([
             const DocumentModel(
-              type: DocumentType.aadhaar,
+              type: DocumentType.governmentId,
               status: DocumentStatus.pendingVerification,
               fileUrl: '/tmp/a.jpg',
             ),

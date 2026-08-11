@@ -23,7 +23,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Evening delivery boost'), findsOneWidget);
+    expect(find.text('No active incentives'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

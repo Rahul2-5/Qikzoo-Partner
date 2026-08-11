@@ -1,6 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/assets/app_assets.dart';
@@ -10,9 +9,7 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../../models/earnings/earnings_models.dart';
 import '../../../shared/widgets/navigation/partner_app_header.dart';
-import 'period_selector.dart';
 
 const _positive = Color(0xFF20B957);
 const _positiveSoft = Color(0xFFEAF9EF);
@@ -22,16 +19,19 @@ class TodayPerformanceHeader extends StatelessWidget {
     super.key,
     this.unreadNotificationCount = 0,
     this.onNotifications,
+    this.isOnline = false,
   });
 
   final int unreadNotificationCount;
   final VoidCallback? onNotifications;
+  final bool isOnline;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
           final useStackedTitle = constraints.maxWidth < 360 ||
               MediaQuery.textScalerOf(context).scale(1) > 1.3;
+          final dateLabel = DateFormat('d MMMM, EEEE').format(DateTime.now());
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,11 +45,11 @@ class TodayPerformanceHeader extends StatelessWidget {
               if (useStackedTitle) ...[
                 Text("Today's Earnings", style: AppTypography.h1),
                 const SizedBox(height: 3),
-                Text('25 July, Saturday', style: AppTypography.body),
+                Text(dateLabel, style: AppTypography.body),
                 const SizedBox(height: AppSpacing.sm),
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
-                  child: _OnlineBadge(),
+                  child: _OnlineBadge(isOnline: isOnline),
                 ),
               ] else
                 Row(
@@ -61,11 +61,11 @@ class TodayPerformanceHeader extends StatelessWidget {
                         children: [
                           Text("Today's Earnings", style: AppTypography.h1),
                           const SizedBox(height: 3),
-                          Text('25 July, Saturday', style: AppTypography.body),
+                          Text(dateLabel, style: AppTypography.body),
                         ],
                       ),
                     ),
-                    const _OnlineBadge(),
+                    _OnlineBadge(isOnline: isOnline),
                   ],
                 ),
             ],
@@ -74,24 +74,29 @@ class TodayPerformanceHeader extends StatelessWidget {
       );
 }
 
+/// Shows the real total for whichever period the rider selected
+/// (today/this-week/lifetime) — earnings + tips, both from
+/// `GET /rider/earnings/summary`. No category split (order pay vs
+/// incentives vs distance pay) or day-over-day delta exists on the
+/// backend, so neither is shown here.
 class TodayEarningsCard extends StatelessWidget {
   final double total;
-  final double orderEarnings;
-  final double incentives;
+  final double earnings;
   final double tips;
+  final int deliveries;
 
   const TodayEarningsCard({
     super.key,
     required this.total,
-    required this.orderEarnings,
-    required this.incentives,
+    required this.earnings,
     required this.tips,
+    required this.deliveries,
   });
 
   @override
   Widget build(BuildContext context) => Semantics(
         label:
-            "Today's total earnings ${CurrencyFormatter.rupeesPrecise(total)}",
+            "Total earnings ${CurrencyFormatter.rupeesPrecise(total)}",
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 20, 16, 18),
           decoration: BoxDecoration(
@@ -137,36 +142,16 @@ class TodayEarningsCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 72),
-                          child: Text(
-                            'Total Earnings',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: Colors.white.withValues(alpha: .9),
-                            ),
-                          ),
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 72),
+                    child: Text(
+                      'Total Earnings',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.white.withValues(alpha: .9),
                       ),
-                      const SizedBox(width: 6),
-                      Icon(LucideIcons.info,
-                          color: Colors.white.withValues(alpha: .72), size: 16),
-                      const SizedBox(width: AppSpacing.sm),
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: .12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(LucideIcons.chevronRight,
-                            color: Colors.white, size: 22),
-                      ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   FittedBox(
@@ -186,26 +171,15 @@ class TodayEarningsCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: .2),
+                      color: Colors.white.withValues(alpha: .14),
                       borderRadius: BorderRadius.circular(AppRadius.chip),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(LucideIcons.trendingUp,
-                            size: 14, color: Color(0xFF6EEB91)),
-                        const SizedBox(width: 5),
-                        Flexible(
-                          child: Text(
-                            '18% more than yesterday',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.caption.copyWith(
-                              color: const Color(0xFF6EEB91),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      '$deliveries ${deliveries == 1 ? 'delivery' : 'deliveries'}',
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -218,69 +192,27 @@ class TodayEarningsCard extends StatelessWidget {
                           color: Colors.white.withValues(alpha: .14)),
                       borderRadius: BorderRadius.circular(AppRadius.card),
                     ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final useStackedMetrics = constraints.maxWidth < 340 ||
-                            MediaQuery.textScalerOf(context).scale(1) > 1.3;
-                        final metrics = [
-                          _EarningValue(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _EarningValue(
                             icon: LucideIcons.shoppingBag,
                             iconColor: AppColors.secondary,
-                            label: 'Order Earnings',
-                            amount: orderEarnings,
+                            label: 'Delivery Earnings',
+                            amount: earnings,
                           ),
-                          _EarningValue(
-                            icon: LucideIcons.gift,
-                            iconColor: AppColors.success,
-                            label: 'Incentives',
-                            amount: incentives,
-                            amountColor: const Color(0xFF6EEB91),
-                          ),
-                          _EarningValue(
+                        ),
+                        _Divider(color: Colors.white.withValues(alpha: .18)),
+                        Expanded(
+                          child: _EarningValue(
                             icon: LucideIcons.circleDollarSign,
                             iconColor: const Color(0xFF8C67F6),
                             label: 'Tips',
                             amount: tips,
                             amountColor: Colors.white,
                           ),
-                        ];
-                        if (useStackedMetrics) {
-                          return Column(
-                            children: [
-                              for (var index = 0;
-                                  index < metrics.length;
-                                  index++) ...[
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: metrics[index],
-                                ),
-                                if (index < metrics.length - 1)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: AppSpacing.sm,
-                                    ),
-                                    child: Divider(
-                                      color:
-                                          Colors.white.withValues(alpha: .18),
-                                      height: 1,
-                                    ),
-                                  ),
-                              ],
-                            ],
-                          );
-                        }
-                        return Row(
-                          children: [
-                            Expanded(child: metrics[0]),
-                            _Divider(
-                                color: Colors.white.withValues(alpha: .18)),
-                            Expanded(child: metrics[1]),
-                            _Divider(
-                                color: Colors.white.withValues(alpha: .18)),
-                            Expanded(child: metrics[2]),
-                          ],
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -291,614 +223,21 @@ class TodayEarningsCard extends StatelessWidget {
       );
 }
 
-/// Gives partners an at-a-glance view of cash in hand and a clear path to
-/// deposit it before reaching their operational limit.
-class CashLimitAndDepositCard extends StatelessWidget {
-  final double cashCollected;
-  final double cashLimit;
-  final VoidCallback onDeposit;
-
-  const CashLimitAndDepositCard({
-    super.key,
-    required this.cashCollected,
-    required this.cashLimit,
-    required this.onDeposit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final usage = cashLimit <= 0
-        ? 0.0
-        : (cashCollected / cashLimit).clamp(0.0, 1.0).toDouble();
-    final remaining = math.max(0, cashLimit - cashCollected).toDouble();
-    final isAtLimit = cashCollected >= cashLimit;
-    final limitColor = isAtLimit ? AppColors.warning : AppColors.primary;
-    final statusLabel = isAtLimit
-        ? 'Cash limit reached'
-        : '${CurrencyFormatter.rupees(remaining)} remaining before your limit';
-
-    return Semantics(
-      label:
-          'Cash limit. ${CurrencyFormatter.rupees(cashCollected)} collected out of ${CurrencyFormatter.rupees(cashLimit)}.',
-      child: _SurfaceCard(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final useStackedLayout = constraints.maxWidth < 360 ||
-                MediaQuery.textScalerOf(context).scale(1) > 1.25;
-            final collectedMetric = _CashMetric(
-              label: 'Cash collected',
-              amount: CurrencyFormatter.rupees(cashCollected),
-              amountColor: AppColors.textPrimary,
-            );
-            final limitMetric = _CashMetric(
-              label: 'Cash limit',
-              amount: CurrencyFormatter.rupees(cashLimit),
-              amountColor: limitColor,
-            );
-            final depositAction = FilledButton.icon(
-              onPressed: onDeposit,
-              icon: const Icon(LucideIcons.landmark, size: 17),
-              label: const Text('Deposit cash', maxLines: 1),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(0, 44),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.control),
-                ),
-                textStyle: AppTypography.bodyMedium.copyWith(fontSize: 12),
-              ),
-            );
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFF3E7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        LucideIcons.walletCards,
-                        color: Color(0xFFE6892E),
-                        size: 21,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Cash management',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Monitor collected cash and deposit it on time.',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.caption.copyWith(fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                if (useStackedLayout)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      collectedMetric,
-                      const SizedBox(height: AppSpacing.sm),
-                      limitMetric,
-                    ],
-                  )
-                else
-                  IntrinsicHeight(
-                    child: Row(
-                      children: [
-                        Expanded(child: collectedMetric),
-                        Container(
-                          width: 1,
-                          color: AppColors.border.withValues(alpha: .8),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(child: limitMetric),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                        child: LinearProgressIndicator(
-                          value: usage,
-                          minHeight: 9,
-                          backgroundColor: AppColors.surfaceMuted,
-                          valueColor: AlwaysStoppedAnimation(limitColor),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      '${(usage * 100).round()}%',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: limitColor,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  statusLabel,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
-                    color:
-                        isAtLimit ? AppColors.warning : AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Divider(
-                  color: AppColors.border.withValues(alpha: .8),
-                  height: 1,
-                ),
-                const SizedBox(height: 12),
-                if (useStackedLayout)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _DepositCallout(),
-                      const SizedBox(height: 12),
-                      depositAction,
-                    ],
-                  )
-                else
-                  Row(
-                    children: [
-                      const Expanded(child: _DepositCallout()),
-                      const SizedBox(width: AppSpacing.sm),
-                      depositAction,
-                    ],
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _CashMetric extends StatelessWidget {
-  final String label;
-  final String amount;
-  final Color amountColor;
-
-  const _CashMetric({
-    required this.label,
-    required this.amount,
-    required this.amountColor,
-  });
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: AppTypography.caption.copyWith(fontSize: 11)),
-          const SizedBox(height: 3),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              amount,
-              style: AppTypography.numericMd.copyWith(
-                color: amountColor,
-                fontSize: 21,
-              ),
-            ),
-          ),
-        ],
-      );
-}
-
-class _DepositCallout extends StatelessWidget {
-  const _DepositCallout();
-
-  @override
-  Widget build(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(
-              LucideIcons.circleDollarSign,
-              size: 17,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cash deposit',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMedium.copyWith(fontSize: 13),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Deposit your collected cash at the assigned hub.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(fontSize: 10),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-}
-
-class GigProgressCard extends StatelessWidget {
-  const GigProgressCard({super.key});
-
-  @override
-  Widget build(BuildContext context) => _SurfaceCard(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final useStackedLayout = constraints.maxWidth < 360 ||
-                MediaQuery.textScalerOf(context).scale(1) > 1.3;
-            final progressDetails = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Gig Progress',
-                    style: AppTypography.h2.copyWith(fontSize: 18)),
-                const SizedBox(height: AppSpacing.sm),
-                RichText(
-                  text: TextSpan(
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: '6 / 8 ',
-                        style:
-                            AppTypography.bodyMedium.copyWith(color: _positive),
-                      ),
-                      const TextSpan(text: 'Orders Completed'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                        child: const LinearProgressIndicator(
-                          value: .75,
-                          minHeight: 10,
-                          backgroundColor: Color(0xFFE8ECF2),
-                          valueColor: AlwaysStoppedAnimation(_positive),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text('75%', style: AppTypography.bodyMedium),
-                  ],
-                ),
-              ],
-            );
-            const progressRing = SizedBox(
-              width: 74,
-              height: 74,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 74,
-                    height: 74,
-                    child: CircularProgressIndicator(
-                      value: .75,
-                      strokeWidth: 8,
-                      backgroundColor: AppColors.primarySoft,
-                      valueColor: AlwaysStoppedAnimation(AppColors.success),
-                    ),
-                  ),
-                  Icon(LucideIcons.bike, size: 30, color: AppColors.success),
-                ],
-              ),
-            );
-            final illustration = SizedBox(
-              width: 94,
-              height: 76,
-              child: Image.asset(
-                AppAssets.gigMap3d,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  LucideIcons.mapPin,
-                  color: AppColors.success,
-                  size: 42,
-                ),
-              ),
-            );
-
-            if (useStackedLayout) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: progressRing,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  progressDetails,
-                  const SizedBox(height: AppSpacing.md),
-                  Align(alignment: Alignment.centerRight, child: illustration),
-                ],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                progressRing,
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: progressDetails),
-                const SizedBox(width: AppSpacing.sm),
-                Align(
-                  alignment: Alignment.center,
-                  child: illustration,
-                ),
-              ],
-            );
-          },
-        ),
-      );
-}
-
+/// Real delivery count for the same period as [TodayEarningsCard]. There is
+/// no backend field for online/shift duration, so that stat is not shown
+/// rather than fabricated.
 class TodayStatGrid extends StatelessWidget {
-  const TodayStatGrid({super.key});
+  const TodayStatGrid({super.key, required this.deliveries});
+
+  final int deliveries;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) {
-          final useSingleColumn = constraints.maxWidth < 340 ||
-              MediaQuery.textScalerOf(context).scale(1) > 1.3;
-          const onlineHoursCard = _PerformanceStatCard(
-            icon: LucideIcons.timer,
-            tint: Color(0xFFF1EBFF),
-            iconColor: Color(0xFF7958D9),
-            title: 'Online Hours',
-            value: '06h 15m',
-            caption: '1h 20m more than yesterday',
-          );
-          const completedOrdersCard = _PerformanceStatCard(
-            icon: LucideIcons.shoppingBag,
-            tint: Color(0xFFFFF3E7),
-            iconColor: Color(0xFFE6892E),
-            title: 'Completed Orders',
-            value: '6',
-            caption: '2 more than yesterday',
-          );
-
-          if (useSingleColumn) {
-            return const Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                onlineHoursCard,
-                SizedBox(height: AppSpacing.sm),
-                completedOrdersCard,
-              ],
-            );
-          }
-
-          return const IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: onlineHoursCard),
-                SizedBox(width: AppSpacing.sm),
-                Expanded(child: completedOrdersCard),
-              ],
-            ),
-          );
-        },
-      );
-}
-
-class TodayEarningsTrend extends StatelessWidget {
-  final List<ChartBar> points;
-  final double maxValue;
-  final EarningsPeriod period;
-  final ValueChanged<EarningsPeriod> onPeriodChanged;
-
-  const TodayEarningsTrend({
-    super.key,
-    required this.points,
-    required this.maxValue,
-    required this.period,
-    required this.onPeriodChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final peak = points.fold<ChartBar>(points.first,
-        (current, point) => point.value > current.value ? point : current);
-    return _SurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final useStackedHeader = constraints.maxWidth < 380 ||
-                  MediaQuery.textScalerOf(context).scale(1) > 1.3;
-              final selector =
-                  PeriodSelector(value: period, onChanged: onPeriodChanged);
-              if (useStackedHeader) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Earnings Trend', style: AppTypography.h2),
-                    const SizedBox(height: AppSpacing.sm),
-                    Align(alignment: Alignment.centerRight, child: selector),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(
-                    child: Text('Earnings Trend', style: AppTypography.h2),
-                  ),
-                  selector,
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: AppSpacing.md),
-          SizedBox(
-            height: 218,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                const axisWidth = 44.0;
-                return Row(
-                  children: [
-                    SizedBox(
-                        width: axisWidth,
-                        child: _TrendAxis(maxValue: maxValue)),
-                    Expanded(
-                      child: _LineChart(
-                        points: points,
-                        maxValue: maxValue,
-                        peak: peak,
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TodayBreakdownCard extends StatelessWidget {
-  final List<EarningsCategory> categories;
-
-  const TodayBreakdownCard({super.key, required this.categories});
-
-  static const _icons = [
-    LucideIcons.receipt,
-    LucideIcons.gift,
-    LucideIcons.mapPin,
-    LucideIcons.trendingUp,
-  ];
-  static const _tints = [
-    Color(0xFFFFF3E7),
-    Color(0xFFEAF9EF),
-    Color(0xFFEAF1FF),
-    Color(0xFFFFEEF1),
-  ];
-  static const _iconColors = [
-    Color(0xFFE6892E),
-    _positive,
-    AppColors.primary,
-    Color(0xFFE16477),
-  ];
-
-  @override
-  Widget build(BuildContext context) => _SurfaceCard(
-        child: Column(
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final viewDetails = Semantics(
-                  button: true,
-                  label: 'View earning details',
-                  child: const _ViewDetailsButton(),
-                );
-                if (constraints.maxWidth < 380 ||
-                    MediaQuery.textScalerOf(context).scale(1) > 1.3) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Breakdown', style: AppTypography.h2),
-                      const SizedBox(height: AppSpacing.xs),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: viewDetails,
-                      ),
-                    ],
-                  );
-                }
-                return Row(
-                  children: [
-                    Expanded(child: Text('Breakdown', style: AppTypography.h2)),
-                    viewDetails,
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            for (var index = 0; index < categories.length; index++)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 7),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: _tints[index % _tints.length],
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Icon(_icons[index % _icons.length],
-                          size: 16,
-                          color: _iconColors[index % _iconColors.length]),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(categories[index].label,
-                          style: AppTypography.body),
-                    ),
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          CurrencyFormatter.rupeesPrecise(
-                            categories[index].amount,
-                          ),
-                          style:
-                              AppTypography.bodyMedium.copyWith(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+  Widget build(BuildContext context) => _PerformanceStatCard(
+        icon: LucideIcons.shoppingBag,
+        tint: const Color(0xFFFFF3E7),
+        iconColor: const Color(0xFFE6892E),
+        title: 'Completed Deliveries',
+        value: '$deliveries',
       );
 }
 
@@ -920,56 +259,46 @@ class _SurfaceCard extends StatelessWidget {
 }
 
 class _OnlineBadge extends StatelessWidget {
-  const _OnlineBadge();
+  const _OnlineBadge({required this.isOnline});
+
+  final bool isOnline;
+
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: _positiveSoft,
+          color: isOnline ? _positiveSoft : AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(AppRadius.chip),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const _StatusDot(),
+            _StatusDot(isOnline: isOnline),
             const SizedBox(width: 7),
-            Text('Online',
-                style: AppTypography.bodyMedium.copyWith(color: _positive)),
+            Text(
+              isOnline ? 'Online' : 'Offline',
+              style: AppTypography.bodyMedium.copyWith(
+                color: isOnline ? _positive : AppColors.textSecondary,
+              ),
+            ),
           ],
         ),
       );
 }
 
 class _StatusDot extends StatelessWidget {
-  const _StatusDot();
+  const _StatusDot({required this.isOnline});
+
+  final bool isOnline;
+
   @override
-  Widget build(BuildContext context) => const SizedBox(
+  Widget build(BuildContext context) => SizedBox(
         width: 11,
         height: 11,
         child: DecoratedBox(
-          decoration: BoxDecoration(color: _positive, shape: BoxShape.circle),
-        ),
-      );
-}
-
-class _RoundIconButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _RoundIconButton(
-      {required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: label,
-        child: InkResponse(
-          onTap: onTap,
-          radius: 26,
-          child: SizedBox(
-            width: 44,
-            height: 44,
-            child: Icon(icon, color: AppColors.textPrimary, size: 25),
+          decoration: BoxDecoration(
+            color: isOnline ? _positive : AppColors.textDisabled,
+            shape: BoxShape.circle,
           ),
         ),
       );
@@ -1002,43 +331,38 @@ class _EarningValue extends StatelessWidget {
       this.amountColor});
 
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) => Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: .88),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 17, color: Colors.white),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption.copyWith(
-                            color: Colors.white.withValues(alpha: .74),
-                            fontSize: 10)),
-                    const SizedBox(height: 3),
-                    Text(CurrencyFormatter.rupeesPrecise(amount),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: amountColor ?? Colors.white,
-                          fontSize: 14,
-                        )),
-                  ],
-                ),
-              ),
-            ],
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: .88),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 17, color: Colors.white),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.caption.copyWith(
+                        color: Colors.white.withValues(alpha: .74),
+                        fontSize: 10)),
+                const SizedBox(height: 3),
+                Text(CurrencyFormatter.rupeesPrecise(amount),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: amountColor ?? Colors.white,
+                      fontSize: 14,
+                    )),
+              ],
+            ),
           ),
         ],
       );
@@ -1058,20 +382,17 @@ class _PerformanceStatCard extends StatelessWidget {
   final Color iconColor;
   final String title;
   final String value;
-  final String caption;
   const _PerformanceStatCard({
     required this.icon,
     required this.tint,
     required this.iconColor,
     required this.title,
     required this.value,
-    required this.caption,
   });
 
   @override
   Widget build(BuildContext context) => _SurfaceCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             Container(
               width: 42,
@@ -1079,235 +400,22 @@ class _PerformanceStatCard extends StatelessWidget {
               decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
               child: Icon(icon, size: 21, color: iconColor),
             ),
-            const SizedBox(height: 12),
-            Text(title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodyMedium.copyWith(fontSize: 13)),
-            const SizedBox(height: 3),
-            Text(value, style: AppTypography.numericMd.copyWith(fontSize: 19)),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(LucideIcons.arrowUpRight,
-                    size: 14, color: _positive),
-                const SizedBox(width: 3),
-                Expanded(
-                  child: Text(caption,
-                      style: AppTypography.caption.copyWith(fontSize: 11)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-}
-
-class _TrendAxis extends StatelessWidget {
-  final double maxValue;
-  const _TrendAxis({required this.maxValue});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final ratio in [1.0, .75, .5, .25, 0.0])
-              Text(CurrencyFormatter.rupees(maxValue * ratio),
-                  style: AppTypography.caption.copyWith(fontSize: 10)),
-          ],
-        ),
-      );
-}
-
-class _LineChart extends StatelessWidget {
-  final List<ChartBar> points;
-  final double maxValue;
-  final ChartBar peak;
-  const _LineChart(
-      {required this.points, required this.maxValue, required this.peak});
-
-  @override
-  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeOutCubic,
-        builder: (context, progress, _) => Column(
-          children: [
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: CustomPaint(
-                painter: _LineChartPainter(
-                  points: points,
-                  maxValue: maxValue,
-                  progress: progress,
-                  peak: peak,
-                ),
-                child: const SizedBox.expand(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodyMedium.copyWith(fontSize: 13)),
+                  const SizedBox(height: 3),
+                  Text(value,
+                      style: AppTypography.numericMd.copyWith(fontSize: 19)),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                for (final point in points)
-                  Expanded(
-                    child: Semantics(
-                      label:
-                          '${point.label}, ${CurrencyFormatter.rupeesPrecise(point.value)}',
-                      child: Text(point.label,
-                          textAlign: TextAlign.center,
-                          style: AppTypography.caption.copyWith(fontSize: 10)),
-                    ),
-                  ),
-              ],
             ),
           ],
-        ),
-      );
-}
-
-class _LineChartPainter extends CustomPainter {
-  final List<ChartBar> points;
-  final double maxValue;
-  final double progress;
-  final ChartBar peak;
-  _LineChartPainter({
-    required this.points,
-    required this.maxValue,
-    required this.progress,
-    required this.peak,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = AppColors.border.withValues(alpha: .65)
-      ..strokeWidth = 1;
-    for (var index = 0; index < 5; index++) {
-      final y = size.height * index / 4;
-      canvas.drawLine(
-          Offset.zero.translate(0, y), Offset(size.width, y), gridPaint);
-    }
-    if (points.isEmpty) return;
-
-    final chartPoints = <Offset>[];
-    for (var index = 0; index < points.length; index++) {
-      final x = points.length == 1
-          ? size.width / 2
-          : size.width * index / (points.length - 1);
-      final ratio = (points[index].value / maxValue).clamp(0.0, 1.0).toDouble();
-      chartPoints.add(Offset(x, size.height - size.height * ratio * progress));
-    }
-
-    final path = Path()..moveTo(chartPoints.first.dx, chartPoints.first.dy);
-    for (var index = 1; index < chartPoints.length; index++) {
-      final previous = chartPoints[index - 1];
-      final current = chartPoints[index];
-      path.cubicTo(
-        (previous.dx + current.dx) / 2,
-        previous.dy,
-        (previous.dx + current.dx) / 2,
-        current.dy,
-        current.dx,
-        current.dy,
-      );
-    }
-
-    final fillPath = Path.from(path)
-      ..lineTo(chartPoints.last.dx, size.height)
-      ..lineTo(chartPoints.first.dx, size.height)
-      ..close();
-    canvas.drawPath(
-      fillPath,
-      Paint()
-        ..shader = LinearGradient(
-          colors: [AppColors.primary.withValues(alpha: .2), Colors.transparent],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ).createShader(Offset.zero & size),
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = AppColors.primary
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-
-    for (var index = 0; index < chartPoints.length; index++) {
-      final isPeak = points[index] == peak;
-      canvas.drawCircle(
-          chartPoints[index], isPeak ? 7 : 5, Paint()..color = Colors.white);
-      canvas.drawCircle(chartPoints[index], isPeak ? 5 : 3.5,
-          Paint()..color = isPeak ? _positive : AppColors.primary);
-      if (isPeak) {
-        _drawPeakLabel(canvas, chartPoints[index], points[index].value, size);
-      }
-    }
-  }
-
-  void _drawPeakLabel(Canvas canvas, Offset point, double value, Size size) {
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: CurrencyFormatter.rupees(value),
-        style: const TextStyle(
-            color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    const horizontalPadding = 8.0;
-    final labelWidth = textPainter.width + horizontalPadding * 2;
-    final x = math
-        .min(math.max(0.0, point.dx - labelWidth / 2), size.width - labelWidth)
-        .toDouble();
-    final y = math.max(4.0, point.dy - 30).toDouble();
-    final rect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(x, y, labelWidth, 22),
-      const Radius.circular(6),
-    );
-    canvas.drawRRect(rect, Paint()..color = AppColors.primary);
-    textPainter.paint(canvas, Offset(x + horizontalPadding, y + 5));
-  }
-
-  @override
-  bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
-      oldDelegate.points != points ||
-      oldDelegate.maxValue != maxValue ||
-      oldDelegate.progress != progress ||
-      oldDelegate.peak != peak;
-}
-
-class _ViewDetailsButton extends StatelessWidget {
-  const _ViewDetailsButton();
-  @override
-  Widget build(BuildContext context) => InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-        onTap: () {},
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  'View Details',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.primary,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 2),
-              const Icon(LucideIcons.chevronRight,
-                  size: 17, color: AppColors.primary),
-            ],
-          ),
         ),
       );
 }

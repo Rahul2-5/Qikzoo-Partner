@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "192118265479",
+    "project_id": "qikzoo",
+    "storage_bucket": "qikzoo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:192118265479:android:00f7029825f1f155a7ca22",
+        "android_client_info": {
+          "package_name": "com.qikzoodelivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLdLv8nsJYHSILy3dPVP6xY2DlrUAE47M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

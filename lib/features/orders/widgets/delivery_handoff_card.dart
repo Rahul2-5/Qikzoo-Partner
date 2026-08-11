@@ -8,12 +8,12 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 
-/// Frontend-only handoff guidance displayed once the rider is on the way to
-/// the customer. The values are deliberately configurable so API-provided
-/// delivery instructions can replace the sample values later without changing
-/// the layout.
+/// Handoff guidance displayed once the rider is on the way to the customer.
+/// [buildingSummary] and [instruction] must come from the real order
+/// (delivery address / customer note) — this widget renders whatever it's
+/// given and never fabricates its own values.
 class DeliveryHandoffCard extends StatelessWidget {
-  final String preference;
+  final String? preference;
   final String buildingSummary;
   final String instruction;
   final VoidCallback? onCall;
@@ -22,7 +22,7 @@ class DeliveryHandoffCard extends StatelessWidget {
 
   const DeliveryHandoffCard({
     super.key,
-    required this.preference,
+    this.preference,
     required this.buildingSummary,
     required this.instruction,
     this.onCall,
@@ -63,32 +63,14 @@ class DeliveryHandoffCard extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                _InfoChip(icon: Icons.phone_in_talk_outlined, label: preference),
+                if (preference != null)
+                  _InfoChip(icon: Icons.phone_in_talk_outlined, label: preference!),
                 _InfoChip(icon: Icons.business_outlined, label: buildingSummary),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(instruction, style: AppTypography.body),
             const SizedBox(height: AppSpacing.sm),
-            Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                childrenPadding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                leading: const Icon(Icons.info_outline, color: AppColors.textSecondary),
-                title: Text('Building access notes', style: AppTypography.bodyMedium),
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Use Gate 2 beside the pharmacy. Two-wheelers can park near the visitor entry. Check with security before using the lift.',
-                      style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,

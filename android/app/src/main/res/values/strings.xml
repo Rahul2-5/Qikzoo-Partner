@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Must match the channel id created by flutter_local_notifications /
+         push_service.dart — this is only the default channel FCM falls back
+         to for a notification-only (no local-notification) background
+         message, not the primary display path. -->
+    <string name="default_notification_channel_id">dispatch_offers_channel</string>
+</resources>

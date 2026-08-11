@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
-import '../../core/constants/app_constants.dart';
 import '../../models/dashboard/dashboard_stats_model.dart';
 import '../../providers/core/api_providers.dart';
 
@@ -17,40 +16,6 @@ abstract class DashboardRepository {
 
   /// `POST /rider/availability/offline` — see [goOnline].
   Future<DashboardStatsModel> goOffline();
-}
-
-class MockDashboardRepository implements DashboardRepository {
-  RiderAvailabilityStatus _status = RiderAvailabilityStatus.offline;
-
-  @override
-  Future<DashboardStatsModel> getStats() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return DashboardStatsModel(
-      riderName: 'Ravi Kumar',
-      availabilityStatus: _status,
-      todaysEarningsPaise: 84200,
-      todaysDeliveries: 14,
-      walletBalancePaise: 312000,
-      acceptanceRatePercent: 92,
-      completionRatePercent: 96,
-      rating: 4.7,
-      workingZone: 'Bengaluru, Karnataka',
-    );
-  }
-
-  @override
-  Future<DashboardStatsModel> goOnline() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    _status = RiderAvailabilityStatus.online;
-    return getStats();
-  }
-
-  @override
-  Future<DashboardStatsModel> goOffline() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    _status = RiderAvailabilityStatus.offline;
-    return getStats();
-  }
 }
 
 class DioDashboardRepository implements DashboardRepository {

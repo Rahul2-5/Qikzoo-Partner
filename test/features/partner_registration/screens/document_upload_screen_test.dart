@@ -54,11 +54,11 @@ void setTallSurface(WidgetTester tester) {
 
 void main() {
   test(
-      'missingRequiredDocumentLabels requires PAN and excludes optional documents',
+      'missingRequiredDocumentLabels requires the government ID and excludes optional documents',
       () {
     final documents = [
       const DocumentModel(
-          type: DocumentType.aadhaar,
+          type: DocumentType.governmentId,
           status: DocumentStatus.pendingVerification),
       const DocumentModel(
           type: DocumentType.drivingLicense,
@@ -68,43 +68,40 @@ void main() {
       const DocumentModel(
           type: DocumentType.vehicleInsurance, status: DocumentStatus.rejected),
       const DocumentModel(
-          type: DocumentType.pan, status: DocumentStatus.notUploaded),
-      const DocumentModel(
           type: DocumentType.bankProof, status: DocumentStatus.notUploaded),
     ];
 
     expect(
       missingRequiredDocumentLabels(documents),
-      ['PAN Card', 'Driving License'],
+      ['Driving License'],
     );
   });
 
-  testWidgets('renders all six documents with requirement labels',
+  testWidgets('renders every required document with requirement labels',
       (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp(
-      DocumentType.values
+      documentDisplayOrder
           .map((type) =>
               DocumentModel(type: type, status: DocumentStatus.notUploaded))
           .toList(),
     ));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Aadhaar Card'), findsOneWidget);
+    expect(find.textContaining('Government ID'), findsOneWidget);
     expect(find.textContaining('Driving License'), findsOneWidget);
     expect(find.textContaining('Vehicle RC'), findsOneWidget);
     expect(find.textContaining('Insurance'), findsOneWidget);
-    expect(find.textContaining('PAN Card'), findsOneWidget);
     expect(find.textContaining('Bank Details'), findsOneWidget);
     expect(find.textContaining('(Optional)'), findsNWidgets(2));
-    expect(find.textContaining('(Required)'), findsNWidgets(4));
+    expect(find.textContaining('(Required)'), findsNWidgets(3));
   });
 
   testWidgets('Continue shows a snackbar listing missing required documents',
       (tester) async {
     setTallSurface(tester);
     await tester.pumpWidget(buildApp(
-      DocumentType.values
+      documentDisplayOrder
           .map((type) =>
               DocumentModel(type: type, status: DocumentStatus.notUploaded))
           .toList(),
@@ -114,7 +111,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Aadhaar Card'), findsWidgets);
+    expect(find.textContaining('Government ID'), findsWidgets);
     expect(find.text('Selfie Verification Screen'), findsNothing);
   });
 
@@ -123,12 +120,11 @@ void main() {
       (tester) async {
     setTallSurface(tester);
     const requiredTypes = [
-      DocumentType.aadhaar,
-      DocumentType.pan,
+      DocumentType.governmentId,
       DocumentType.drivingLicense,
       DocumentType.vehicleRc,
     ];
-    final documents = DocumentType.values.map((type) {
+    final documents = documentDisplayOrder.map((type) {
       final isRequired = requiredTypes.contains(type);
       return DocumentModel(
         type: type,

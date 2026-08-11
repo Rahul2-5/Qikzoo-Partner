@@ -238,7 +238,7 @@ class _KycScreenState extends ConsumerState<KycScreen> {
       final profile = await ref.read(profileRepositoryProvider).getProfile();
       return NextOnboardingStepResolver.resolve(status, profile: profile);
     } catch (_) {
-      return AppRoutes.vehicleSelection;
+      return AppRoutes.vehicleRegistration;
     }
   }
 

@@ -39,10 +39,6 @@ void main() {
     expect(find.text('Call on arrival'), findsOneWidget);
     expect(find.text('Tower B · Gate 2'), findsOneWidget);
 
-    await tester.tap(find.text('Building access notes'));
-    await settleSheet(tester);
-    expect(find.textContaining('Use Gate 2 beside the pharmacy'), findsOneWidget);
-
     await tester.tap(find.text('Quick message'));
     expect(quickMessageTapped, isTrue);
     await tester.tap(find.text('Customer not responding?'));

@@ -1,115 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../providers/agreement/agreement_provider.dart';
-import '../../../shared/widgets/buttons/primary_cta_button.dart';
-import '../../../shared/widgets/feedback/app_snack_bar.dart';
+import '../../../providers/onboarding_status/onboarding_status_provider.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
+import '../../../shared/widgets/misc/loading_skeleton.dart';
 
+/// Consent is captured exactly once, atomically, during onboarding submit
+/// (`POST /rider/onboarding/submit`) — there is no backend endpoint to
+/// re-accept or re-record it later, so this screen is read-only: it
+/// confirms what the rider already agreed to rather than pretending a
+/// second "Accept" action here does anything real.
 class AgreementScreen extends ConsumerWidget {
   const AgreementScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final agreement = ref.watch(agreementProvider);
-    final notifier = ref.read(agreementProvider.notifier);
+    final statusAsync = ref.watch(onboardingStatusProvider);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Partner agreement')),
       body: SafeArea(
         child: ResponsiveFrame(
           maxWidth: 520,
-          child: CustomScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.only(top: AppSpacing.md),
-                sliver: SliverList.list(
-                  children: [
-                    Text(
-                      'Review and accept the terms to continue.',
-                      style: AppTypography.body,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _AgreementOption(
-                      value: agreement.termsAccepted,
-                      label: 'I accept the Terms of Service',
-                      onChanged: notifier.toggleTerms,
-                    ),
-                    _AgreementOption(
-                      value: agreement.privacyAccepted,
-                      label: 'I accept the Privacy Policy',
-                      onChanged: notifier.togglePrivacy,
-                    ),
-                    _AgreementOption(
-                      value: agreement.partnerAgreementAccepted,
-                      label: 'I accept the Delivery Partner Agreement',
-                      onChanged: notifier.togglePartnerAgreement,
-                    ),
-                  ],
-                ),
+          child: statusAsync.when(
+            loading: () => const PageLoadingShimmer(),
+            error: (_, __) => Center(
+              child: TextButton(
+                onPressed: () => ref.invalidate(onboardingStatusProvider),
+                child: const Text('Retry'),
               ),
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    top: AppSpacing.lg,
-                    bottom: AppSpacing.md,
-                  ),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: PrimaryCtaButton(
-                      label: 'Accept and continue',
-                      onPressed: agreement.allAccepted
-                          ? () async {
-                              await notifier.submit();
-                              if (!context.mounted) return;
-                              AppSnackBar.success(
-                                context,
-                                'Agreement accepted',
-                              );
-                              Get.offNamed(AppRoutes.approval);
-                            }
-                          : null,
+            ),
+            data: (status) {
+              final submittedAt = status.submittedAt;
+              return ListView(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.sheet),
+                      boxShadow: AppShadows.card,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(LucideIcons.fileCheck2,
+                            color: AppColors.success, size: 32),
+                        const SizedBox(height: AppSpacing.md),
+                        Text('Terms of Service', style: AppTypography.h3),
+                        const SizedBox(height: 4),
+                        Text('Privacy Policy', style: AppTypography.h3),
+                        const SizedBox(height: 4),
+                        Text('Delivery Partner Agreement', style: AppTypography.h3),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          submittedAt != null
+                              ? 'You accepted these when you submitted your application on ${DateFormat('d MMMM yyyy').format(submittedAt.toLocal())}.'
+                              : 'You accept these when you submit your partner application.',
+                          style: AppTypography.body
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _AgreementOption extends StatelessWidget {
-  const _AgreementOption({
-    required this.value,
-    required this.label,
-    required this.onChanged,
-  });
-
-  final bool value;
-  final String label;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return CheckboxListTile(
-      value: value,
-      onChanged: (nextValue) => onChanged(nextValue ?? false),
-      title: Text(label, style: AppTypography.bodyMedium),
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: EdgeInsets.zero,
-      visualDensity: VisualDensity.comfortable,
-      shape: const Border(
-        bottom: BorderSide(color: AppColors.border),
       ),
     );
   }

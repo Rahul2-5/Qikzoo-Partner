@@ -9,6 +9,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/document_verification/document_model.dart';
+import '../../../providers/core/camera_config_provider.dart';
 import '../../../providers/document_verification/documents_provider.dart';
 import '../../../repositories/document_verification/document_image_picker.dart';
 import '../../../repositories/profile/profile_repository.dart';
@@ -199,8 +200,14 @@ Future<bool> pickAndConfirmSelfie(
     if (!context.mounted) return false;
     String? path;
     if (cameraOnly) {
+      final cameraConfig = ref.read(cameraConfigProvider);
       path = await Navigator.of(context).push<String>(
-        MaterialPageRoute(builder: (_) => const SelfieCameraCaptureScreen()),
+        MaterialPageRoute(
+          builder: (_) => SelfieCameraCaptureScreen(
+            cameraListLoader: cameraConfig.cameraListLoader,
+            controllerBuilder: cameraConfig.controllerBuilder,
+          ),
+        ),
       );
     } else {
       final source = await showImageSourceSheet(context);

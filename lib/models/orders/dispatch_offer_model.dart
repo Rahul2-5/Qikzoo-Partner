@@ -21,12 +21,9 @@ enum DispatchAttemptStatus {
 }
 
 /// A pending dispatch offer, as returned by `GET /rider/dispatch/current`
-/// (backend's bare `DispatchAttempt` row — `DispatchEngineService.
-/// getCurrentOffer`). The backend does not join in the restaurant name,
-/// pickup address, ETA, or estimated earnings on this endpoint — only
-/// `distanceKm` and the offer's own timing are available before the rider
-/// decides, so the offer screen only ever shows what's genuinely here
-/// rather than inventing fields the backend doesn't provide.
+/// (`DispatchEngineService.getCurrentOffer`) — already joins in the
+/// restaurant/customer/pickup/drop details and a computed payout, not just
+/// the bare `DispatchAttempt` row.
 class DispatchOfferModel extends Equatable {
   final String id;
   final String jobId;
@@ -37,6 +34,12 @@ class DispatchOfferModel extends Equatable {
   final bool broadcast;
   final DateTime offeredAt;
   final DateTime expiresAt;
+  final double payout;
+  final String restaurantName;
+  final String restaurantAddress;
+  final String customerName;
+  final String userAddress;
+  final double dropDistanceKm;
 
   const DispatchOfferModel({
     required this.id,
@@ -48,6 +51,12 @@ class DispatchOfferModel extends Equatable {
     required this.broadcast,
     required this.offeredAt,
     required this.expiresAt,
+    required this.payout,
+    required this.restaurantName,
+    required this.restaurantAddress,
+    required this.customerName,
+    required this.userAddress,
+    required this.dropDistanceKm,
   });
 
   Duration get remaining {
@@ -74,6 +83,21 @@ class DispatchOfferModel extends Equatable {
       broadcast: json['broadcast'] == true,
       offeredAt: DateTime.tryParse('${json['offeredAt']}') ?? DateTime.now(),
       expiresAt: DateTime.tryParse('${json['expiresAt']}') ?? DateTime.now(),
+      payout: json['payout'] is num ? (json['payout'] as num).toDouble() : 0,
+      restaurantName: json['restaurantName'] is String
+          ? json['restaurantName'] as String
+          : 'Qikzoo Merchant',
+      restaurantAddress: json['restaurantAddress'] is String
+          ? json['restaurantAddress'] as String
+          : '',
+      customerName: json['customerName'] is String
+          ? json['customerName'] as String
+          : 'Customer',
+      userAddress:
+          json['userAddress'] is String ? json['userAddress'] as String : '',
+      dropDistanceKm: json['dropDistanceKm'] is num
+          ? (json['dropDistanceKm'] as num).toDouble()
+          : 0,
     );
   }
 
@@ -88,5 +112,11 @@ class DispatchOfferModel extends Equatable {
         broadcast,
         offeredAt,
         expiresAt,
+        payout,
+        restaurantName,
+        restaurantAddress,
+        customerName,
+        userAddress,
+        dropDistanceKm,
       ];
 }

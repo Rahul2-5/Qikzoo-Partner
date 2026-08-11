@@ -49,9 +49,9 @@ Widget buildApp(List<SessionRestoreResult> results) => ProviderScope(
               page: () =>
                   const Scaffold(body: Text('Personal Details Screen'))),
           GetPage(
-              name: AppRoutes.vehicleSelection,
+              name: AppRoutes.vehicleRegistration,
               page: () =>
-                  const Scaffold(body: Text('Vehicle Selection Screen'))),
+                  const Scaffold(body: Text('Vehicle Registration Screen'))),
           GetPage(
               name: AppRoutes.welcome,
               page: () => const Scaffold(body: Text('Welcome Screen'))),
@@ -127,17 +127,17 @@ void main() {
   });
 
   testWidgets(
-      'pending onboarding with a VEHICLE route resumes exactly on Vehicle Selection',
+      'pending onboarding with a VEHICLE route resumes exactly on Vehicle Registration',
       (tester) async {
     await tester.pumpWidget(buildApp([
       const SessionRestoreResult(SessionRestoreOutcome.needsOnboarding,
-          route: AppRoutes.vehicleSelection),
+          route: AppRoutes.vehicleRegistration),
     ]));
     await settleBootstrap(tester);
     await settleTransition(tester);
     await tester.pumpAndSettle();
 
-    expect(find.text('Vehicle Selection Screen'), findsOneWidget);
+    expect(find.text('Vehicle Registration Screen'), findsOneWidget);
   });
 
   testWidgets('no/expired session restores to the welcome (login) screen',

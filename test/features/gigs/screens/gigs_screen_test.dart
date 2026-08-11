@@ -30,65 +30,43 @@ class _OfflineDashboardRepository implements DashboardRepository {
   Future<DashboardStatsModel> goOnline() async => _stats;
 }
 
+Widget buildApp() => ProviderScope(
+      overrides: [
+        dashboardRepositoryProvider
+            .overrideWithValue(const _OfflineDashboardRepository()),
+      ],
+      child: const MaterialApp(home: GigsScreen()),
+    );
+
 void main() {
   testWidgets('shows Offline when the rider is offline', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          dashboardRepositoryProvider
-              .overrideWithValue(const _OfflineDashboardRepository()),
-        ],
-        child: const MaterialApp(home: GigsScreen()),
-      ),
-    );
+    await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Offline'), findsOneWidget);
   });
 
-  testWidgets('puts the weekly plan and earning opportunities up front',
+  testWidgets(
+      'shows an honest coming-soon state instead of fabricated gig bookings',
       (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          dashboardRepositoryProvider
-              .overrideWithValue(const _OfflineDashboardRepository()),
-        ],
-        child: const MaterialApp(home: GigsScreen()),
-      ),
-    );
+    await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Your week is taking shape'), findsOneWidget);
-    expect(find.text('Weekend Boost'), findsOneWidget);
-    expect(find.text('Extra Earnings'), findsOneWidget);
-    expect(find.text('Your Gigs This Week'), findsOneWidget);
+    expect(find.text('Gig scheduling is coming soon'), findsOneWidget);
+    expect(find.text('Weekend Boost'), findsNothing);
+    expect(find.text('Extra Earnings'), findsNothing);
   });
 
-  testWidgets('keeps the schedule legible on a compact phone', (tester) async {
+  testWidgets('remains usable on a compact phone', (tester) async {
     tester.view.physicalSize = const Size(320, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          dashboardRepositoryProvider
-              .overrideWithValue(const _OfflineDashboardRepository()),
-        ],
-        child: const MaterialApp(home: GigsScreen()),
-      ),
-    );
+    await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Estimated payout'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-
-    await tester.drag(find.byType(ListView), const Offset(0, -600));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Booking open'), findsWidgets);
+    expect(find.text('Gig scheduling is coming soon'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

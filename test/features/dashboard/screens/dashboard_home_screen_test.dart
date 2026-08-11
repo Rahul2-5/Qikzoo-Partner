@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/dashboard/screens/dashboard_home_screen.dart';
+import 'package:delivery_partner_app/features/partner_registration/widgets/capture_button.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
@@ -17,12 +18,15 @@ import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
 import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
 import 'package:delivery_partner_app/models/profile/partner_profile_model.dart';
 import 'package:delivery_partner_app/models/profile/rating_model.dart';
+import 'package:delivery_partner_app/providers/core/camera_config_provider.dart';
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
 import 'package:delivery_partner_app/repositories/orders/dispatch_repository.dart';
 import 'package:delivery_partner_app/repositories/notifications/notifications_repository.dart';
 import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
+
+import '../../../support/fake_camera.dart';
 
 class FakeDashboardRepository implements DashboardRepository {
   FakeDashboardRepository({required this.initial});
@@ -172,6 +176,12 @@ DispatchOfferModel mockOffer() => DispatchOfferModel(
       broadcast: false,
       offeredAt: DateTime.now(),
       expiresAt: DateTime.now().add(const Duration(seconds: 20)),
+      payout: 50,
+      restaurantName: 'Test Restaurant',
+      restaurantAddress: '1 Test Street',
+      customerName: 'Test Customer',
+      userAddress: '2 Test Avenue',
+      dropDistanceKm: 3.0,
     );
 
 class FakeAuthRepository implements AuthRepository {
@@ -236,6 +246,15 @@ Widget buildApp({
       profileRepositoryProvider
           .overrideWithValue(profileRepository ?? FakeProfileRepository()),
       documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
+      // Replaces only the native camera plugin — the rest of the selfie
+      // flow (capture button, confirm sheet, upload) runs for real.
+      cameraConfigProvider.overrideWithValue(
+        CameraConfig(
+          cameraListLoader: fakeCameraListLoader,
+          controllerBuilder: (description) =>
+              FakeCameraController(description),
+        ),
+      ),
     ],
     child: GetMaterialApp(
       initialRoute: AppRoutes.dashboard,
@@ -257,6 +276,38 @@ Widget buildApp({
       ],
     ),
   );
+}
+
+/// The dashboard's real 8s dispatch-offer poll timer
+/// (`AppConstants.dispatchOfferPollInterval`) is intentionally always
+/// running (online or not — see its doc comment), which is correct
+/// production behavior but means `pumpAndSettle()` — which waits for zero
+/// scheduled frames — can never naturally converge once enough cumulative
+/// virtual test time has elapsed for that periodic timer to fire mid-settle.
+/// Bounded pumps sidestep that without touching the real polling behavior.
+Future<void> pumpBounded(WidgetTester tester) async {
+  await tester.pump();
+  // 20 x 100ms = 2s of virtual time — comfortably enough for the fake
+  // repositories' near-instant futures plus any transition animations to
+  // finish, while staying well under the 8s poll interval so this loop
+  // can never race the periodic timer the way pumpAndSettle() does.
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
+/// Taps the real selfie [CaptureButton], which drives a real (unfaked)
+/// `dart:io` file read/write via `SelfieImageProcessor.prepareForUpload`.
+/// The virtualized test clock that `pump()` advances can't move that real
+/// I/O forward, so the tap — and the async work it kicks off — must happen
+/// inside `runAsync`, Flutter's documented escape hatch for letting genuine
+/// async work complete inside an otherwise clock-faked widget test.
+Future<void> tapCaptureButton(WidgetTester tester) async {
+  await tester.runAsync(() async {
+    await tester.tap(find.byType(CaptureButton));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+  });
+  await pumpBounded(tester);
 }
 
 void main() {
@@ -283,7 +334,7 @@ void main() {
     expect(find.text('Completion rate'), findsNothing);
     expect(find.text('Working zone'), findsNothing);
     expect(find.text("TODAY'S PROGRESS"), findsOneWidget);
-    expect(find.text('Top opportunities'), findsOneWidget);
+    expect(find.text('Top opportunities'), findsNothing);
     expect(find.text('Wallet'), findsOneWidget);
     expect(find.text('Incentives'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
@@ -309,6 +360,9 @@ void main() {
 
   testWidgets('shows the unread notification count and opens notifications',
       (tester) async {
+    // bySemanticsLabel needs the semantics tree actually built — Flutter
+    // widget tests don't generate it by default.
+    final semantics = tester.ensureSemantics();
     setTallSurface(tester);
     final notifications = FakeNotificationsRepository([
       NotificationModel(
@@ -336,10 +390,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.bySemanticsLabel('Notifications, 2 unread'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Notifications, 2 unread'));
+    // The button's Semantics doesn't set `container: true`, so its label
+    // merges with the descendant unread-count Text's own semantics (a
+    // trailing "\n2") rather than staying exactly "Notifications, 2 unread".
+    final notificationButtonLabel = RegExp(r'^Notifications, 2 unread\n2$');
+    expect(find.bySemanticsLabel(notificationButtonLabel), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(notificationButtonLabel));
     await tester.pumpAndSettle();
     expect(find.text('Notifications Screen'), findsOneWidget);
+    semantics.dispose();
   });
 
   testWidgets('shows — for acceptance/completion rate and zone when null',
@@ -378,24 +437,28 @@ void main() {
     expect(repo.goOnlineCalls, 0);
 
     await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
     expect(find.text('Quick selfie check'), findsOneWidget);
 
     await tester.tap(find.text('Take selfie'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
+    // Camera screen is pushed and the fake camera has initialized; capture
+    // a frame before the confirm sheet can appear.
+    await tapCaptureButton(tester);
     await tester.tap(find.text('Use Photo'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
 
-    // The selfie must actually be uploaded through the real profile API —
-    // not silently faked — before the rider is allowed to go online.
+    // The selfie must actually be captured and uploaded through the real
+    // profile API — not silently faked — before the rider is allowed online.
     expect(profileRepo.uploadSelfieCalls, 1);
-    expect(profileRepo.lastSelfiePath, '/tmp/selfie.jpg');
+    expect(profileRepo.lastSelfiePath, isNotNull);
+    expect(profileRepo.lastSelfiePath, endsWith('selfie.jpg'));
     expect(repo.goOnlineCalls, 1);
     expect(find.text('You are Online'), findsOneWidget);
     expect(find.text('Go offline'), findsOneWidget);
     expect(find.text("TODAY'S PROGRESS"), findsOneWidget);
     expect(find.text("Today's Overview"), findsOneWidget);
-    expect(find.text('Top opportunities'), findsOneWidget);
+    expect(find.text('Top opportunities'), findsNothing);
     expect(find.byKey(const Key('online-status-celebration')), findsOneWidget);
   });
 
@@ -415,11 +478,12 @@ void main() {
     await tester.tap(find.byKey(const Key('availability-toggle')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
     await tester.tap(find.text('Take selfie'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
+    await tapCaptureButton(tester);
     await tester.tap(find.text('Use Photo'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
 
     expect(profileRepo.uploadSelfieCalls, 1);
     expect(find.textContaining('Upload failed'), findsOneWidget);
@@ -459,11 +523,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
     await tester.tap(find.text('Take selfie'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
+    await tapCaptureButton(tester);
     await tester.tap(find.text('Use Photo'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
 
     expect(authRepo.loggedOut, isTrue);
     expect(find.text('Welcome Screen'), findsOneWidget);
@@ -484,11 +549,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Confirm'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
     await tester.tap(find.text('Take selfie'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
+    await tapCaptureButton(tester);
     await tester.tap(find.text('Use Photo'));
-    await tester.pumpAndSettle();
+    await pumpBounded(tester);
 
     expect(find.textContaining("You're offline"), findsNothing);
     expect(find.textContaining('Unable to connect'), findsOneWidget);

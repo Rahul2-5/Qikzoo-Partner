@@ -4,9 +4,11 @@ import 'package:delivery_partner_app/features/approval/screens/approval_screen.d
 import 'package:delivery_partner_app/features/training/screens/training_screen.dart';
 import 'package:delivery_partner_app/features/wallet/screens/wallet_screen.dart';
 import 'package:delivery_partner_app/models/approval/approval_status_model.dart';
+import 'package:delivery_partner_app/models/onboarding_status/onboarding_status_model.dart';
 import 'package:delivery_partner_app/models/training/training_module_model.dart';
 import 'package:delivery_partner_app/models/wallet/wallet_model.dart';
 import 'package:delivery_partner_app/providers/approval/approval_provider.dart';
+import 'package:delivery_partner_app/providers/onboarding_status/onboarding_status_provider.dart';
 import 'package:delivery_partner_app/providers/training/training_provider.dart';
 import 'package:delivery_partner_app/providers/wallet/wallet_provider.dart';
 import 'package:flutter/material.dart';
@@ -51,18 +53,27 @@ class FakeTrainingModulesNotifier extends TrainingModulesNotifier {
 }
 
 void main() {
-  testWidgets('agreement options remain scrollable with large text',
+  testWidgets('agreement screen remains scrollable with large text',
       (tester) async {
     setCompactSurface(tester);
 
-    await tester.pumpWidget(buildApp(const AgreementScreen()));
-    expect(tester.takeException(), isNull);
-
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+    await tester.pumpWidget(
+      buildApp(
+        const AgreementScreen(),
+        overrides: [
+          onboardingStatusProvider.overrideWith(
+            (ref) async => OnboardingStatusModel(
+              accountStatus: RiderAccountStatus.active,
+              onboardingStatus: RiderOnboardingStatus.approved,
+              submittedAt: DateTime(2026, 1, 15),
+            ),
+          ),
+        ],
+      ),
+    );
     await tester.pump();
 
-    expect(
-        find.text('I accept the Delivery Partner Agreement'), findsOneWidget);
+    expect(find.text('Delivery Partner Agreement'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

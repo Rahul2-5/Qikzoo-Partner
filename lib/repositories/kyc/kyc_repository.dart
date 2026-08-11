@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
-import '../../core/constants/app_constants.dart';
 import '../../models/kyc/rider_kyc_model.dart';
 import '../../providers/core/api_providers.dart';
 
@@ -46,97 +45,6 @@ abstract class KycRepository {
   });
 }
 
-class MockKycRepository implements KycRepository {
-  RiderKycModel? _current;
-
-  @override
-  Future<RiderKycModel?> getKyc() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return _current;
-  }
-
-  @override
-  Future<RiderKycModel> submit({
-    GovernmentIdType? governmentIdType,
-    String? governmentIdNumber,
-    String? drivingLicenseNumber,
-    DateTime? drivingLicenseExpiry,
-    String? bankAccountHolderName,
-    String? bankAccountNumber,
-    String? confirmBankAccountNumber,
-    String? bankIfsc,
-    String? bankName,
-  }) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    final c = _current;
-    _current = RiderKycModel(
-      governmentIdType: governmentIdType ?? c?.governmentIdType,
-      governmentIdNumber: governmentIdNumber ?? c?.governmentIdNumber,
-      governmentIdDocumentUrl: c?.governmentIdDocumentUrl,
-      drivingLicenseNumber: drivingLicenseNumber ?? c?.drivingLicenseNumber,
-      drivingLicenseExpiry: drivingLicenseExpiry ?? c?.drivingLicenseExpiry,
-      drivingLicenseDocumentUrl: c?.drivingLicenseDocumentUrl,
-      bankAccountHolderName: bankAccountHolderName ?? c?.bankAccountHolderName,
-      bankAccountNumberMasked: bankAccountNumber != null
-          ? '•••• ${bankAccountNumber.substring(bankAccountNumber.length - 4)}'
-          : c?.bankAccountNumberMasked,
-      bankIfsc: bankIfsc ?? c?.bankIfsc,
-      bankName: bankName ?? c?.bankName,
-      status: KycDocumentStatus.pending,
-    );
-    return _current!;
-  }
-
-  @override
-  Future<RiderKycModel> uploadGovernmentIdDocument(
-    File file, {
-    void Function(int sent, int total)? onSendProgress,
-    CancelToken? cancelToken,
-  }) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    onSendProgress?.call(1, 1);
-    final c = _current;
-    _current = RiderKycModel(
-      governmentIdType: c?.governmentIdType,
-      governmentIdNumber: c?.governmentIdNumber,
-      governmentIdDocumentUrl: file.path,
-      drivingLicenseNumber: c?.drivingLicenseNumber,
-      drivingLicenseExpiry: c?.drivingLicenseExpiry,
-      drivingLicenseDocumentUrl: c?.drivingLicenseDocumentUrl,
-      bankAccountHolderName: c?.bankAccountHolderName,
-      bankAccountNumberMasked: c?.bankAccountNumberMasked,
-      bankIfsc: c?.bankIfsc,
-      bankName: c?.bankName,
-      status: KycDocumentStatus.pending,
-    );
-    return _current!;
-  }
-
-  @override
-  Future<RiderKycModel> uploadDrivingLicenseDocument(
-    File file, {
-    void Function(int sent, int total)? onSendProgress,
-    CancelToken? cancelToken,
-  }) async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    onSendProgress?.call(1, 1);
-    final c = _current;
-    _current = RiderKycModel(
-      governmentIdType: c?.governmentIdType,
-      governmentIdNumber: c?.governmentIdNumber,
-      governmentIdDocumentUrl: c?.governmentIdDocumentUrl,
-      drivingLicenseNumber: c?.drivingLicenseNumber,
-      drivingLicenseExpiry: c?.drivingLicenseExpiry,
-      drivingLicenseDocumentUrl: file.path,
-      bankAccountHolderName: c?.bankAccountHolderName,
-      bankAccountNumberMasked: c?.bankAccountNumberMasked,
-      bankIfsc: c?.bankIfsc,
-      bankName: c?.bankName,
-      status: KycDocumentStatus.pending,
-    );
-    return _current!;
-  }
-}
 
 class DioKycRepository implements KycRepository {
   const DioKycRepository({required ApiClient apiClient})

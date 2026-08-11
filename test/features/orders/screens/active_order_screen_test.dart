@@ -292,7 +292,14 @@ void main() {
 
     expect(repo.startDeliveryCalls, 1);
     expect(find.text('Out for delivery'), findsOneWidget);
-    expect(find.text('Complete delivery'), findsOneWidget);
+    // The new DeliveryHandoffCard section (shown only for outForDelivery)
+    // pushes this button below the initial viewport in the list — it's
+    // still built (within the sliver's cache extent) but skipOffstage's
+    // default excludes it, so it must be searched for explicitly here.
+    expect(
+      find.text('Complete delivery', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -316,9 +323,18 @@ void main() {
     // PinCodeTextField runs a repeating cursor animation once the sheet is
     // shown, which never settles — bounded pumps drive the same frames
     // without waiting indefinitely.
-    await tester.tap(find.text('Complete delivery'));
+    // DeliveryHandoffCard (shown for outForDelivery) pushes this button
+    // below the initial viewport — scroll it into view first, since a tap
+    // at an off-screen coordinate silently misses the real hit target.
+    final completeDeliveryFinder =
+        find.text('Complete delivery', skipOffstage: false);
+    await tester.ensureVisible(completeDeliveryFinder);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(completeDeliveryFinder);
+    await tester.pump();
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     expect(find.text('Enter delivery OTP'), findsOneWidget);
 

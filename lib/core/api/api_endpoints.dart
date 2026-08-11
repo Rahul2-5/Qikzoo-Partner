@@ -52,8 +52,21 @@ class ApiEndpoints {
   static String riderDispatchReject(String attemptId) =>
       '/rider/dispatch/$attemptId/reject';
 
-  static const riderEarnings = '/rider/earnings';
   static const riderEarningsSummary = '/rider/earnings/summary';
+  static const riderEarningsHistory = '/rider/earnings/history';
   static const riderWallet = '/rider/wallet';
+<<<<<<< HEAD
   static const riderDeviceTokens = '/rider/device-tokens';
+=======
+
+  // Actor-agnostic — shared with the customer/admin/restaurant apps.
+  static const deviceTokens = '/notifications/device-tokens';
+
+  static const riderNotifications = '/rider/notifications';
+  static String riderNotificationRead(String id) =>
+      '/rider/notifications/$id/read';
+  static const riderNotificationsReadAll = '/rider/notifications/read-all';
+  static String riderNotificationDelete(String id) =>
+      '/rider/notifications/$id';
+>>>>>>> bf2d480ead9dc170aa7642e121a3318abbb40510
 }

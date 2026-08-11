@@ -13,9 +13,6 @@ class AppRoutes {
   static const vehicleRegistration = '/registration/vehicle';
   static const emergencyContact = '/registration/emergency-contact';
   static const review = '/registration/review';
-  static const vehicleSelection = '/registration/vehicle-selection';
-  static const vehicleDetails = '/registration/vehicle-details';
-  static const deliveryZone = '/registration/delivery-zone';
   static const documentUpload = '/documents';
   static const selfieVerification = '/registration/selfie-verification';
   static const welcomeKit = '/registration/welcome-kit';

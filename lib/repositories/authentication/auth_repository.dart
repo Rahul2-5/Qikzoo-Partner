@@ -22,41 +22,6 @@ abstract class AuthRepository {
   Future<void> logout();
 }
 
-class MockAuthRepository implements AuthRepository {
-  @override
-  Future<OtpModel> requestOtp(String phoneNumber) async {
-    _ensureValidPhone(phoneNumber);
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return OtpModel(
-      phoneNumber: phoneNumber,
-      isVerified: false,
-      expiresAt: DateTime.now()
-          .add(const Duration(seconds: AppConstants.otpResendSeconds)),
-    );
-  }
-
-  @override
-  Future<AuthSessionModel> verifyOtp(String phoneNumber, String otp, {String? name}) async {
-    final isValidOtp = RegExp(
-      '^\\d{${AppConstants.otpLength}}\$',
-    ).hasMatch(otp);
-    if (!isValidOtp) {
-      throw const FormatException('OTP must contain exactly 4 digits.');
-    }
-    await Future.delayed(AppConstants.mockNetworkDelay);
-    return const AuthSessionModel(
-      partnerId: 'partner_mock_001',
-      token: 'mock_token_abc123',
-      isAuthenticated: true,
-    );
-  }
-
-  @override
-  Future<void> logout() async {
-    await Future.delayed(AppConstants.mockNetworkDelay);
-  }
-}
-
 class DioAuthRepository implements AuthRepository {
   const DioAuthRepository({
     required ApiClient apiClient,
