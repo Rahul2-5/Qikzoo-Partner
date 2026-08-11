@@ -3,6 +3,24 @@
 .env.*
 !.env.example
 
+# Firebase generated/config files
+**/google-services.json
+**/GoogleService-Info.plist
+lib/firebase_options.dart
+.firebase/
+firebase-debug.log
+
+# Signing keys and local Android secrets
+*.jks
+*.keystore
+*.p12
+*.p8
+*.mobileprovision
+*.key.properties
+**/key.properties
+**/local.properties
+!android/key.properties.example
+
 # Miscellaneous
 *.class
 *.log
@@ -32,6 +50,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+**/build/
 
 # Symbolication related
 app.*.symbols
@@ -43,7 +62,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-*.key.properties
-**/key.properties
+**/.gradle/
 **/release
+
+# Flutter generated files in nested app folders
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh
+**/Flutter/ephemeral/
+**/GeneratedPluginRegistrant.*
 

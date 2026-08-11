@@ -55,4 +55,5 @@ class ApiEndpoints {
   static const riderEarnings = '/rider/earnings';
   static const riderEarningsSummary = '/rider/earnings/summary';
   static const riderWallet = '/rider/wallet';
+  static const riderDeviceTokens = '/rider/device-tokens';
 }
