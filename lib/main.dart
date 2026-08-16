@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app.dart';
+import 'core/location/rider_background_location_service.dart';
 import 'core/push/push_service.dart';
 
 Future<void> main() async {
@@ -16,6 +17,7 @@ Future<void> main() async {
   GoogleFonts.config.allowRuntimeFetching = false;
   _registerFontLicenses();
   await dotenv.load(fileName: '.env');
+  RiderBackgroundLocationService.instance.initialize();
 
   // iOS has no GoogleService-Info.plist yet (see ios/Runner/Info.plist and
   // push_service.dart) — Firebase.initializeApp() would throw without it,

@@ -48,28 +48,29 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   @override
   Future<void> markArrived(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> scanPickupQr(String riderOrderId, String token) =>
-      throw UnimplementedError();
-  @override
-  Future<void> pickupSuccess(String riderOrderId) => throw UnimplementedError();
-  @override
   Future<void> startDelivery(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) =>
-      throw UnimplementedError();
+  Future<void> completeDelivery(String riderOrderId) => throw UnimplementedError();
   @override
   Future<void> cancel(String riderOrderId, String reason) =>
       throw UnimplementedError();
 }
 
 class FakeDashboardRepository implements DashboardRepository {
+  FakeDashboardRepository({
+    this.availabilityStatus = RiderAvailabilityStatus.online,
+  });
+
+  final RiderAvailabilityStatus availabilityStatus;
+
   @override
-  Future<DashboardStatsModel> getStats() async => const DashboardStatsModel(
+  Future<DashboardStatsModel> getStats() async => DashboardStatsModel(
         riderName: 'Ravi Kumar',
-        availabilityStatus: RiderAvailabilityStatus.online,
+        availabilityStatus: availabilityStatus,
         todaysEarningsPaise: 0,
         todaysDeliveries: 0,
         walletBalancePaise: 0,
+        onlineSecondsToday: 0,
         acceptanceRatePercent: null,
         completionRatePercent: null,
         rating: 5,
@@ -81,6 +82,9 @@ class FakeDashboardRepository implements DashboardRepository {
 
   @override
   Future<DashboardStatsModel> goOnline() => getStats();
+
+  @override
+  Future<DashboardStatsModel> goAvailable() => getStats();
 }
 
 RiderOrderModel mockOrder({
@@ -126,16 +130,19 @@ RiderOrderModel mockOrder({
         customerNote: null,
         status: RestaurantOrderStatus.delivered,
         statusHistory: null,
+        pickupOtp: null,
       ),
-      pickupQr: null,
-      deliveryOtp: null,
     );
 
-Widget buildApp({required FakeRiderOrdersRepository repository}) {
+Widget buildApp({
+  required FakeRiderOrdersRepository repository,
+  FakeDashboardRepository? dashboardRepository,
+}) {
   return ProviderScope(
     overrides: [
       riderOrdersRepositoryProvider.overrideWithValue(repository),
-      dashboardRepositoryProvider.overrideWithValue(FakeDashboardRepository()),
+      dashboardRepositoryProvider
+          .overrideWithValue(dashboardRepository ?? FakeDashboardRepository()),
     ],
     child: GetMaterialApp(
       initialRoute: AppRoutes.orders,
@@ -199,6 +206,24 @@ void main() {
     expect(find.text('You have an order in progress'), findsOneWidget);
     expect(find.text('1 order'), findsOneWidget);
     expect(find.text('Online'), findsOneWidget);
+  });
+
+  testWidgets(
+      'shows Busy — distinct from Online — when the backend availability is BUSY',
+      (tester) async {
+    final repo = FakeRiderOrdersRepository(
+      activeOrder: mockOrder(status: RiderOrderStatus.pickedUp),
+    );
+    await tester.pumpWidget(buildApp(
+      repository: repo,
+      dashboardRepository:
+          FakeDashboardRepository(availabilityStatus: RiderAvailabilityStatus.busy),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Busy'), findsOneWidget);
+    expect(find.text('Online'), findsNothing);
+    expect(find.text('Offline'), findsNothing);
   });
 
   testWidgets(

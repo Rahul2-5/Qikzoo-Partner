@@ -2,18 +2,25 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../models/orders/order_history_page_model.dart';
 import '../../../models/orders/rider_order_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
+import '../../../providers/dashboard/dashboard_provider.dart';
+import '../../../providers/location/rider_location_provider.dart';
+import '../../../providers/location/rider_location_state.dart';
 import '../../../providers/orders/active_order_provider.dart';
+import '../../../providers/orders/order_history_provider.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/chips/status_chip.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
@@ -25,35 +32,81 @@ import '../widgets/cancel_order_sheet.dart';
 import '../widgets/contactless_proof_sheet.dart';
 import '../widgets/contact_actions.dart';
 import '../widgets/delivery_handoff_card.dart';
-import '../widgets/delivery_otp_sheet.dart';
 import '../widgets/no_response_sheet.dart';
-import '../widgets/pickup_qr_scanner_screen.dart';
 import '../widgets/quick_message_sheet.dart';
 
-enum _PrimaryAction { markArrived, scanQr, confirmPickup, startDelivery, completeDelivery, none }
+/// Client-side-only UX threshold for the "Mark delivered" button/copy — the
+/// backend enforces its own real 150m default radius independently via a
+/// server-side haversine check against `Rider.lastLat/lastLng`; this constant
+/// never needs to match it exactly, it only has to give the rider an honest
+/// sense of "close enough to try" before they tap.
+const double _deliveryProximityThresholdMeters = 150;
+
+/// The rider's live distance to the delivery coordinates, computed from
+/// whatever position [RiderLocationController] currently holds — purely for
+/// UX (disabling the button, showing "X away"). Tapping "Mark delivered"
+/// always calls the real endpoint regardless of this estimate; the backend
+/// re-checks GPS proximity itself and is the only authority that matters.
+class _DeliveryProximity {
+  final double? distanceMeters;
+  final bool waitingForGps;
+
+  const _DeliveryProximity({required this.distanceMeters, required this.waitingForGps});
+
+  bool get isNear =>
+      !waitingForGps &&
+      distanceMeters != null &&
+      distanceMeters! <= _deliveryProximityThresholdMeters;
+}
+
+_DeliveryProximity _computeDeliveryProximity(
+  RiderLocationTrackingState locationState,
+  RiderOrderModel order,
+) {
+  final riderLat = locationState.lastLat;
+  final riderLng = locationState.lastLng;
+  final deliveryLat = order.order.deliveryLat;
+  final deliveryLng = order.order.deliveryLng;
+  if (riderLat == null || riderLng == null || deliveryLat == null || deliveryLng == null) {
+    return const _DeliveryProximity(distanceMeters: null, waitingForGps: true);
+  }
+  return _DeliveryProximity(
+    distanceMeters: Geolocator.distanceBetween(riderLat, riderLng, deliveryLat, deliveryLng),
+    waitingForGps: false,
+  );
+}
+
+/// Formats a live-tracked distance as `"350 m away"` (< 1km) or
+/// `"1.2 km away"` (>= 1km) — reusable anywhere this screen needs to show
+/// "how far is the rider" from a point.
+String formatDistanceAway(double meters) {
+  if (meters < 1000) return '${meters.round()} m away';
+  return '${(meters / 1000).toStringAsFixed(1)} km away';
+}
+
+enum _PrimaryAction { markArrived, startDelivery, completeDelivery, none }
 
 _PrimaryAction _primaryActionFor(RiderOrderModel order) {
   switch (order.status) {
     case RiderOrderStatus.accepted:
       return _PrimaryAction.markArrived;
-    case RiderOrderStatus.arrivedAtRestaurant:
-      final qr = order.pickupQr;
-      return (qr != null && qr.status == PickupQrStatus.used)
-          ? _PrimaryAction.confirmPickup
-          : _PrimaryAction.scanQr;
     case RiderOrderStatus.pickedUp:
       return _PrimaryAction.startDelivery;
     case RiderOrderStatus.outForDelivery:
       return _PrimaryAction.completeDelivery;
     default:
+      // Includes ARRIVED_AT_RESTAURANT: the rider has nothing to tap while
+      // waiting — see _PickupOtpWaitingPanel below. They never enter,
+      // submit, or generate the pickup OTP; only restaurant staff do that
+      // on their own dashboard, which flips the RiderOrder straight to
+      // PICKED_UP for this screen to pick up via its existing polling.
       return _PrimaryAction.none;
   }
 }
 
-/// The rider's current order, driven entirely by `RiderOrderModel.status`
-/// (and, while ARRIVED_AT_RESTAURANT, the pickup QR's own status) — no
-/// stage is hardcoded beyond mirroring the backend's own transition guards
-/// exactly (`rider-order.transitions.ts`, `RiderOrdersService`).
+/// The rider's current order, driven entirely by `RiderOrderModel.status` —
+/// no stage is hardcoded beyond mirroring the backend's own transition
+/// guards exactly (`rider-order.transitions.ts`, `RiderOrdersService`).
 class ActiveOrderScreen extends ConsumerStatefulWidget {
   const ActiveOrderScreen({super.key});
 
@@ -61,42 +114,13 @@ class ActiveOrderScreen extends ConsumerStatefulWidget {
   ConsumerState<ActiveOrderScreen> createState() => _ActiveOrderScreenState();
 }
 
-class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
-    with WidgetsBindingObserver {
+class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
   bool _isProcessing = false;
-  Timer? _pollTimer;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _startPolling();
-  }
-
-  void _startPolling() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(
-      AppConstants.activeOrderPollInterval,
-      (_) => ref.read(activeOrderProvider.notifier).refresh(),
-    );
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.read(activeOrderProvider.notifier).refresh();
-      _startPolling();
-    } else if (state == AppLifecycleState.paused) {
-      _pollTimer?.cancel();
-    }
-  }
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
+  // activeOrderProvider is kept fresh by riderPollingControllerProvider's
+  // single, app-lifetime timer (see its doc comment) regardless of which
+  // tab/screen is on screen — this screen no longer needs its own
+  // poll timer or app-lifecycle observer duplicating that work.
 
   Future<void> _run(Future<void> Function() action) async {
     if (_isProcessing) return;
@@ -123,23 +147,26 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
   Future<void> _markArrived(String riderOrderId) =>
       _run(() => ref.read(activeOrderProvider.notifier).markArrived(riderOrderId));
 
-  Future<void> _scanQr(String riderOrderId) => _run(() async {
-        final token = await Get.to<String>(() => const PickupQrScannerScreen());
-        if (token == null || token.isEmpty) return;
-        await ref.read(activeOrderProvider.notifier).scanPickupQr(riderOrderId, token);
-      });
-
-  Future<void> _confirmPickup(String riderOrderId) =>
-      _run(() => ref.read(activeOrderProvider.notifier).pickupSuccess(riderOrderId));
-
   Future<void> _startDelivery(String riderOrderId) =>
       _run(() => ref.read(activeOrderProvider.notifier).startDelivery(riderOrderId));
 
-  Future<void> _completeDelivery(String riderOrderId, int attemptsRemaining) => _run(() async {
-        final code =
-            await DeliveryOtpSheet.show(context, attemptsRemaining: attemptsRemaining);
-        if (code == null || code.length != 6) return;
-        await ref.read(activeOrderProvider.notifier).completeDelivery(riderOrderId, code);
+  Future<void> _completeDelivery(String riderOrderId) => _run(() async {
+        // No local "are we close enough" short-circuit here — the backend
+        // is the sole authority on GPS proximity (it re-checks
+        // Rider.lastLat/lastLng itself) and _run already surfaces its
+        // rejection (stale GPS / too far / wrong state) via the same
+        // snackbar path every other action on this screen uses.
+        await ref.read(activeOrderProvider.notifier).completeDelivery(riderOrderId);
+        // The backend flips the rider back to AVAILABLE on delivery
+        // completion — the Dashboard Home screen stays mounted underneath
+        // (bottom-tab scaffold) watching dashboardStatsProvider, which has
+        // no periodic poll of its own, so without this it would keep
+        // showing "Busy" until some unrelated trigger refreshed it.
+        unawaited(ref.read(dashboardStatsProvider.notifier).refresh());
+        // This order just moved into the Completed history filter — drop
+        // both caches so the Orders tab shows it there (and no longer under
+        // Ongoing) without needing a manual pull-to-refresh.
+        _invalidateOrderHistory();
         if (!mounted) return;
         AppSnackBar.success(context, 'Delivery completed!');
         Get.back();
@@ -149,10 +176,19 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
         final reason = await CancelOrderSheet.show(context);
         if (reason == null || reason.isEmpty) return;
         await ref.read(activeOrderProvider.notifier).cancel(riderOrderId, reason);
+        // See the completeDelivery flow above — same reasoning.
+        unawaited(ref.read(dashboardStatsProvider.notifier).refresh());
+        _invalidateOrderHistory();
         if (!mounted) return;
         AppSnackBar.info(context, 'Order cancelled.');
         Get.back();
       });
+
+  void _invalidateOrderHistory() {
+    for (final filter in OrderHistoryFilter.values) {
+      ref.invalidate(orderHistoryProvider(filter));
+    }
+  }
 
   Future<void> _showQuickMessage() async {
     final message = await QuickMessageSheet.show(context);
@@ -176,6 +212,7 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
   @override
   Widget build(BuildContext context) {
     final orderAsync = ref.watch(activeOrderProvider);
+    final locationState = ref.watch(riderLocationControllerProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -202,6 +239,7 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
                   message: 'No active order right now.',
                 );
               }
+              final deliveryProximity = _computeDeliveryProximity(locationState, order);
               return RefreshIndicator(
                 color: AppColors.secondary,
                 onRefresh: () => ref.read(activeOrderProvider.notifier).refresh(),
@@ -246,19 +284,21 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen>
                         onQuickMessage: _showQuickMessage,
                         onNoResponse: _showNoResponseFlow,
                       ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _DeliveryProximityPanel(proximity: deliveryProximity),
+                    ],
+                    if (order.status == RiderOrderStatus.arrivedAtRestaurant) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _PickupOtpWaitingPanel(order: order),
                     ],
                     const SizedBox(height: AppSpacing.lg),
                     _PrimaryActionButton(
                       order: order,
                       isProcessing: _isProcessing,
+                      deliveryReady: deliveryProximity.isNear,
                       onMarkArrived: () => _markArrived(order.id),
-                      onScanQr: () => _scanQr(order.id),
-                      onConfirmPickup: () => _confirmPickup(order.id),
                       onStartDelivery: () => _startDelivery(order.id),
-                      onCompleteDelivery: () => _completeDelivery(
-                        order.id,
-                        order.deliveryOtp?.attemptsRemaining ?? 5,
-                      ),
+                      onCompleteDelivery: () => _completeDelivery(order.id),
                     ),
                     if (order.status.canCancel) ...[
                       const SizedBox(height: AppSpacing.sm),
@@ -320,18 +360,23 @@ class _OrderHeader extends StatelessWidget {
 class _PrimaryActionButton extends StatelessWidget {
   final RiderOrderModel order;
   final bool isProcessing;
+
+  /// Only meaningful for `_PrimaryAction.completeDelivery` — whether the
+  /// rider's own live-tracked position is currently within
+  /// [_deliveryProximityThresholdMeters] of the delivery coordinates. This
+  /// is a UX gate only: the button stays disabled until then so the rider
+  /// isn't invited to tap and immediately get rejected, but the backend is
+  /// the real authority and re-checks GPS proximity itself once tapped.
+  final bool deliveryReady;
   final VoidCallback onMarkArrived;
-  final VoidCallback onScanQr;
-  final VoidCallback onConfirmPickup;
   final VoidCallback onStartDelivery;
   final VoidCallback onCompleteDelivery;
 
   const _PrimaryActionButton({
     required this.order,
     required this.isProcessing,
+    required this.deliveryReady,
     required this.onMarkArrived,
-    required this.onScanQr,
-    required this.onConfirmPickup,
     required this.onStartDelivery,
     required this.onCompleteDelivery,
   });
@@ -341,10 +386,9 @@ class _PrimaryActionButton extends StatelessWidget {
     final action = _primaryActionFor(order);
     final (label, onPressed) = switch (action) {
       _PrimaryAction.markArrived => ('Mark arrived at restaurant', onMarkArrived),
-      _PrimaryAction.scanQr => ('Scan pickup QR', onScanQr),
-      _PrimaryAction.confirmPickup => ('Confirm pickup', onConfirmPickup),
       _PrimaryAction.startDelivery => ('Start delivery', onStartDelivery),
-      _PrimaryAction.completeDelivery => ('Complete delivery', onCompleteDelivery),
+      _PrimaryAction.completeDelivery =>
+        ('Mark delivered', deliveryReady ? onCompleteDelivery : null),
       _PrimaryAction.none => (null, null),
     };
     if (label == null) return const SizedBox.shrink();
@@ -352,6 +396,162 @@ class _PrimaryActionButton extends StatelessWidget {
       label: label,
       isLoading: isProcessing,
       onPressed: isProcessing ? null : onPressed,
+    );
+  }
+}
+
+/// Shown only while OUT_FOR_DELIVERY — the rider's own live distance/status
+/// relative to the delivery coordinates, purely so they know whether tapping
+/// "Mark delivered" is likely to succeed. Never an input: no OTP field, no
+/// "share this code" text, nothing for the rider to type — the backend
+/// alone decides via its own server-side GPS check.
+class _DeliveryProximityPanel extends StatelessWidget {
+  final _DeliveryProximity proximity;
+
+  const _DeliveryProximityPanel({required this.proximity});
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = proximity.isNear;
+    final statusLabel = proximity.waitingForGps
+        ? 'Waiting for your location…'
+        : ready
+            ? "You're at the delivery location"
+            : "You're not at the delivery location yet";
+    final distanceLabel = (!proximity.waitingForGps && !ready && proximity.distanceMeters != null)
+        ? formatDistanceAway(proximity.distanceMeters!)
+        : null;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.card,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            ready ? LucideIcons.mapPin : LucideIcons.mapPinOff,
+            size: 20,
+            color: ready ? AppColors.secondary : AppColors.textSecondary,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(statusLabel, style: AppTypography.bodyMedium),
+                if (distanceLabel != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    distanceLabel,
+                    style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Read-only panel shown only while ARRIVED_AT_RESTAURANT — the rider is
+/// just waiting here, there is no action to take. Displays the
+/// restaurant-verified pickup OTP for the rider to read out to restaurant
+/// staff (never an input — the rider never types this code, restaurant
+/// staff confirm it on their own dashboard), plus a purely local elapsed-
+/// time ticker. This panel disappears on its own once polling refreshes
+/// `activeOrderProvider` and `order.status` moves past ARRIVED_AT_RESTAURANT,
+/// since the whole ListView is already keyed off that status.
+class _PickupOtpWaitingPanel extends StatelessWidget {
+  final RiderOrderModel order;
+
+  const _PickupOtpWaitingPanel({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    final code = order.order.pickupOtp?.code;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Pickup OTP',
+              style: AppTypography.caption.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: 4),
+          Text(
+            code ?? '— — — —',
+            style: AppTypography.h1.copyWith(letterSpacing: 6),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tell this OTP to the restaurant staff to collect the order.',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+          ),
+          if (order.arrivedAt != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.sm),
+            _WaitingTicker(arrivedAt: order.arrivedAt!),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A purely local UI clock — it never reads a provider or triggers a
+/// network call, it only reformats the already-fetched `arrivedAt`
+/// timestamp every second. `activeOrderProvider`'s own polling (unrelated
+/// to this widget) is what keeps `arrivedAt`/`order.status` themselves
+/// fresh.
+class _WaitingTicker extends StatefulWidget {
+  final DateTime arrivedAt;
+
+  const _WaitingTicker({required this.arrivedAt});
+
+  @override
+  State<_WaitingTicker> createState() => _WaitingTickerState();
+}
+
+class _WaitingTickerState extends State<_WaitingTicker> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elapsed = DateTime.now().difference(widget.arrivedAt);
+    final clamped = elapsed.isNegative ? Duration.zero : elapsed;
+    final minutes = clamped.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = clamped.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return Row(
+      children: [
+        const Icon(LucideIcons.clock3, size: 16, color: AppColors.textSecondary),
+        const SizedBox(width: 6),
+        Text(
+          'Waiting for restaurant · $minutes:$seconds',
+          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
+        ),
+      ],
     );
   }
 }

@@ -16,6 +16,7 @@ import '../../../providers/dashboard/dashboard_provider.dart';
 import '../../../providers/notifications/notifications_provider.dart';
 import '../../../providers/orders/active_order_provider.dart';
 import '../../../providers/orders/order_history_provider.dart';
+import '../../../shared/utils/rider_status_tone_color.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
 import '../../../shared/widgets/navigation/partner_app_header.dart';
@@ -221,13 +222,15 @@ class _AvailabilityPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isOnline = availability?.isOnlineFacing ?? false;
-    final label = availability == null
-        ? 'Checking'
-        : isOnline
-            ? 'Online'
-            : 'Offline';
-    final color = isOnline ? AppColors.success : AppColors.textSecondary;
+    // Derived from the backend-authoritative RiderAvailabilityStatus via
+    // its own statusTone/statusChipLabel — the same source the Dashboard's
+    // shift badge reads from — rather than a locally re-derived
+    // online/offline boolean, so BUSY can't be silently collapsed into
+    // "Online" here independently of how the Dashboard renders it.
+    final label = availability?.statusChipLabel ?? 'Checking';
+    final color = availability == null
+        ? AppColors.textSecondary
+        : riderStatusToneColor(availability!.statusTone);
 
     return Semantics(
       label: 'Availability: $label',

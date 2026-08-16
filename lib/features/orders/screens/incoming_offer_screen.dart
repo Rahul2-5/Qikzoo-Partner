@@ -14,8 +14,12 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/orders/dispatch_offer_model.dart';
+import '../../../models/orders/order_history_page_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
+import '../../../providers/dashboard/dashboard_provider.dart';
+import '../../../providers/orders/active_order_provider.dart';
 import '../../../providers/orders/dispatch_offer_provider.dart';
+import '../../../providers/orders/order_history_provider.dart';
 import '../../../shared/widgets/buttons/outlined_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
@@ -62,6 +66,22 @@ class _IncomingOfferScreenState extends ConsumerState<IncomingOfferScreen> {
     setState(() => _isProcessing = true);
     try {
       await ref.read(dispatchOfferProvider.notifier).accept(offer.id);
+      if (!mounted) return;
+      // The active-order screen's own poll timer only ticks on a fixed
+      // interval (see ActiveOrderScreen._startPolling) — without an
+      // explicit refresh here, it (and the Orders tab, which shares this
+      // same provider) would show stale pre-accept data, most often "no
+      // active order", until that timer's first tick.
+      await ref.read(activeOrderProvider.notifier).refresh();
+      // The Dashboard Home screen stays mounted underneath (bottom-tab
+      // scaffold), watching dashboardStatsProvider — it has no periodic
+      // poll of its own, so without this it keeps showing "Online" with no
+      // indication the rider just went BUSY until some unrelated trigger
+      // (resume, pull-to-refresh) happens to refresh it.
+      unawaited(ref.read(dashboardStatsProvider.notifier).refresh());
+      for (final filter in OrderHistoryFilter.values) {
+        ref.invalidate(orderHistoryProvider(filter));
+      }
       if (!mounted) return;
       Get.offNamed(AppRoutes.activeOrder);
     } on ApiException catch (e) {

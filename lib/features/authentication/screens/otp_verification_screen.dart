@@ -92,7 +92,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
 
     setState(() => _isVerifying = true);
     try {
-      await ref.read(authSessionProvider.notifier).verifyOtp(phone, otp);
+      final name = widget.flow == AuthFlow.signUp
+          ? ref.read(signupNameUiProvider).trim()
+          : null;
+      await ref
+          .read(authSessionProvider.notifier)
+          .verifyOtp(phone, otp, name: name);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isVerifying = false);

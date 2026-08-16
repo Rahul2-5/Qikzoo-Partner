@@ -27,7 +27,9 @@ class ApiEndpoints {
   static const riderOnboardingReapply = '/rider/onboarding/reapply';
   static const riderAvailability = '/rider/availability';
   static const riderAvailabilityOnline = '/rider/availability/online';
+  static const riderAvailabilityAvailable = '/rider/availability/available';
   static const riderAvailabilityOffline = '/rider/availability/offline';
+  static const riderLocation = '/rider/location';
   static const riderOrders = '/rider/orders';
   static const riderOrdersCurrent = '/rider/orders/current';
   static const riderOrdersHistory = '/rider/orders/history';
@@ -35,10 +37,6 @@ class ApiEndpoints {
       '/rider/orders/$riderOrderId';
   static String riderOrderArrived(String riderOrderId) =>
       '/rider/orders/$riderOrderId/arrived';
-  static String riderOrderScanPickupQr(String riderOrderId) =>
-      '/rider/orders/$riderOrderId/scan-pickup-qr';
-  static String riderOrderPickupSuccess(String riderOrderId) =>
-      '/rider/orders/$riderOrderId/pickup-success';
   static String riderOrderStartDelivery(String riderOrderId) =>
       '/rider/orders/$riderOrderId/start-delivery';
   static String riderOrderCompleteDelivery(String riderOrderId) =>

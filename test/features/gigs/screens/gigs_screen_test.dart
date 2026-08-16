@@ -14,6 +14,7 @@ class _OfflineDashboardRepository implements DashboardRepository {
     todaysEarningsPaise: 0,
     todaysDeliveries: 0,
     walletBalancePaise: 0,
+    onlineSecondsToday: 0,
     acceptanceRatePercent: null,
     completionRatePercent: null,
     rating: 0,
@@ -28,6 +29,9 @@ class _OfflineDashboardRepository implements DashboardRepository {
 
   @override
   Future<DashboardStatsModel> goOnline() async => _stats;
+
+  @override
+  Future<DashboardStatsModel> goAvailable() async => _stats;
 }
 
 Widget buildApp() => ProviderScope(

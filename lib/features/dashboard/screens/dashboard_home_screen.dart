@@ -8,7 +8,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/assets/app_assets.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/location/location_platform.dart';
+import '../../../core/location/rider_background_location_service.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
@@ -17,11 +18,12 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/dashboard/dashboard_stats_model.dart';
-import '../../../models/orders/dispatch_offer_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
+import '../../../providers/location/rider_location_provider.dart';
+import '../../../providers/location/rider_location_state.dart';
 import '../../../providers/notifications/notifications_provider.dart';
-import '../../../providers/orders/dispatch_offer_provider.dart';
+import '../../../providers/polling/rider_polling_controller.dart';
 import '../../../shared/widgets/dialogs/confirmation_dialog.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
@@ -47,51 +49,132 @@ class DashboardHomeScreen extends ConsumerStatefulWidget {
 class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
     with WidgetsBindingObserver {
   bool _isTogglingAvailability = false;
-  Timer? _offerPollTimer;
-  String? _lastHandledOfferId;
+
+  bool _backgroundLocationGranted = false;
+  bool _backgroundCardDismissed = false;
+  bool _isRequestingBackgroundPermission = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _startOfferPolling();
+    // Idempotent — the timer lives in the provider, not this screen, so it
+    // survives every later tab switch instead of dying with this widget.
+    // See RiderPollingController's doc comment for why this moved here.
+    // Deferred to a post-frame callback because start() mutates the
+    // controller's own provider state, and Riverpod disallows modifying a
+    // provider synchronously from within another widget's initState (it's
+    // still mid-build at that point).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(riderPollingControllerProvider.notifier).start();
+    });
+    _refreshBackgroundPermissionState();
   }
 
-  void _startOfferPolling() {
-    _offerPollTimer?.cancel();
-    _offerPollTimer = Timer.periodic(
-      AppConstants.dispatchOfferPollInterval,
-      (_) => ref.read(dispatchOfferProvider.notifier).refresh(),
-    );
+  Future<void> _refreshBackgroundPermissionState() async {
+    final granted =
+        await RiderBackgroundLocationService.instance.hasBackgroundPermission();
+    if (mounted) setState(() => _backgroundLocationGranted = granted);
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.read(dispatchOfferProvider.notifier).refresh();
-      ref.read(dashboardStatsProvider.notifier).refresh();
-      _startOfferPolling();
-    } else if (state == AppLifecycleState.paused) {
-      _offerPollTimer?.cancel();
+  Future<void> _onEnableBackgroundLocation() async {
+    if (_isRequestingBackgroundPermission) return;
+    setState(() => _isRequestingBackgroundPermission = true);
+    final granted = await RiderBackgroundLocationService.instance
+        .requestBackgroundPermission();
+    if (!mounted) return;
+    setState(() {
+      _backgroundLocationGranted = granted;
+      _isRequestingBackgroundPermission = false;
+    });
+    final stats = ref.read(dashboardStatsProvider).valueOrNull;
+    if (granted && stats?.availabilityStatus == RiderAvailabilityStatus.available) {
+      unawaited(RiderBackgroundLocationService.instance.start());
+    }
+    if (!granted && mounted) {
+      AppSnackBar.info(
+        context,
+        "You'll still receive offers while the app is open — enable it later from here if you change your mind.",
+      );
     }
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Dispatch-offer/active-order poll resume/pause is handled by the
+    // app-root observer in app.dart via riderPollingControllerProvider —
+    // that one fires regardless of which tab is on screen, unlike this
+    // widget-scoped observer. This one stays scoped to what genuinely is
+    // location-tracking-specific and tied to this screen's own state
+    // (background-permission card, GPS tracker's foreground/background
+    // classification).
+    final tracker = ref.read(riderLocationControllerProvider.notifier);
+    if (state == AppLifecycleState.resumed) {
+      tracker.setAppBackgrounded(false);
+      // Reconciliation against fresh truth happens in [_onStatsChanged],
+      // triggered once this refresh resolves — not here, so cold launch
+      // (which never sees a `resumed` transition, only this screen's own
+      // first build) and every later resume go through the exact same path.
+      ref.read(dashboardStatsProvider.notifier).refresh();
+      unawaited(_refreshBackgroundPermissionState());
+    } else if (state == AppLifecycleState.paused) {
+      tracker.setAppBackgrounded(true);
+    }
+  }
+
+  /// Reacts to every authoritative backend availability read — the initial
+  /// fetch on cold launch, a resume-triggered refresh, pull-to-refresh, or
+  /// the result of Go Online/Go Offline — and reconciles the on-device GPS
+  /// tracker to match it. This is the single place that keeps tracking state
+  /// consistent with backend truth; nothing else starts/stops it based on
+  /// availability alone.
+  ///
+  /// Covers process-death self-healing for AVAILABLE *and* BUSY (a rider
+  /// mid-delivery still needs live tracking): the on-device tracker always
+  /// starts at `idle` on a fresh launch, so without this a rider could look
+  /// "Online"/"Busy" in the UI (from the correctly-fetched dashboard stats)
+  /// with no ping loop actually running. Also handles the inverse — backend
+  /// says OFFLINE (e.g. the stale-presence sweep force-offlined this rider
+  /// while the app sat backgrounded) but the local tracker still thinks it's
+  /// running — by stopping it, so a dead-server-side rider doesn't keep
+  /// burning battery pinging a position nobody is reading.
+  void _onStatsChanged(
+    AsyncValue<DashboardStatsModel>? previous,
+    AsyncValue<DashboardStatsModel> next,
+  ) {
+    final stats = next.valueOrNull;
+    if (stats == null) return;
+    final shouldBeTracking =
+        stats.availabilityStatus == RiderAvailabilityStatus.available ||
+        stats.availabilityStatus == RiderAvailabilityStatus.busy;
+    final tracking = ref.read(riderLocationControllerProvider);
+    if (shouldBeTracking && !tracking.isTracking) {
+      ref.read(riderLocationControllerProvider.notifier).start();
+      unawaited(RiderBackgroundLocationService.instance.start());
+    } else if (!shouldBeTracking && tracking.isTracking) {
+      ref.read(riderLocationControllerProvider.notifier).stop();
+      unawaited(RiderBackgroundLocationService.instance.stop());
+    }
+    unawaited(_refreshBackgroundPermissionState());
+  }
+
+  @override
   void dispose() {
-    _offerPollTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  Future<void> _setAvailability(RiderAvailabilityStatus current) async {
+  Future<void> _goOffline() async {
     if (_isTogglingAvailability) return;
     setState(() => _isTogglingAvailability = true);
+    // Stop pinging before the backend transition, not after — a ping that
+    // lands mid-transition could otherwise re-add the rider to Redis GEO
+    // right as they're being removed from it.
+    ref.read(riderLocationControllerProvider.notifier).stop();
+    await RiderBackgroundLocationService.instance.stop();
     try {
-      if (current.isOnlineFacing) {
-        await ref.read(dashboardStatsProvider.notifier).goOffline();
-      } else {
-        await ref.read(dashboardStatsProvider.notifier).goOnline();
-      }
+      await ref.read(dashboardStatsProvider.notifier).goOffline();
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 401) {
@@ -109,9 +192,14 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
     }
   }
 
-  Future<void> _onToggleAvailability(RiderAvailabilityStatus current) async {
-    if (current.isOnlineFacing) {
-      await _setAvailability(current);
+  Future<void> _goOnline() async {
+    if (_isTogglingAvailability) return;
+
+    final tracker = ref.read(riderLocationControllerProvider.notifier);
+    final readiness = await tracker.ensureReadyForOnline();
+    if (!mounted) return;
+    if (readiness != LocationReadiness.ready) {
+      await _showLocationBlockedDialog(readiness);
       return;
     }
 
@@ -128,31 +216,162 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
         builder: (_) => const SelfieVerificationScreen(isOnlineCheck: true),
       ),
     );
-    if (selfieCaptured == true && mounted) {
-      await _setAvailability(current);
+    if (selfieCaptured != true || !mounted) return;
+
+    setState(() => _isTogglingAvailability = true);
+    try {
+      // 1. A real GPS fix before anything is reported as "online" — never
+      //    fabricate a position just to satisfy the flow.
+      final position = await tracker.acquireInitialFix();
+      if (!mounted) return;
+      if (position == null) {
+        AppSnackBar.error(
+          context,
+          "Couldn't get your location. Please try again.",
+        );
+        return;
+      }
+      // 2. ONLINE (existing endpoint, unchanged semantics).
+      await ref.read(dashboardStatsProvider.notifier).goOnline();
+      // 3. Send that first fix so the backend has a last-known position
+      //    before the AVAILABLE transition below — RiderAvailabilityService
+      //    only mirrors a rider into Redis GEO on AVAILABLE if
+      //    Rider.lastLat/lastLng are already set at that moment.
+      await tracker.sendImmediateFix(position);
+      // 4. AVAILABLE — the transition that actually makes the rider
+      //    dispatch-eligible. Existing endpoint, never called by this app
+      //    before this change.
+      await ref.read(dashboardStatsProvider.notifier).goAvailable();
+      // 5. Only now start the continuous ping loop and reflect "online" —
+      //    at every earlier step, a failure leaves the rider genuinely
+      //    offline rather than showing a false "Online".
+      tracker.start();
+      // 6. Background tracking (P0-2) is a silent enhancement here, never
+      //    a blocker — it only actually starts if the rider already
+      //    granted "Allow all the time" location on a previous visit to
+      //    the dashboard's opt-in card; otherwise this is a fast no-op and
+      //    foreground-only tracking continues to work correctly.
+      unawaited(RiderBackgroundLocationService.instance.start());
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 401) {
+        tracker.stop();
+        await ref.read(authSessionProvider.notifier).logout();
+        if (!mounted) return;
+        Get.offAllNamed(AppRoutes.welcome);
+        return;
+      }
+      tracker.stop();
+      await _rollbackToOffline();
+      if (mounted) AppSnackBar.error(context, e.message);
+    } catch (_) {
+      tracker.stop();
+      await _rollbackToOffline();
+      if (mounted) {
+        AppSnackBar.error(context, 'Something went wrong. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _isTogglingAvailability = false);
     }
   }
 
-  void _onOfferChanged(
-    AsyncValue<DispatchOfferModel?>? previous,
-    AsyncValue<DispatchOfferModel?> next,
-  ) {
-    final offer = next.valueOrNull;
-    if (offer == null || offer.id == _lastHandledOfferId) return;
-    _lastHandledOfferId = offer.id;
-    Get.toNamed(AppRoutes.incomingOffer);
+  /// Best-effort: if ONLINE succeeded but a later step (send-location,
+  /// AVAILABLE) failed, put the rider back to OFFLINE server-side rather
+  /// than leaving them stuck ONLINE-but-not-dispatchable with no ping
+  /// loop. If even this fails, the next stats refresh/pull-to-refresh
+  /// still reconciles the UI to whatever the server's real state is —
+  /// this never fabricates a successful outcome.
+  Future<void> _rollbackToOffline() async {
+    await RiderBackgroundLocationService.instance.stop();
+    try {
+      await ref.read(dashboardStatsProvider.notifier).goOffline();
+    } catch (_) {
+      // See doc comment above.
+    }
+  }
+
+  Future<void> _showLocationBlockedDialog(LocationReadiness readiness) async {
+    late final String title;
+    late final String message;
+    String? actionLabel;
+    Future<void> Function()? action;
+
+    final platform = ref.read(locationPlatformProvider);
+    switch (readiness) {
+      case LocationReadiness.servicesDisabled:
+        title = 'Turn on location';
+        message =
+            'Location services are off on this device. Dispatch needs your live location to send you delivery offers — turn it on to go online.';
+        actionLabel = 'Open location settings';
+        action = platform.openLocationSettings;
+      case LocationReadiness.permissionDeniedForever:
+        title = 'Location permission needed';
+        message =
+            'Location access is permanently denied for Qikzoo Delivery Partner. Enable it from Settings to go online.';
+        actionLabel = 'Open app settings';
+        action = platform.openAppSettings;
+      case LocationReadiness.permissionDenied:
+        title = 'Location permission needed';
+        message =
+            'Qikzoo Delivery Partner needs your location to send you nearby delivery offers. Please allow location access to go online.';
+      case LocationReadiness.ready:
+        return;
+    }
+
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          if (actionLabel != null && action != null)
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                action!();
+              },
+              child: Text(actionLabel),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onToggleAvailability(RiderAvailabilityStatus current) async {
+    if (current == RiderAvailabilityStatus.busy) {
+      AppSnackBar.info(
+        context,
+        'Finish or cancel your active delivery before going offline.',
+      );
+      return;
+    }
+    if (current.isOnlineFacing) {
+      await _goOffline();
+    } else {
+      await _goOnline();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(dashboardStatsProvider);
+    final trackingState = ref.watch(riderLocationControllerProvider);
     final unreadNotificationCount = ref
         .watch(notificationsProvider)
         .valueOrNull
         ?.where((notification) => !notification.isRead)
         .length ??
         0;
-    ref.listen(dispatchOfferProvider, _onOfferChanged);
+    // Dispatch-offer detection and active-order sync are handled by
+    // riderPollingControllerProvider regardless of which tab is on screen
+    // — see its doc comment. This screen only still owns the
+    // location-tracking reconciliation below.
+    ref.listen(dashboardStatsProvider, _onStatsChanged);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -195,11 +414,31 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
                     delay: const Duration(milliseconds: 45),
                     child: _OnlineStatusBanner(
                       isOnline: stats.availabilityStatus.isOnlineFacing,
-                      isBusy: _isTogglingAvailability,
+                      isRiderBusy:
+                          stats.availabilityStatus == RiderAvailabilityStatus.busy,
+                      isTogglingAvailability: _isTogglingAvailability,
+                      trackingStatus: stats.availabilityStatus ==
+                                  RiderAvailabilityStatus.available ||
+                              stats.availabilityStatus ==
+                                  RiderAvailabilityStatus.busy
+                          ? trackingState.status
+                          : null,
                       onPressed: () =>
                           _onToggleAvailability(stats.availabilityStatus),
                     ),
                   ),
+                  if (stats.availabilityStatus ==
+                          RiderAvailabilityStatus.available &&
+                      !_backgroundLocationGranted &&
+                      !_backgroundCardDismissed) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    _BackgroundLocationCard(
+                      isRequesting: _isRequestingBackgroundPermission,
+                      onEnable: _onEnableBackgroundLocation,
+                      onDismiss: () =>
+                          setState(() => _backgroundCardDismissed = true),
+                    ),
+                  ],
                   if (stats.availabilityStatus.isOnlineFacing) ...[
                     const SizedBox(height: AppSpacing.md),
                     AppReveal(
@@ -268,20 +507,49 @@ class _DashboardTopBar extends StatelessWidget {
 class _OnlineStatusBanner extends StatelessWidget {
   const _OnlineStatusBanner({
     required this.isOnline,
-    required this.isBusy,
+    required this.isRiderBusy,
+    required this.isTogglingAvailability,
     required this.onPressed,
+    this.trackingStatus,
   });
 
   final bool isOnline;
-  final bool isBusy;
+
+  /// True only for the backend's genuine BUSY status (an active delivery) —
+  /// distinct from [isOnline], which is also true for ONLINE/AVAILABLE.
+  /// Without this, a rider mid-delivery was shown the exact same "You are
+  /// Online" banner as one who was simply available and idle — a real,
+  /// confirmed-on-device gap (the banner had no BUSY visual state at all,
+  /// regardless of how fresh the underlying data was).
+  final bool isRiderBusy;
+
+  /// True only while the Go Online/Offline network call is in flight.
+  final bool isTogglingAvailability;
   final VoidCallback onPressed;
+
+  /// Non-null only while the backend status is genuinely AVAILABLE — the
+  /// on-device GPS/ping-loop health, shown honestly alongside "Online"
+  /// rather than assumed from it. Null (e.g. still ONLINE, pre-AVAILABLE,
+  /// or offline) renders no location line at all.
+  final RiderLocationTrackingStatus? trackingStatus;
+
+  String? get _locationStatusLabel => switch (trackingStatus) {
+        RiderLocationTrackingStatus.active => 'Location active',
+        RiderLocationTrackingStatus.acquiring => 'Getting your location…',
+        RiderLocationTrackingStatus.signalLost =>
+          'Location signal lost — offers may be delayed',
+        _ => null,
+      };
 
   @override
   Widget build(BuildContext context) {
+    final locationLabel = _locationStatusLabel;
     return Semantics(
-      label: isOnline
-          ? 'You are online and ready to accept gigs'
-          : 'You are offline. Turn on availability to accept gigs',
+      label: isRiderBusy
+          ? 'You are busy on an active delivery${locationLabel != null ? ', $locationLabel' : ''}'
+          : isOnline
+              ? 'You are online and ready to accept gigs${locationLabel != null ? ', $locationLabel' : ''}'
+              : 'You are offline. Turn on availability to accept gigs',
       child: SizedBox(
         height: 194,
         child: Container(
@@ -289,9 +557,11 @@ class _OnlineStatusBanner extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: isOnline
-                  ? const [Color(0xFF087D48), Color(0xFF064F38)]
-                  : AppColors.ctaGradient,
+              colors: isRiderBusy
+                  ? const [Color(0xFFB54708), Color(0xFF7A2E04)]
+                  : isOnline
+                      ? const [Color(0xFF087D48), Color(0xFF064F38)]
+                      : AppColors.ctaGradient,
             ),
             borderRadius: BorderRadius.circular(AppRadius.sheet + 4),
             boxShadow: const [
@@ -370,9 +640,14 @@ class _OnlineStatusBanner extends StatelessWidget {
                             const _ShiftBadge(label: 'SHIFT STATUS'),
                             const SizedBox(width: AppSpacing.xs),
                             _ShiftBadge(
-                              label: isOnline ? 'ONLINE' : 'PAUSED',
+                              label: isRiderBusy
+                                  ? 'BUSY'
+                                  : isOnline
+                                      ? 'ONLINE'
+                                      : 'PAUSED',
                               emphasized: true,
                               online: isOnline,
+                              busy: isRiderBusy,
                             ),
                           ],
                         ),
@@ -382,7 +657,11 @@ class _OnlineStatusBanner extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          isOnline ? 'You are Online' : 'You are Offline',
+                          isRiderBusy
+                              ? 'You are Busy'
+                              : isOnline
+                                  ? 'You are Online'
+                                  : 'You are Offline',
                           style: AppTypography.h1.copyWith(
                             color: AppColors.surface,
                             fontSize: 27,
@@ -392,26 +671,60 @@ class _OnlineStatusBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        isOnline
-                            ? 'Ready to start receiving gigs'
-                            : 'Go online to start receiving gigs',
+                        isRiderBusy
+                            ? 'On an active delivery'
+                            : isOnline
+                                ? 'Ready to start receiving gigs'
+                                : 'Go online to start receiving gigs',
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.surface.withValues(alpha: 0.86),
                           fontSize: 12,
                           height: 1.25,
                         ),
                       ),
+                      if (locationLabel != null) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              trackingStatus ==
+                                      RiderLocationTrackingStatus.signalLost
+                                  ? LucideIcons.mapPinOff
+                                  : LucideIcons.mapPin,
+                              size: 11,
+                              color: AppColors.surface.withValues(alpha: 0.8),
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                locationLabel,
+                                style: AppTypography.caption.copyWith(
+                                  color:
+                                      AppColors.surface.withValues(alpha: 0.8),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const Spacer(),
                       SizedBox(
                         height: 46,
                         child: FilledButton.icon(
                           key: const Key('availability-toggle'),
-                          onPressed: isBusy ? null : onPressed,
+                          onPressed:
+                              isTogglingAvailability ? null : onPressed,
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.surface,
-                            foregroundColor: isOnline
-                                ? AppColors.success
-                                : AppColors.primary,
+                            foregroundColor: isRiderBusy
+                                ? AppColors.warning
+                                : isOnline
+                                    ? AppColors.success
+                                    : AppColors.primary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.md,
                             ),
@@ -420,27 +733,35 @@ class _OnlineStatusBanner extends StatelessWidget {
                                   BorderRadius.circular(AppRadius.control),
                             ),
                           ),
-                          icon: isBusy
+                          icon: isTogglingAvailability
                               ? const SizedBox(
                                   height: 17,
                                   width: 17,
                                   child:
                                       CircularProgressIndicator(strokeWidth: 2),
                                 )
-                              : Icon(isOnline
-                                  ? LucideIcons.pause
-                                  : LucideIcons.power),
+                              : Icon(isRiderBusy
+                                  ? LucideIcons.navigation
+                                  : isOnline
+                                      ? LucideIcons.pause
+                                      : LucideIcons.power),
                           label: Text(
-                            isOnline ? 'Go offline' : 'Go online',
+                            isRiderBusy
+                                ? 'On delivery'
+                                : isOnline
+                                    ? 'Go offline'
+                                    : 'Go online',
                             // AppTypography.button is white by default for
                             // primary CTAs. The availability action has a
                             // white surface, so use the matching foreground
                             // colour to keep its state label visible.
                             style: AppTypography.button.copyWith(
                               fontSize: 13,
-                              color: isOnline
-                                  ? AppColors.success
-                                  : AppColors.primary,
+                              color: isRiderBusy
+                                  ? AppColors.warning
+                                  : isOnline
+                                      ? AppColors.success
+                                      : AppColors.primary,
                             ),
                           ),
                         ),
@@ -457,18 +778,105 @@ class _OnlineStatusBanner extends StatelessWidget {
   }
 }
 
-/// Compact at-a-glance shift totals. The dashboard API does not currently
-/// expose an accumulated online duration, so the time begins at zero until
-/// that field is available from the backend.
+/// P0-2's opt-in card — shown only while the rider is genuinely AVAILABLE
+/// and "Allow all the time" location hasn't been granted yet. Never shown
+/// during the go-online flow itself (foreground location is the only
+/// requirement to go online at all); this is a separate, dismissible,
+/// later-ask for uninterrupted offers while the app is minimized.
+class _BackgroundLocationCard extends StatelessWidget {
+  const _BackgroundLocationCard({
+    required this.isRequesting,
+    required this.onEnable,
+    required this.onDismiss,
+  });
+
+  final bool isRequesting;
+  final VoidCallback onEnable;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F4FF),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: const Color(0xFFD8E2FF)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(LucideIcons.mapPin, color: AppColors.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Keep receiving offers in the background',
+                    style: AppTypography.bodyMedium,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    "Allow location access all the time so offers can still reach you when the app is minimised.",
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      SizedBox(
+                        height: 34,
+                        child: OutlinedButton(
+                          onPressed: isRequesting ? null : onEnable,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.control),
+                            ),
+                          ),
+                          child: isRequesting
+                              ? const SizedBox(
+                                  height: 14,
+                                  width: 14,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : const Text('Enable'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      TextButton(
+                        onPressed: isRequesting ? null : onDismiss,
+                        child: const Text('Not now'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+/// Compact at-a-glance shift totals. Online time comes from the backend's
+/// authoritative server-side availability history
+/// (`stats.onlineSecondsToday`) — never a client-side estimate/timer.
 class _TodayProgressCard extends StatelessWidget {
   const _TodayProgressCard({required this.stats});
 
   final DashboardStatsModel stats;
 
   @override
-  Widget build(BuildContext context) => Semantics(
+  Widget build(BuildContext context) {
+    final onlineTimeLabel = _formatOnlineTime(stats.onlineSecondsToday);
+    return Semantics(
         label:
-            "Today's progress: ${CurrencyFormatter.rupeesPrecise(stats.todaysEarningsPaise / 100)} earnings, 0 hours online, ${stats.todaysDeliveries} trips",
+            "Today's progress: ${CurrencyFormatter.rupeesPrecise(stats.todaysEarningsPaise / 100)} earnings, $onlineTimeLabel online, ${stats.todaysDeliveries} trips",
         child: Container(
           height: 104,
           padding: const EdgeInsets.symmetric(
@@ -513,10 +921,10 @@ class _TodayProgressCard extends StatelessWidget {
                       ),
                     ),
                     const _ProgressDivider(),
-                    const Expanded(
+                    Expanded(
                       child: _ProgressMetric(
                         icon: LucideIcons.clock3,
-                        value: '0h 0m',
+                        value: onlineTimeLabel,
                         label: 'Online time',
                         color: AppColors.primary,
                       ),
@@ -537,6 +945,16 @@ class _TodayProgressCard extends StatelessWidget {
           ),
         ),
       );
+  }
+}
+
+/// Formats a duration in seconds as `"XhYm"` (e.g. `2h 14m`), matching the
+/// compact style already used elsewhere on this card.
+String _formatOnlineTime(int onlineSecondsToday) {
+  final totalMinutes = onlineSecondsToday ~/ 60;
+  final hours = totalMinutes ~/ 60;
+  final minutes = totalMinutes % 60;
+  return '${hours}h ${minutes}m';
 }
 
 class _ProgressDivider extends StatelessWidget {
@@ -611,18 +1029,28 @@ class _ShiftBadge extends StatelessWidget {
     required this.label,
     this.emphasized = false,
     this.online = false,
+    this.busy = false,
   });
 
   final String label;
   final bool emphasized;
   final bool online;
 
+  /// Renders a distinct amber tone instead of the plain green "online"
+  /// tone — a rider mid-delivery needs to visually tell that state apart
+  /// from simply being available and idle.
+  final bool busy;
+
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         decoration: BoxDecoration(
           color: emphasized
-              ? (online ? const Color(0xFFB9F4CC) : const Color(0xFFFFEEF0))
+              ? (busy
+                  ? const Color(0xFFFFE8CC)
+                  : online
+                      ? const Color(0xFFB9F4CC)
+                      : const Color(0xFFFFEEF0))
               : AppColors.surface.withValues(alpha: 0.16),
           borderRadius: BorderRadius.circular(AppRadius.chip),
         ),
@@ -630,7 +1058,11 @@ class _ShiftBadge extends StatelessWidget {
           label,
           style: AppTypography.caption.copyWith(
             color: emphasized
-                ? (online ? AppColors.success : AppColors.error)
+                ? (busy
+                    ? AppColors.warning
+                    : online
+                        ? AppColors.success
+                        : AppColors.error)
                 : AppColors.surface,
             fontSize: 8.5,
             fontWeight: FontWeight.w900,

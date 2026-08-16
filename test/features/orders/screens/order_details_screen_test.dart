@@ -34,14 +34,9 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   @override
   Future<void> markArrived(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> scanPickupQr(String riderOrderId, String token) => throw UnimplementedError();
-  @override
-  Future<void> pickupSuccess(String riderOrderId) => throw UnimplementedError();
-  @override
   Future<void> startDelivery(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) =>
-      throw UnimplementedError();
+  Future<void> completeDelivery(String riderOrderId) => throw UnimplementedError();
   @override
   Future<void> cancel(String riderOrderId, String reason) => throw UnimplementedError();
 }
@@ -89,9 +84,8 @@ RiderOrderModel mockDeliveredOrder({
         customerNote: null,
         status: RestaurantOrderStatus.delivered,
         statusHistory: statusHistory,
+        pickupOtp: null,
       ),
-      pickupQr: null,
-      deliveryOtp: null,
     );
 
 Widget buildApp({required FakeRiderOrdersRepository repository, String id = 'rider-order-1'}) {

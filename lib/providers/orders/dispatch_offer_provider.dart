@@ -2,12 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/orders/dispatch_offer_model.dart';
 import '../../repositories/orders/dispatch_repository.dart';
 
-/// The rider's current outstanding dispatch offer, if any. Polled from
-/// wherever the rider is expected to be watching for work (the dashboard);
-/// this notifier itself only holds state and performs the fetch/accept/
-/// reject calls — timer lifecycle belongs to the widget that watches it,
-/// per this codebase's existing "dispose timers in the State that owns
-/// them" convention.
+/// The rider's current outstanding dispatch offer, if any. Polled by
+/// `RiderPollingController` for the lifetime of an authenticated session,
+/// not by any one screen — see that provider's doc comment; this notifier
+/// itself only holds state and performs the fetch/accept/reject calls.
 class DispatchOfferNotifier extends AsyncNotifier<DispatchOfferModel?> {
   @override
   Future<DispatchOfferModel?> build() =>

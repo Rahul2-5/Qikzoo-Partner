@@ -47,7 +47,7 @@ DioDashboardRepository buildRepository(FakeHttpClientAdapter adapter) {
 /// independently shaped payload.
 FakeHttpClientAdapter routedAdapter({
   String profileJson = '{"data":{"name":"Ravi Kumar","availabilityStatus":"ONLINE","rating":4.7,"totalOffers":50,"totalAccepted":46,"totalOrdersCancelled":2,"city":"Bengaluru","state":"Karnataka"}}',
-  String earningsJson = '{"data":{"today":{"deliveries":14,"earningsPaise":84200,"tipsPaise":500},"thisWeek":{},"lifetime":{}}}',
+  String earningsJson = '{"data":{"today":{"deliveries":14,"earningsPaise":84200,"tipsPaise":500,"onlineSecondsToday":7530},"thisWeek":{},"lifetime":{}}}',
   String walletJson = '{"data":{"availableBalancePaise":312000,"lifetimeEarningsPaise":900000,"lifetimePayoutsPaise":600000}}',
   String? onlineJson,
   String? offlineJson,
@@ -84,6 +84,7 @@ void main() {
       expect(stats.todaysEarningsPaise, 84200);
       expect(stats.todaysDeliveries, 14);
       expect(stats.walletBalancePaise, 312000);
+      expect(stats.onlineSecondsToday, 7530);
       expect(stats.acceptanceRatePercent, closeTo(92, 0.01));
       expect(stats.completionRatePercent, closeTo(95.65, 0.01));
       expect(stats.rating, 4.7);

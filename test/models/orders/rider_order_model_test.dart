@@ -4,8 +4,9 @@ import 'package:delivery_partner_app/models/orders/rider_order_model.dart';
 Map<String, dynamic> baseRiderOrderJson({
   String status = 'ACCEPTED',
   String? customerPhone = '9999999999',
-  Map<String, dynamic>? pickupQr,
-  Map<String, dynamic>? deliveryOtp,
+  Map<String, dynamic>? pickupOtp,
+  double? deliveryLat = 12.99,
+  double? deliveryLng = 77.61,
   List<Map<String, dynamic>>? statusHistory,
 }) {
   return {
@@ -40,15 +41,14 @@ Map<String, dynamic> baseRiderOrderJson({
       'deliveryAddressLine': '221B Baker Street',
       'deliveryCity': 'Bengaluru',
       'deliveryPincode': '560001',
-      'deliveryLat': 12.99,
-      'deliveryLng': 77.61,
+      'deliveryLat': deliveryLat,
+      'deliveryLng': deliveryLng,
       'totalPaise': 45000,
       'customerNote': 'Ring the bell',
       'status': 'HANDED_TO_RIDER',
       if (statusHistory != null) 'statusHistory': statusHistory,
+      'pickupOtp': pickupOtp,
     },
-    'pickupQr': pickupQr,
-    'deliveryOtp': deliveryOtp,
   };
 }
 
@@ -92,6 +92,20 @@ void main() {
       expect(order.tipsPaise, 500);
     });
 
+    test('parses deliveryLat/deliveryLng as plain numeric fields', () {
+      final order = RiderOrderModel.fromJson(
+          baseRiderOrderJson(deliveryLat: 12.99, deliveryLng: 77.61));
+      expect(order.order.deliveryLat, 12.99);
+      expect(order.order.deliveryLng, 77.61);
+    });
+
+    test('deliveryLat/deliveryLng stay null when the backend omits them', () {
+      final order =
+          RiderOrderModel.fromJson(baseRiderOrderJson(deliveryLat: null, deliveryLng: null));
+      expect(order.order.deliveryLat, isNull);
+      expect(order.order.deliveryLng, isNull);
+    });
+
     test('customer phone is exposed when the backend returns a non-null value', () {
       final order =
           RiderOrderModel.fromJson(baseRiderOrderJson(customerPhone: '9998887777'));
@@ -126,23 +140,31 @@ void main() {
           RestaurantOrderStatus.handedToRider);
     });
 
-    test('parses pickupQr and deliveryOtp when present, null when absent', () {
-      final withoutCheckpoints = RiderOrderModel.fromJson(baseRiderOrderJson());
-      expect(withoutCheckpoints.pickupQr, isNull);
-      expect(withoutCheckpoints.deliveryOtp, isNull);
+    test('parses pickupOtp (nested under order) when present, null when absent', () {
+      final withoutPickupOtp = RiderOrderModel.fromJson(baseRiderOrderJson());
+      expect(withoutPickupOtp.order.pickupOtp, isNull);
 
-      final withCheckpoints = RiderOrderModel.fromJson(baseRiderOrderJson(
-        pickupQr: {'status': 'USED', 'expiresAt': '2026-07-23T12:00:00.000Z'},
-        deliveryOtp: {
+      final withPickupOtp = RiderOrderModel.fromJson(baseRiderOrderJson(
+        pickupOtp: {
+          'code': '1234',
           'status': 'ACTIVE',
-          'attempts': 2,
-          'maxAttempts': 5,
-          'expiresAt': '2026-07-23T12:45:00.000Z',
+          'expiresAt': '2026-07-23T12:00:00.000Z',
         },
       ));
-      expect(withCheckpoints.pickupQr!.status, PickupQrStatus.used);
-      expect(withCheckpoints.deliveryOtp!.attempts, 2);
-      expect(withCheckpoints.deliveryOtp!.attemptsRemaining, 3);
+      expect(withPickupOtp.order.pickupOtp!.code, '1234');
+      expect(withPickupOtp.order.pickupOtp!.status, PickupOtpStatus.active);
+    });
+
+    test('pickupOtp.code stays null before the rider has arrived (server-side gated)', () {
+      final order = RiderOrderModel.fromJson(baseRiderOrderJson(
+        pickupOtp: {
+          'code': null,
+          'status': 'ACTIVE',
+          'expiresAt': '2026-07-23T12:00:00.000Z',
+        },
+      ));
+      expect(order.order.pickupOtp!.code, isNull);
+      expect(order.order.pickupOtp!.status, PickupOtpStatus.active);
     });
 
     test('handles an unwrapped (non-envelope) response body', () {

@@ -32,6 +32,7 @@ class FakeDashboardRepository implements DashboardRepository {
         todaysEarningsPaise: 0,
         todaysDeliveries: 0,
         walletBalancePaise: 0,
+        onlineSecondsToday: 0,
         acceptanceRatePercent: null,
         completionRatePercent: null,
         rating: 5,
@@ -43,6 +44,9 @@ class FakeDashboardRepository implements DashboardRepository {
 
   @override
   Future<DashboardStatsModel> goOnline() => getStats();
+
+  @override
+  Future<DashboardStatsModel> goAvailable() => getStats();
 }
 
 Widget buildApp({

@@ -94,33 +94,18 @@ enum RestaurantOrderStatus {
       };
 }
 
-/// Mirrors the backend's `PickupQrStatus` enum.
-enum PickupQrStatus {
-  active,
-  used,
-  expired,
-  unknown;
-
-  static PickupQrStatus fromBackend(Object? value) => switch (value) {
-        'ACTIVE' => PickupQrStatus.active,
-        'USED' => PickupQrStatus.used,
-        'EXPIRED' => PickupQrStatus.expired,
-        _ => PickupQrStatus.unknown,
-      };
-}
-
-/// Mirrors the backend's `DeliveryOtpStatus` enum.
-enum DeliveryOtpStatus {
+/// Mirrors the backend's `PickupOtpStatus` enum.
+enum PickupOtpStatus {
   active,
   verified,
   expired,
   unknown;
 
-  static DeliveryOtpStatus fromBackend(Object? value) => switch (value) {
-        'ACTIVE' => DeliveryOtpStatus.active,
-        'VERIFIED' => DeliveryOtpStatus.verified,
-        'EXPIRED' => DeliveryOtpStatus.expired,
-        _ => DeliveryOtpStatus.unknown,
+  static PickupOtpStatus fromBackend(Object? value) => switch (value) {
+        'ACTIVE' => PickupOtpStatus.active,
+        'VERIFIED' => PickupOtpStatus.verified,
+        'EXPIRED' => PickupOtpStatus.expired,
+        _ => PickupOtpStatus.unknown,
       };
 }
 
@@ -187,50 +172,29 @@ class OrderStatusHistoryEntry extends Equatable {
   List<Object?> get props => [fromStatus, toStatus, reason, changedAt];
 }
 
-/// The restaurant-generated secure pickup token's status — the rider's app
-/// never sees the token itself, only whether one is active to scan.
-class PickupQrInfo extends Equatable {
-  final PickupQrStatus status;
+/// The restaurant-visible, restaurant-verified pickup OTP's status — the
+/// rider never enters, submits, or generates this code, they only ever
+/// read it (passively, once GPS-validated arrival unlocks [code]) so the
+/// restaurant staff can type/confirm it on their own dashboard.
+class PickupOtpInfo extends Equatable {
+  final String? code;
+  final PickupOtpStatus status;
   final DateTime expiresAt;
 
-  const PickupQrInfo({required this.status, required this.expiresAt});
-
-  factory PickupQrInfo.fromJson(Map<String, dynamic> json) => PickupQrInfo(
-        status: PickupQrStatus.fromBackend(json['status']),
-        expiresAt: _date(json['expiresAt']) ?? DateTime.now(),
-      );
-
-  @override
-  List<Object?> get props => [status, expiresAt];
-}
-
-/// The customer-facing delivery OTP's status/attempt-budget — the rider
-/// never sees the code itself (it's SMS'd to the customer); only how many
-/// attempts remain matters to the app.
-class DeliveryOtpInfo extends Equatable {
-  final DeliveryOtpStatus status;
-  final int attempts;
-  final int maxAttempts;
-  final DateTime expiresAt;
-
-  const DeliveryOtpInfo({
+  const PickupOtpInfo({
+    required this.code,
     required this.status,
-    required this.attempts,
-    required this.maxAttempts,
     required this.expiresAt,
   });
 
-  int get attemptsRemaining => (maxAttempts - attempts).clamp(0, maxAttempts);
-
-  factory DeliveryOtpInfo.fromJson(Map<String, dynamic> json) => DeliveryOtpInfo(
-        status: DeliveryOtpStatus.fromBackend(json['status']),
-        attempts: _int(json['attempts']),
-        maxAttempts: _int(json['maxAttempts']) == 0 ? 5 : _int(json['maxAttempts']),
+  factory PickupOtpInfo.fromJson(Map<String, dynamic> json) => PickupOtpInfo(
+        code: _str(json['code']),
+        status: PickupOtpStatus.fromBackend(json['status']),
         expiresAt: _date(json['expiresAt']) ?? DateTime.now(),
       );
 
   @override
-  List<Object?> get props => [status, attempts, maxAttempts, expiresAt];
+  List<Object?> get props => [code, status, expiresAt];
 }
 
 /// The RestaurantOrder fields the rider app actually needs — a subset of
@@ -257,6 +221,12 @@ class RestaurantOrderSummary extends Equatable {
   /// backend simply doesn't include it there.
   final List<OrderStatusHistoryEntry>? statusHistory;
 
+  /// `null` until the rider has arrived at the restaurant; even once
+  /// present, `pickupOtp.code` itself stays `null` until server-side GPS
+  /// validation on `POST /rider/orders/:id/arrived` succeeds — the rider
+  /// never types this code, only reads it once it appears.
+  final PickupOtpInfo? pickupOtp;
+
   const RestaurantOrderSummary({
     required this.id,
     required this.orderNumber,
@@ -271,10 +241,12 @@ class RestaurantOrderSummary extends Equatable {
     required this.customerNote,
     required this.status,
     required this.statusHistory,
+    required this.pickupOtp,
   });
 
   factory RestaurantOrderSummary.fromJson(Map<String, dynamic> json) {
     final historyJson = json['statusHistory'];
+    final pickupOtpJson = json['pickupOtp'];
     return RestaurantOrderSummary(
       id: json['id'] is String ? json['id'] as String : '',
       orderNumber: _str(json['orderNumber']) ?? '',
@@ -294,6 +266,9 @@ class RestaurantOrderSummary extends Equatable {
               .map(OrderStatusHistoryEntry.fromJson)
               .toList()
           : null,
+      pickupOtp: pickupOtpJson is Map<String, dynamic>
+          ? PickupOtpInfo.fromJson(pickupOtpJson)
+          : null,
     );
   }
 
@@ -312,6 +287,7 @@ class RestaurantOrderSummary extends Equatable {
         customerNote,
         status,
         statusHistory,
+        pickupOtp,
       ];
 }
 
@@ -336,8 +312,6 @@ class RiderOrderModel extends Equatable {
   final String? cancellationReason;
   final RestaurantContactModel restaurant;
   final RestaurantOrderSummary order;
-  final PickupQrInfo? pickupQr;
-  final DeliveryOtpInfo? deliveryOtp;
 
   const RiderOrderModel({
     required this.id,
@@ -357,15 +331,11 @@ class RiderOrderModel extends Equatable {
     required this.cancellationReason,
     required this.restaurant,
     required this.order,
-    required this.pickupQr,
-    required this.deliveryOtp,
   });
 
   factory RiderOrderModel.fromJson(Map<String, dynamic> json) {
     final restaurantJson = json['restaurant'];
     final orderJson = json['order'];
-    final pickupQrJson = json['pickupQr'];
-    final deliveryOtpJson = json['deliveryOtp'];
     return RiderOrderModel(
       id: json['id'] is String ? json['id'] as String : '',
       orderId: _str(json['orderId']) ?? '',
@@ -395,11 +365,6 @@ class RiderOrderModel extends Equatable {
       order: orderJson is Map<String, dynamic>
           ? RestaurantOrderSummary.fromJson(orderJson)
           : RestaurantOrderSummary.fromJson(const {}),
-      pickupQr:
-          pickupQrJson is Map<String, dynamic> ? PickupQrInfo.fromJson(pickupQrJson) : null,
-      deliveryOtp: deliveryOtpJson is Map<String, dynamic>
-          ? DeliveryOtpInfo.fromJson(deliveryOtpJson)
-          : null,
     );
   }
 
@@ -422,8 +387,6 @@ class RiderOrderModel extends Equatable {
         cancellationReason,
         restaurant,
         order,
-        pickupQr,
-        deliveryOtp,
       ];
 }
 

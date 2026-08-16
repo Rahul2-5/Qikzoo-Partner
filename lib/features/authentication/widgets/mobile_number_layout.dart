@@ -12,6 +12,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../models/authentication/auth_flow.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
+import '../../../shared/widgets/inputs/app_text_field.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import 'phone_input_field.dart';
 
@@ -22,9 +23,12 @@ class MobileNumberLayout extends StatelessWidget {
     required this.controller,
     required this.phone,
     required this.isPhoneValid,
+    required this.nameController,
+    required this.isNameValid,
     required this.isRequesting,
     required this.onBack,
     required this.onPhoneChanged,
+    required this.onNameChanged,
     required this.onContinue,
     this.onSubmitted,
   });
@@ -33,9 +37,12 @@ class MobileNumberLayout extends StatelessWidget {
   final TextEditingController controller;
   final String phone;
   final bool isPhoneValid;
+  final TextEditingController nameController;
+  final bool isNameValid;
   final bool isRequesting;
   final VoidCallback onBack;
   final ValueChanged<String> onPhoneChanged;
+  final ValueChanged<String> onNameChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
 
@@ -100,9 +107,12 @@ class MobileNumberLayout extends StatelessWidget {
                                           controller: controller,
                                           phone: phone,
                                           isPhoneValid: isPhoneValid,
+                                          nameController: nameController,
+                                          isNameValid: isNameValid,
                                           isRequesting: isRequesting,
                                           isCompact: isCompact,
                                           onPhoneChanged: onPhoneChanged,
+                                          onNameChanged: onNameChanged,
                                           onContinue: onContinue,
                                           onSubmitted: onSubmitted,
                                         )
@@ -111,9 +121,12 @@ class MobileNumberLayout extends StatelessWidget {
                                           controller: controller,
                                           phone: phone,
                                           isPhoneValid: isPhoneValid,
+                                          nameController: nameController,
+                                          isNameValid: isNameValid,
                                           isRequesting: isRequesting,
                                           isCompact: isCompact,
                                           onPhoneChanged: onPhoneChanged,
+                                          onNameChanged: onNameChanged,
                                           onContinue: onContinue,
                                           onSubmitted: onSubmitted,
                                         ),
@@ -162,9 +175,12 @@ class _NarrowLoginLayout extends StatelessWidget {
     required this.controller,
     required this.phone,
     required this.isPhoneValid,
+    required this.nameController,
+    required this.isNameValid,
     required this.isRequesting,
     required this.isCompact,
     required this.onPhoneChanged,
+    required this.onNameChanged,
     required this.onContinue,
     required this.onSubmitted,
   });
@@ -173,9 +189,12 @@ class _NarrowLoginLayout extends StatelessWidget {
   final TextEditingController controller;
   final String phone;
   final bool isPhoneValid;
+  final TextEditingController nameController;
+  final bool isNameValid;
   final bool isRequesting;
   final bool isCompact;
   final ValueChanged<String> onPhoneChanged;
+  final ValueChanged<String> onNameChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
 
@@ -198,9 +217,12 @@ class _NarrowLoginLayout extends StatelessWidget {
               controller: controller,
               phone: phone,
               isPhoneValid: isPhoneValid,
+              nameController: nameController,
+              isNameValid: isNameValid,
               isRequesting: isRequesting,
               isCompact: isCompact,
               onPhoneChanged: onPhoneChanged,
+              onNameChanged: onNameChanged,
               onContinue: onContinue,
               onSubmitted: onSubmitted,
             ),
@@ -219,9 +241,12 @@ class _WideLoginLayout extends StatelessWidget {
     required this.controller,
     required this.phone,
     required this.isPhoneValid,
+    required this.nameController,
+    required this.isNameValid,
     required this.isRequesting,
     required this.isCompact,
     required this.onPhoneChanged,
+    required this.onNameChanged,
     required this.onContinue,
     required this.onSubmitted,
   });
@@ -230,9 +255,12 @@ class _WideLoginLayout extends StatelessWidget {
   final TextEditingController controller;
   final String phone;
   final bool isPhoneValid;
+  final TextEditingController nameController;
+  final bool isNameValid;
   final bool isRequesting;
   final bool isCompact;
   final ValueChanged<String> onPhoneChanged;
+  final ValueChanged<String> onNameChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
 
@@ -270,9 +298,12 @@ class _WideLoginLayout extends StatelessWidget {
                           controller: controller,
                           phone: phone,
                           isPhoneValid: isPhoneValid,
+                          nameController: nameController,
+                          isNameValid: isNameValid,
                           isRequesting: isRequesting,
                           isCompact: isCompact,
                           onPhoneChanged: onPhoneChanged,
+                          onNameChanged: onNameChanged,
                           onContinue: onContinue,
                           onSubmitted: onSubmitted,
                         ),
@@ -318,9 +349,12 @@ class _LoginFormCard extends StatelessWidget {
     required this.controller,
     required this.phone,
     required this.isPhoneValid,
+    required this.nameController,
+    required this.isNameValid,
     required this.isRequesting,
     required this.isCompact,
     required this.onPhoneChanged,
+    required this.onNameChanged,
     required this.onContinue,
     required this.onSubmitted,
   });
@@ -329,9 +363,12 @@ class _LoginFormCard extends StatelessWidget {
   final TextEditingController controller;
   final String phone;
   final bool isPhoneValid;
+  final TextEditingController nameController;
+  final bool isNameValid;
   final bool isRequesting;
   final bool isCompact;
   final ValueChanged<String> onPhoneChanged;
+  final ValueChanged<String> onNameChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
 
@@ -380,6 +417,22 @@ class _LoginFormCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               const _SecurityNote(),
               SizedBox(height: isCompact ? AppSpacing.md : AppSpacing.lg),
+              if (!isLogin) ...[
+                Text('Full name', style: AppTypography.bodyMedium),
+                const SizedBox(height: AppSpacing.sm),
+                AppTextField(
+                  label: 'Full name',
+                  controller: nameController,
+                  showFloatingLabel: false,
+                  hint: 'Enter your full name',
+                  enabled: !isRequesting,
+                  textCapitalization: TextCapitalization.words,
+                  prefixIcon: const Icon(LucideIcons.user,
+                      color: AppColors.secondary, size: 20),
+                  onChanged: onNameChanged,
+                ),
+                SizedBox(height: isCompact ? AppSpacing.md : AppSpacing.lg),
+              ],
               Text('Mobile number', style: AppTypography.bodyMedium),
               const SizedBox(height: AppSpacing.sm),
               PhoneInputField(

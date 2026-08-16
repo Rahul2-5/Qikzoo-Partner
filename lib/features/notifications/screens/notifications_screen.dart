@@ -3,7 +3,9 @@ import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:permission_handler/permission_handler.dart';
 
+import '../../../core/push/push_service.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -13,6 +15,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../models/notifications/notification_model.dart';
 import '../../../providers/notifications/notifications_provider.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
@@ -37,6 +40,28 @@ class NotificationsScreen extends ConsumerWidget {
   Future<void> _refresh(WidgetRef ref) async {
     ref.invalidate(notificationsProvider);
     await ref.read(notificationsProvider.future);
+  }
+
+  /// Wires the "Enable alerts" card to the app's real notification
+  /// permission + FCM token pipeline (`PushService`) instead of a snackbar
+  /// that always claimed success. Reports the actual granted/denied
+  /// outcome — a denial offers a direct path to Settings rather than
+  /// pretending the request worked.
+  Future<void> _onEnableAlerts(BuildContext context) async {
+    final granted = await PushService.instance.requestPermissionAndRegister();
+    if (!context.mounted) return;
+    if (granted) {
+      AppSnackBar.success(context, 'Order and gig alerts are now enabled.');
+    } else {
+      AppSnackBar.show(
+        context,
+        message:
+            'Notification permission was not granted. Enable it from Settings to receive order and gig alerts.',
+        type: AppSnackBarType.error,
+        actionLabel: 'Open Settings',
+        onAction: openAppSettings,
+      );
+    }
   }
 
   @override
@@ -89,13 +114,7 @@ class NotificationsScreen extends ConsumerWidget {
                         const _PartnerMomentumCard(),
                         const SizedBox(height: AppSpacing.md),
                         _AlertsPermissionCard(
-                          onEnable: () =>
-                              ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Order and gig alerts have been enabled.'),
-                            ),
-                          ),
+                          onEnable: () => _onEnableAlerts(context),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         _SectionHeading(

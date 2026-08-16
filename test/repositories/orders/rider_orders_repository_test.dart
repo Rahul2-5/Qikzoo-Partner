@@ -119,23 +119,6 @@ void main() {
       await buildRepository(adapter).markArrived('rider-order-1');
     });
 
-    test('scanPickupQr posts the decoded token', () async {
-      final adapter = FakeHttpClientAdapter((options) {
-        expect(options.path, ApiEndpoints.riderOrderScanPickupQr('rider-order-1'));
-        expect(options.data, {'token': 'the-token'});
-        return jsonResponse('{"data":{}}', 201);
-      });
-      await buildRepository(adapter).scanPickupQr('rider-order-1', 'the-token');
-    });
-
-    test('pickupSuccess posts to the pickup-success endpoint', () async {
-      final adapter = FakeHttpClientAdapter((options) {
-        expect(options.path, ApiEndpoints.riderOrderPickupSuccess('rider-order-1'));
-        return jsonResponse('{"data":{}}', 201);
-      });
-      await buildRepository(adapter).pickupSuccess('rider-order-1');
-    });
-
     test('startDelivery posts to the start-delivery endpoint', () async {
       final adapter = FakeHttpClientAdapter((options) {
         expect(options.path, ApiEndpoints.riderOrderStartDelivery('rider-order-1'));
@@ -144,13 +127,13 @@ void main() {
       await buildRepository(adapter).startDelivery('rider-order-1');
     });
 
-    test('completeDelivery posts the OTP code', () async {
+    test('completeDelivery posts to the complete-delivery endpoint with no body', () async {
       final adapter = FakeHttpClientAdapter((options) {
         expect(options.path, ApiEndpoints.riderOrderCompleteDelivery('rider-order-1'));
-        expect(options.data, {'code': '654321'});
+        expect(options.data, isNull);
         return jsonResponse('{"data":{}}', 201);
       });
-      await buildRepository(adapter).completeDelivery('rider-order-1', '654321');
+      await buildRepository(adapter).completeDelivery('rider-order-1');
     });
 
     test('cancel posts the reason', () async {

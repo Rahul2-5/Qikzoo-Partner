@@ -35,19 +35,19 @@ class _QuickMessageSheetContentState extends State<_QuickMessageSheetContent> {
       "I'm at the gate",
       'Please share a landmark',
       "I'm at the security desk",
-      'Please share the delivery OTP',
+      "I've arrived, please collect your order",
     ],
     'हिन्दी': [
       'मैं गेट पर हूँ',
       'कृपया कोई लैंडमार्क साझा करें',
       'मैं सुरक्षा डेस्क पर हूँ',
-      'कृपया डिलीवरी OTP साझा करें',
+      'मैं पहुँच गया हूँ, कृपया अपना ऑर्डर लें',
     ],
     'मराठी': [
       'मी गेटवर आहे',
       'कृपया जवळची खूण सांगा',
       'मी सुरक्षा डेस्कवर आहे',
-      'कृपया डिलिव्हरी OTP सांगा',
+      'मी पोहोचलो आहे, कृपया तुमची ऑर्डर घ्या',
     ],
   };
 

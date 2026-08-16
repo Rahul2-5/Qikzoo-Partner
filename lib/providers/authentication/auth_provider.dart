@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/api/dio_service.dart';
+import '../../core/location/rider_background_location_service.dart';
 import '../../core/navigation/next_onboarding_step_resolver.dart';
 import '../../core/push/push_service.dart';
 import '../../repositories/authentication/auth_repository.dart';
@@ -10,7 +11,13 @@ import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/onboarding_status/onboarding_status_repository.dart';
 import '../../models/authentication/auth_session_model.dart';
 import '../../models/authentication/session_restore_outcome.dart';
+import '../location/rider_location_provider.dart';
 import '../core/api_providers.dart';
+import '../dashboard/dashboard_provider.dart';
+import '../orders/active_order_provider.dart';
+import '../orders/dispatch_offer_provider.dart';
+import '../notifications/notifications_provider.dart';
+import '../polling/rider_polling_controller.dart';
 
 /// UI state: the phone number currently being entered/verified.
 final phoneNumberUiProvider = StateProvider<String>((ref) => '');
@@ -31,8 +38,28 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
       () => ref.read(authRepositoryProvider).verifyOtp(phoneNumber, otp, name: name),
     );
     if (state.valueOrNull?.isAuthenticated == true) {
+      // A previous session (this rider logging back in, or a different
+      // rider on a shared device) may have left stale AsyncNotifierProvider
+      // state cached — force every session-scoped provider to re-fetch from
+      // the backend rather than risk the dashboard rendering leftover data
+      // from before this login.
+      _invalidateSessionScopedState();
       unawaited(PushService.instance.registerCurrentToken());
     }
+  }
+
+  /// Drops any cached availability/active-order/offer/notification state so
+  /// the next read is a genuine backend fetch, never a stale carry-over from
+  /// a previous session in this same app process. Called on every
+  /// authenticated entry point (fresh login, successful session restore) and
+  /// on logout — backend remains the sole source of truth; this never
+  /// fabricates or guesses a value, it only clears the cache so the real one
+  /// gets fetched.
+  void _invalidateSessionScopedState() {
+    ref.invalidate(dashboardStatsProvider);
+    ref.invalidate(activeOrderProvider);
+    ref.invalidate(dispatchOfferProvider);
+    ref.invalidate(notificationsProvider);
   }
 
   /// Called once on app start. If a refresh token is stored, silently
@@ -80,6 +107,10 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
           isAuthenticated: true,
         ),
       );
+      // See [_invalidateSessionScopedState] — guarantees the dashboard's
+      // first read after a session restore is a fresh backend fetch, not
+      // whatever an earlier app run left cached.
+      _invalidateSessionScopedState();
       unawaited(PushService.instance.registerCurrentToken());
       return SessionRestoreResult(
         onboarding.isActive
@@ -103,10 +134,22 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
 
   /// Ends the session: best-effort revokes it server-side, always clears
   /// local tokens, and resets [state] to signed-out.
+  ///
+  /// Stops the location ping loop and the dispatch-offer/active-order poll
+  /// first, centrally, so every logout path (the Profile screen's explicit
+  /// "Log out", and every screen's own forced-logout-on-401 handler)
+  /// reliably tears them down — no per-screen call site needs to remember
+  /// to do it itself.
   Future<void> logout() async {
+    ref.read(riderLocationControllerProvider.notifier).stop();
+    ref.read(riderPollingControllerProvider.notifier).stop();
+    await RiderBackgroundLocationService.instance.stop();
     await PushService.instance.removeCurrentToken();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncData(AuthSessionModel.empty);
+    // Clear this rider's cached state completely — the next login (same
+    // rider or a different one on this device) must never see it.
+    _invalidateSessionScopedState();
   }
 }
 

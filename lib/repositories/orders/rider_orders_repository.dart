@@ -23,23 +23,27 @@ abstract class RiderOrdersRepository {
     required int pageSize,
   });
 
-  /// `POST /rider/orders/:id/arrived`.
+  /// `POST /rider/orders/:id/arrived` — now server-side GPS-validated;
+  /// the backend either transitions to ARRIVED_AT_RESTAURANT or returns a
+  /// 400 the caller surfaces verbatim (see `ActiveOrderScreen._run`).
+  /// There is no rider-initiated pickup-confirmation call after this: once
+  /// the restaurant staff verify the pickup OTP on their own dashboard,
+  /// the backend transitions the RiderOrder straight to PICKED_UP, which
+  /// this app only ever observes via its existing polling.
   Future<void> markArrived(String riderOrderId);
-
-  /// `POST /rider/orders/:id/scan-pickup-qr` — `token` is the plaintext
-  /// string decoded from the restaurant-generated QR code.
-  Future<void> scanPickupQr(String riderOrderId, String token);
-
-  /// `POST /rider/orders/:id/pickup-success` — issues the delivery OTP to
-  /// the customer.
-  Future<void> pickupSuccess(String riderOrderId);
 
   /// `POST /rider/orders/:id/start-delivery`.
   Future<void> startDelivery(String riderOrderId);
 
-  /// `POST /rider/orders/:id/complete-delivery` — `code` is the 6-digit
-  /// OTP the customer reads out to the rider.
-  Future<void> completeDelivery(String riderOrderId, String code);
+  /// `POST /rider/orders/:id/complete-delivery` — no request body. The
+  /// backend gates this purely on the rider's own last-known GPS position
+  /// (`Rider.lastLat`/`lastLng`/`lastLocationAt`, the same fields the
+  /// location-ping loop already keeps fresh) against the order's delivery
+  /// coordinates via a server-side haversine check; it can reject with
+  /// "outdated" (stale/missing GPS), "too far" (not close enough yet), or
+  /// "no delivery location" (edge case). There is no customer-facing
+  /// delivery OTP anymore — the rider never enters a code here.
+  Future<void> completeDelivery(String riderOrderId);
 
   /// `POST /rider/orders/:id/cancel`.
   Future<void> cancel(String riderOrderId, String reason);
@@ -91,21 +95,6 @@ class DioRiderOrdersRepository implements RiderOrdersRepository {
   }
 
   @override
-  Future<void> scanPickupQr(String riderOrderId, String token) async {
-    await _apiClient.post<Map<String, dynamic>>(
-      ApiEndpoints.riderOrderScanPickupQr(riderOrderId),
-      data: {'token': token},
-    );
-  }
-
-  @override
-  Future<void> pickupSuccess(String riderOrderId) async {
-    await _apiClient.post<Map<String, dynamic>>(
-      ApiEndpoints.riderOrderPickupSuccess(riderOrderId),
-    );
-  }
-
-  @override
   Future<void> startDelivery(String riderOrderId) async {
     await _apiClient.post<Map<String, dynamic>>(
       ApiEndpoints.riderOrderStartDelivery(riderOrderId),
@@ -113,10 +102,9 @@ class DioRiderOrdersRepository implements RiderOrdersRepository {
   }
 
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) async {
+  Future<void> completeDelivery(String riderOrderId) async {
     await _apiClient.post<Map<String, dynamic>>(
       ApiEndpoints.riderOrderCompleteDelivery(riderOrderId),
-      data: {'code': code},
     );
   }
 

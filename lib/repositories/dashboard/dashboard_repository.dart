@@ -14,6 +14,14 @@ abstract class DashboardRepository {
   /// than being merged in manually.
   Future<DashboardStatsModel> goOnline();
 
+  /// `POST /rider/availability/available` — the transition that actually
+  /// makes the rider dispatch-eligible (only an AVAILABLE rider with a
+  /// known last position is mirrored into the backend's Redis GEO set).
+  /// Must be called after `goOnline()` and after at least one location
+  /// ping has been sent, matching `RiderAvailabilityService`'s own
+  /// OFFLINE→ONLINE→AVAILABLE state machine — see [goOnline].
+  Future<DashboardStatsModel> goAvailable();
+
   /// `POST /rider/availability/offline` — see [goOnline].
   Future<DashboardStatsModel> goOffline();
 }
@@ -52,6 +60,7 @@ class DioDashboardRepository implements DashboardRepository {
       todaysEarningsPaise: _asInt(today['earningsPaise']),
       todaysDeliveries: _asInt(today['deliveries']),
       walletBalancePaise: _asInt(wallet['availableBalancePaise']),
+      onlineSecondsToday: _asInt(today['onlineSecondsToday']),
       acceptanceRatePercent:
           totalOffers > 0 ? (totalAccepted / totalOffers) * 100 : null,
       completionRatePercent: totalAccepted > 0
@@ -65,6 +74,12 @@ class DioDashboardRepository implements DashboardRepository {
   @override
   Future<DashboardStatsModel> goOnline() async {
     await _apiClient.post<void>(ApiEndpoints.riderAvailabilityOnline);
+    return getStats();
+  }
+
+  @override
+  Future<DashboardStatsModel> goAvailable() async {
+    await _apiClient.post<void>(ApiEndpoints.riderAvailabilityAvailable);
     return getStats();
   }
 

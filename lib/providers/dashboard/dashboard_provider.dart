@@ -25,6 +25,12 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStatsModel> {
   }
 
   /// See [goOnline].
+  Future<void> goAvailable() async {
+    final updated = await ref.read(dashboardRepositoryProvider).goAvailable();
+    state = AsyncData(updated);
+  }
+
+  /// See [goOnline].
   Future<void> goOffline() async {
     final updated = await ref.read(dashboardRepositoryProvider).goOffline();
     state = AsyncData(updated);

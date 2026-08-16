@@ -1,18 +1,22 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
+import 'package:delivery_partner_app/core/location/location_platform.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/dashboard/screens/dashboard_home_screen.dart';
 import 'package:delivery_partner_app/features/partner_registration/widgets/capture_button.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/location/rider_location_ping.dart';
 import 'package:delivery_partner_app/models/notifications/notification_model.dart';
 import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
 import 'package:delivery_partner_app/models/partner_registration/personal_info_model.dart';
@@ -22,6 +26,7 @@ import 'package:delivery_partner_app/providers/core/camera_config_provider.dart'
 import 'package:delivery_partner_app/repositories/authentication/auth_repository.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
 import 'package:delivery_partner_app/repositories/document_verification/document_image_picker.dart';
+import 'package:delivery_partner_app/repositories/location/location_repository.dart';
 import 'package:delivery_partner_app/repositories/orders/dispatch_repository.dart';
 import 'package:delivery_partner_app/repositories/notifications/notifications_repository.dart';
 import 'package:delivery_partner_app/repositories/profile/profile_repository.dart';
@@ -34,8 +39,10 @@ class FakeDashboardRepository implements DashboardRepository {
   DashboardStatsModel? current;
   Object? getStatsError;
   Object? toggleError;
+  Object? goAvailableError;
   int getStatsCalls = 0;
   int goOnlineCalls = 0;
+  int goAvailableCalls = 0;
   int goOfflineCalls = 0;
 
   @override
@@ -55,12 +62,81 @@ class FakeDashboardRepository implements DashboardRepository {
   }
 
   @override
+  Future<DashboardStatsModel> goAvailable() async {
+    goAvailableCalls++;
+    if (goAvailableError != null) throw goAvailableError!;
+    if (toggleError != null) throw toggleError!;
+    current = (current ?? initial)
+        .copyWith(availabilityStatus: RiderAvailabilityStatus.available);
+    return current!;
+  }
+
+  @override
   Future<DashboardStatsModel> goOffline() async {
     goOfflineCalls++;
     if (toggleError != null) throw toggleError!;
     current = (current ?? initial)
         .copyWith(availabilityStatus: RiderAvailabilityStatus.offline);
     return current!;
+  }
+}
+
+/// Grants location by default — the go-online flow this suite exercises
+/// should succeed unless a test explicitly configures a denial, matching
+/// how [FakeDashboardRepository] defaults to success unless a test sets an
+/// error.
+class FakeLocationPlatform implements LocationPlatform {
+  bool serviceEnabled = true;
+  LocationPermission permission = LocationPermission.whileInUse;
+  int getCurrentPositionCalls = 0;
+
+  Position _fixedPosition() => Position(
+        latitude: 12.9716,
+        longitude: 77.5946,
+        timestamp: DateTime(2026, 1, 1),
+        accuracy: 10,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
+
+  @override
+  Future<bool> isLocationServiceEnabled() async => serviceEnabled;
+
+  @override
+  Future<LocationPermission> checkPermission() async => permission;
+
+  @override
+  Future<LocationPermission> requestPermission() async => permission;
+
+  @override
+  Future<Position> getCurrentPosition({Duration? timeLimit}) async {
+    getCurrentPositionCalls++;
+    return _fixedPosition();
+  }
+
+  @override
+  Stream<Position> getPositionStream({required int distanceFilterMeters}) =>
+      const Stream<Position>.empty();
+
+  @override
+  Future<bool> openLocationSettings() async => true;
+
+  @override
+  Future<bool> openAppSettings() async => true;
+}
+
+class FakeLocationRepository implements LocationRepository {
+  int sendPingCalls = 0;
+  Object? sendPingError;
+
+  @override
+  Future<void> sendPing(RiderLocationPing ping) async {
+    sendPingCalls++;
+    if (sendPingError != null) throw sendPingError!;
   }
 }
 
@@ -206,6 +282,7 @@ DashboardStatsModel mockStats({
   double? acceptanceRatePercent = 92,
   double? completionRatePercent = 96,
   String? workingZone = 'Bengaluru, Karnataka',
+  int onlineSecondsToday = 0,
 }) =>
     DashboardStatsModel(
       riderName: 'Ravi Kumar',
@@ -213,6 +290,7 @@ DashboardStatsModel mockStats({
       todaysEarningsPaise: 84200,
       todaysDeliveries: 14,
       walletBalancePaise: 312000,
+      onlineSecondsToday: onlineSecondsToday,
       acceptanceRatePercent: acceptanceRatePercent,
       completionRatePercent: completionRatePercent,
       rating: 4.7,
@@ -232,6 +310,8 @@ Widget buildApp({
   FakeDispatchRepository? dispatchRepository,
   NotificationsRepository? notificationsRepository,
   FakeProfileRepository? profileRepository,
+  FakeLocationPlatform? locationPlatform,
+  FakeLocationRepository? locationRepository,
 }) {
   return ProviderScope(
     overrides: [
@@ -246,6 +326,10 @@ Widget buildApp({
       profileRepositoryProvider
           .overrideWithValue(profileRepository ?? FakeProfileRepository()),
       documentImagePickerProvider.overrideWithValue(FakeDocumentImagePicker()),
+      locationPlatformProvider
+          .overrideWithValue(locationPlatform ?? FakeLocationPlatform()),
+      locationRepositoryProvider
+          .overrideWithValue(locationRepository ?? FakeLocationRepository()),
       // Replaces only the native camera plugin — the rest of the selfie
       // flow (capture button, confirm sheet, upload) runs for real.
       cameraConfigProvider.overrideWithValue(
@@ -340,6 +424,23 @@ void main() {
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('Schedule'), findsOneWidget);
     expect(find.text('Support'), findsOneWidget);
+  });
+
+  testWidgets(
+      'shows the real backend-computed online time on the Today\'s progress card',
+      (tester) async {
+    setTallSurface(tester);
+    final repo = FakeDashboardRepository(
+      initial: mockStats(
+        availabilityStatus: RiderAvailabilityStatus.online,
+        onlineSecondsToday: 8100, // 2h 15m
+      ),
+    );
+    await tester.pumpWidget(buildApp(dashboardRepository: repo));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2h 15m'), findsOneWidget);
+    expect(find.text('0h 0m'), findsNothing);
   });
 
   testWidgets('keeps earnings and gig content hidden while offline',
@@ -454,6 +555,12 @@ void main() {
     expect(profileRepo.lastSelfiePath, isNotNull);
     expect(profileRepo.lastSelfiePath, endsWith('selfie.jpg'));
     expect(repo.goOnlineCalls, 1);
+    // P0-1: a real GPS fix must be acquired and sent before the rider is
+    // flipped to AVAILABLE — the transition that actually makes them
+    // dispatch-eligible (see RiderAvailabilityService.transition —
+    // AVAILABLE only mirrors into Redis GEO when a last-known position
+    // already exists).
+    expect(repo.goAvailableCalls, 1);
     expect(find.text('You are Online'), findsOneWidget);
     expect(find.text('Go offline'), findsOneWidget);
     expect(find.text("TODAY'S PROGRESS"), findsOneWidget);
@@ -627,22 +734,120 @@ void main() {
     expect(find.text('Incoming Offer Screen'), findsNothing);
   });
 
-  testWidgets('resuming the app after being backgrounded re-polls for an offer',
-      (tester) async {
-    setTallSurface(tester);
-    final dashboardRepo = FakeDashboardRepository(initial: mockStats());
-    final dispatchRepo = FakeDispatchRepository(offer: null);
-    await tester.pumpWidget(buildApp(
-      dashboardRepository: dashboardRepo,
-      dispatchRepository: dispatchRepo,
-    ));
-    await tester.pumpAndSettle();
+  // Resume-triggered dispatch-offer polling now lives in
+  // RiderPollingController, driven by the app-root RiderPollingLifecycleObserver
+  // (see app.dart) rather than this screen's own lifecycle observer — so it
+  // works regardless of which tab is on screen, not just the Dashboard.
+  // Covered by test/providers/polling/rider_polling_controller_test.dart and
+  // test/shared/widgets/lifecycle/rider_polling_lifecycle_observer_test.dart.
 
-    final before = dispatchRepo.getCurrentOfferCalls;
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.pumpAndSettle();
+  group('P0-1 location gating', () {
+    testWidgets(
+        'never calls goOnline when location services are off — shows a blocking dialog instead of the confirm dialog',
+        (tester) async {
+      setTallSurface(tester);
+      final repo = FakeDashboardRepository(
+        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline),
+      );
+      final locationPlatform = FakeLocationPlatform()..serviceEnabled = false;
+      await tester.pumpWidget(buildApp(
+        dashboardRepository: repo,
+        locationPlatform: locationPlatform,
+      ));
+      await tester.pumpAndSettle();
 
-    expect(dispatchRepo.getCurrentOfferCalls, greaterThan(before));
+      await tester.tap(find.byKey(const Key('availability-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Turn on location'), findsOneWidget);
+      // The rider never even sees the "Go online?" confirmation — location
+      // is checked first, before anything else in the flow.
+      expect(find.text('Go online?'), findsNothing);
+      expect(repo.goOnlineCalls, 0);
+      expect(find.text('You are Offline'), findsOneWidget);
+    });
+
+    testWidgets(
+        'never calls goOnline when location permission is permanently denied',
+        (tester) async {
+      setTallSurface(tester);
+      final repo = FakeDashboardRepository(
+        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline),
+      );
+      final locationPlatform = FakeLocationPlatform()
+        ..permission = LocationPermission.deniedForever;
+      await tester.pumpWidget(buildApp(
+        dashboardRepository: repo,
+        locationPlatform: locationPlatform,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('availability-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Location permission needed'), findsOneWidget);
+      expect(find.text('Open app settings'), findsOneWidget);
+      expect(repo.goOnlineCalls, 0);
+      expect(find.text('You are Offline'), findsOneWidget);
+    });
+
+    testWidgets(
+        'never calls goOnline when location permission is denied (recoverable)',
+        (tester) async {
+      setTallSurface(tester);
+      final repo = FakeDashboardRepository(
+        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline),
+      );
+      final locationPlatform = FakeLocationPlatform()
+        ..permission = LocationPermission.denied;
+      await tester.pumpWidget(buildApp(
+        dashboardRepository: repo,
+        locationPlatform: locationPlatform,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('availability-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Location permission needed'), findsOneWidget);
+      // No "Open Settings" action for a merely-denied (not permanently
+      // denied) permission — the OS prompt itself is the recoverable path.
+      expect(find.text('Open app settings'), findsNothing);
+      expect(repo.goOnlineCalls, 0);
+      expect(find.text('You are Offline'), findsOneWidget);
+    });
+
+    testWidgets(
+        'rolls back to offline if goAvailable fails after goOnline already succeeded',
+        (tester) async {
+      setTallSurface(tester);
+      final repo = FakeDashboardRepository(
+        initial: mockStats(availabilityStatus: RiderAvailabilityStatus.offline),
+      )..goAvailableError = const ApiException(message: 'Server error');
+      final profileRepo = FakeProfileRepository();
+      await tester.pumpWidget(buildApp(
+        dashboardRepository: repo,
+        profileRepository: profileRepo,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('availability-toggle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm'));
+      await pumpBounded(tester);
+      await tester.tap(find.text('Take selfie'));
+      await pumpBounded(tester);
+      await tapCaptureButton(tester);
+      await tester.tap(find.text('Use Photo'));
+      await pumpBounded(tester);
+
+      expect(repo.goOnlineCalls, 1);
+      expect(repo.goAvailableCalls, 1);
+      // The rollback calls goOffline a second time (once for the failed
+      // AVAILABLE attempt's cleanup) — the rider must never be left
+      // ONLINE-but-not-AVAILABLE with no way back to a clean state.
+      expect(repo.goOfflineCalls, 1);
+      expect(find.text('You are Offline'), findsOneWidget);
+    });
   });
 }
