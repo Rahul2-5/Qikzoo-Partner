@@ -3,8 +3,6 @@ class AppAssets {
 
   static const imagesPath = 'assets/images';
   static const iconsPath = 'assets/icons';
-  static const illustrationsPath = 'assets/illustrations';
-  static const animationsPath = 'assets/animations';
 
   static const partnerStatusOffline3d =
       '$iconsPath/partner_status_offline_3d.png';
@@ -21,14 +19,10 @@ class AppAssets {
   static const dashboardPerformance3d =
       '$iconsPath/dashboard_performance_3d.png';
   static const dashboardSchedule3d = '$iconsPath/dashboard_schedule_3d.png';
-  static const dashboardLocationBeacon3d =
-      '$iconsPath/dashboard_location_beacon_3d.png';
   static const happyDeliveryRider3d =
       '$imagesPath/happy_delivery_rider_3d_transparent.png';
-  static const onboardingRider = '$iconsPath/onboarding_rider_v3.png';
   static const mainLogo = '$imagesPath/new_logo.png';
   static const partnerLogoTight = '$imagesPath/qikzoo_partner_logo_tight.png';
-  static const transparentLogo = '$iconsPath/transparent_logo.png';
 
   static const onboardingPath = '$imagesPath/onboarding';
   static const onboardingStep1Rider = '$onboardingPath/onboarding_step1_rider.png';
@@ -37,27 +31,13 @@ class AppAssets {
 
   static const earningsPath = '$imagesPath/earnings';
   static const earningsWallet3d = '$earningsPath/earnings_wallet_3d.png';
-  static const gigMap3d = '$earningsPath/gig_map_3d.png';
-
-  static const gigsPath = '$imagesPath/gigs';
-  static const gigCalendar3d = '$gigsPath/gig_calendar_3d.png';
-  static const weekendBoost3d = '$gigsPath/weekend_boost_3d.png';
-  static const extraEarnings3d = '$gigsPath/extra_earnings_3d.png';
-  static const bookedPayout3d = '$gigsPath/booked_payout_3d.png';
 
   static const profilePath = '$imagesPath/profile';
   static const profileStorefront3d = '$profilePath/storefront_3d.png';
   static const profileEarningsWallet3d = '$profilePath/earnings_wallet_3d.png';
-  static const profileGigsHistory3d = '$profilePath/gigs_history_3d.png';
-  static const profileTripsScooter3d = '$profilePath/trips_scooter_3d.png';
   static const profileOffersTicket3d = '$profilePath/offers_ticket_3d.png';
-  static const profileBenefitsGift3d = '$profilePath/benefits_gift_3d.png';
   static const profileHelpHeadset3d = '$profilePath/help_headset_3d.png';
-  static const profileEvScooter3d = '$profilePath/ev_scooter_3d.png';
 
   static const ordersPath = '$imagesPath/orders';
   static const orderBagNew3d = '$ordersPath/order_bag_new_3d.png';
-
-  static const emptyStateIllustration = '$illustrationsPath/empty_state.svg';
-  static const successAnimation = '$animationsPath/success.json';
 }

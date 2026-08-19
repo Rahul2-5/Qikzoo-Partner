@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app.dart';
 import 'core/location/rider_background_location_service.dart';
 import 'core/push/push_service.dart';
@@ -17,7 +16,6 @@ Future<void> main() async {
   await SystemChrome.setPreferredOrientations(const [
     DeviceOrientation.portraitUp,
   ]);
-  GoogleFonts.config.allowRuntimeFetching = false;
   _registerFontLicenses();
   await dotenv.load(fileName: '.env');
   RiderBackgroundLocationService.instance.initialize();
@@ -42,14 +40,6 @@ Future<void> main() async {
 
 void _registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
-    yield LicenseEntryWithLineBreaks(
-      const ['Inter'],
-      await rootBundle.loadString('assets/fonts/OFL-Inter.txt'),
-    );
-    yield LicenseEntryWithLineBreaks(
-      const ['Manrope'],
-      await rootBundle.loadString('assets/fonts/OFL-Manrope.txt'),
-    );
     yield LicenseEntryWithLineBreaks(
       const ['Plus Jakarta Sans'],
       await rootBundle.loadString(

@@ -68,6 +68,13 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
             // Falls back to the debug keystore only when android/key.properties
             // is absent (e.g. a contributor's local `flutter build apk --debug`
             // machine) — `flutter build appbundle --release` for an actual Play
