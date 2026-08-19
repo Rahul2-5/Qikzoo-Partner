@@ -13,7 +13,16 @@ abstract class SettingsRepository {
 /// value that resets every time the provider rebuilds.
 class LocalSettingsRepository implements SettingsRepository {
   LocalSettingsRepository({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+      : _storage = storage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(
+                encryptedSharedPreferences: true,
+                resetOnError: true,
+              ),
+              iOptions: IOSOptions(
+                accessibility: KeychainAccessibility.first_unlock,
+              ),
+            );
 
   static const _notificationsEnabledKey = 'settings_notifications_enabled';
   static const _languageKey = 'settings_language';
@@ -22,23 +31,31 @@ class LocalSettingsRepository implements SettingsRepository {
 
   @override
   Future<AppSettingsModel> getSettings() async {
-    final notificationsRaw = await _storage.read(key: _notificationsEnabledKey);
-    final language = await _storage.read(key: _languageKey);
-    return AppSettingsModel(
-      notificationsEnabled: notificationsRaw == null ? true : notificationsRaw == 'true',
-      language: language ?? AppSettingsModel.defaults.language,
-    );
+    try {
+      final notificationsRaw =
+          await _storage.read(key: _notificationsEnabledKey);
+      final language = await _storage.read(key: _languageKey);
+      return AppSettingsModel(
+        notificationsEnabled:
+            notificationsRaw == null ? true : notificationsRaw == 'true',
+        language: language ?? AppSettingsModel.defaults.language,
+      );
+    } catch (_) {
+      return AppSettingsModel.defaults;
+    }
   }
 
   @override
   Future<AppSettingsModel> updateSettings(AppSettingsModel settings) async {
-    await Future.wait([
-      _storage.write(
-        key: _notificationsEnabledKey,
-        value: settings.notificationsEnabled.toString(),
-      ),
-      _storage.write(key: _languageKey, value: settings.language),
-    ]);
+    try {
+      await Future.wait([
+        _storage.write(
+          key: _notificationsEnabledKey,
+          value: settings.notificationsEnabled.toString(),
+        ),
+        _storage.write(key: _languageKey, value: settings.language),
+      ]);
+    } catch (_) {}
     return settings;
   }
 }

@@ -16,7 +16,16 @@ abstract interface class DispatchOfferStore {
 /// gap after process death and preserves the server's absolute expiry time.
 class DispatchOfferCache implements DispatchOfferStore {
   DispatchOfferCache({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+      : _storage = storage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(
+                encryptedSharedPreferences: true,
+                resetOnError: true,
+              ),
+              iOptions: IOSOptions(
+                accessibility: KeychainAccessibility.first_unlock,
+              ),
+            );
 
   static const _key = 'pending_dispatch_offer_v1';
   final FlutterSecureStorage _storage;

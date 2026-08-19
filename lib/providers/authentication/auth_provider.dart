@@ -76,61 +76,67 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
   /// same resolver every onboarding screen uses — so the caller (the
   /// splash screen) never re-fetches it or re-implements its own routing.
   Future<SessionRestoreResult> restoreSession() async {
-    final storage = ref.read(secureTokenStorageProvider);
-    final hasRefreshToken = await storage.getRefreshToken();
-    if (hasRefreshToken == null || hasRefreshToken.isEmpty) {
-      state = const AsyncData(AuthSessionModel.empty);
-      return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
-    }
-
-    final dioService = ref.read(dioServiceProvider);
-    final refreshResult = await dioService.refreshSession();
-
-    switch (refreshResult) {
-      case SessionRefreshResult.networkError:
-        return const SessionRestoreResult(SessionRestoreOutcome.offline);
-      case SessionRefreshResult.invalidToken:
-        state = const AsyncData(AuthSessionModel.empty);
-        return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
-      case SessionRefreshResult.success:
-        break;
-    }
-
     try {
-      final profile = await ref.read(profileRepositoryProvider).getProfile();
-      final onboarding =
-          await ref.read(onboardingStatusRepositoryProvider).getStatus();
-      final accessToken = await storage.getAccessToken() ?? '';
-
-      state = AsyncData(
-        AuthSessionModel(
-          partnerId: profile.publicRiderId ?? '',
-          token: accessToken,
-          isAuthenticated: true,
-        ),
-      );
-      // See [_invalidateSessionScopedState] — guarantees the dashboard's
-      // first read after a session restore is a fresh backend fetch, not
-      // whatever an earlier app run left cached.
-      _invalidateSessionScopedState();
-      unawaited(PushService.instance.registerCurrentToken());
-      return SessionRestoreResult(
-        onboarding.isActive
-            ? SessionRestoreOutcome.active
-            : SessionRestoreOutcome.needsOnboarding,
-        route: NextOnboardingStepResolver.resolve(onboarding, profile: profile),
-      );
-    } on ApiException catch (error) {
-      if (error.statusCode == 401) {
-        await ref.read(authRepositoryProvider).logout();
+      final storage = ref.read(secureTokenStorageProvider);
+      final hasRefreshToken = await storage.getRefreshToken();
+      if (hasRefreshToken == null || hasRefreshToken.isEmpty) {
         state = const AsyncData(AuthSessionModel.empty);
         return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
       }
-      // Any other failure (timeout, no connection, 5xx, ...) fetching
-      // profile/onboarding after a *successful* token refresh is a
-      // connectivity problem, not a session problem — leave the stored
-      // tokens alone so a retry can pick up where this left off.
-      return const SessionRestoreResult(SessionRestoreOutcome.offline);
+
+      final dioService = ref.read(dioServiceProvider);
+      final refreshResult = await dioService.refreshSession();
+
+      switch (refreshResult) {
+        case SessionRefreshResult.networkError:
+          return const SessionRestoreResult(SessionRestoreOutcome.offline);
+        case SessionRefreshResult.invalidToken:
+          state = const AsyncData(AuthSessionModel.empty);
+          return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
+        case SessionRefreshResult.success:
+          break;
+      }
+
+      try {
+        final profile = await ref.read(profileRepositoryProvider).getProfile();
+        final onboarding =
+            await ref.read(onboardingStatusRepositoryProvider).getStatus();
+        final accessToken = await storage.getAccessToken() ?? '';
+
+        state = AsyncData(
+          AuthSessionModel(
+            partnerId: profile.publicRiderId ?? '',
+            token: accessToken,
+            isAuthenticated: true,
+          ),
+        );
+        // See [_invalidateSessionScopedState] — guarantees the dashboard's
+        // first read after a session restore is a fresh backend fetch, not
+        // whatever an earlier app run left cached.
+        _invalidateSessionScopedState();
+        unawaited(PushService.instance.registerCurrentToken());
+        return SessionRestoreResult(
+          onboarding.isActive
+              ? SessionRestoreOutcome.active
+              : SessionRestoreOutcome.needsOnboarding,
+          route:
+              NextOnboardingStepResolver.resolve(onboarding, profile: profile),
+        );
+      } on ApiException catch (error) {
+        if (error.statusCode == 401) {
+          await ref.read(authRepositoryProvider).logout();
+          state = const AsyncData(AuthSessionModel.empty);
+          return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
+        }
+        // Any other failure (timeout, no connection, 5xx, ...) fetching
+        // profile/onboarding after a *successful* token refresh is a
+        // connectivity problem, not a session problem — leave the stored
+        // tokens alone so a retry can pick up where this left off.
+        return const SessionRestoreResult(SessionRestoreOutcome.offline);
+      }
+    } catch (_) {
+      state = const AsyncData(AuthSessionModel.empty);
+      return const SessionRestoreResult(SessionRestoreOutcome.loggedOut);
     }
   }
 

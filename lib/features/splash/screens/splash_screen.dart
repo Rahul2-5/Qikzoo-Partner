@@ -33,12 +33,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   /// loop beyond this — a single attempt per tap, so there's no splash
   /// loop if the backend is down.
   Future<void> _bootstrap() async {
-    final delay = Future.delayed(const Duration(milliseconds: 1000));
-    final result =
-        await ref.read(authSessionProvider.notifier).restoreSession();
-    await delay;
-    if (!mounted) return;
-    _handleResult(result);
+    try {
+      final delay = Future.delayed(const Duration(milliseconds: 1000));
+      final result = await ref
+          .read(authSessionProvider.notifier)
+          .restoreSession()
+          .timeout(
+            const Duration(seconds: 6),
+            onTimeout: () =>
+                const SessionRestoreResult(SessionRestoreOutcome.offline),
+          );
+      await delay;
+      if (!mounted) return;
+      _handleResult(result);
+    } catch (_) {
+      if (!mounted) return;
+      _navigateTo(AppRoutes.welcome);
+    }
   }
 
   /// Active/needsOnboarding both carry a [SessionRestoreResult.route]
