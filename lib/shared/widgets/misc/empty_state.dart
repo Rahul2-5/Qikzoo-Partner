@@ -32,43 +32,45 @@ class EmptyState extends StatelessWidget {
       container: true,
       label: '$title. $message',
       child: Center(
-        child: AppReveal(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 300),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
+        child: SingleChildScrollView(
+          child: AppReveal(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 300),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                      ),
+                      child: Icon(icon, size: 32, color: AppColors.primary),
                     ),
-                    child: Icon(icon, size: 32, color: AppColors.primary),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    title,
-                    style: AppTypography.h3,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    message,
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (actionLabel != null) ...[
                     const SizedBox(height: AppSpacing.md),
-                    SecondaryButton(label: actionLabel!, onPressed: onAction),
+                    Text(
+                      title,
+                      style: AppTypography.h3,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      message,
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (actionLabel != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      SecondaryButton(label: actionLabel!, onPressed: onAction),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

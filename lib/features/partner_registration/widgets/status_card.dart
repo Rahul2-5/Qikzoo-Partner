@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+
 enum SelfieStatusTone { neutral, busy, error }
 
 /// Animated floating feedback shown immediately above the capture control.
@@ -14,8 +17,6 @@ class SelfieStatusCard extends StatelessWidget {
   final String message;
   final SelfieStatusTone tone;
 
-  static const _primary = Color(0xFF2563EB);
-
   @override
   Widget build(BuildContext context) {
     final reduceMotion =
@@ -24,12 +25,12 @@ class SelfieStatusCard extends StatelessWidget {
         reduceMotion ? Duration.zero : const Duration(milliseconds: 280);
     final foreground = switch (tone) {
       SelfieStatusTone.neutral => const Color(0xFF334155),
-      SelfieStatusTone.busy => _primary,
+      SelfieStatusTone.busy => AppColors.primary,
       SelfieStatusTone.error => const Color(0xFFB42318),
     };
     final background = switch (tone) {
       SelfieStatusTone.neutral => Colors.white,
-      SelfieStatusTone.busy => const Color(0xFFEFF6FF),
+      SelfieStatusTone.busy => AppColors.primarySoft,
       SelfieStatusTone.error => const Color(0xFFFFF1F0),
     };
     final icon = switch (tone) {
@@ -45,7 +46,7 @@ class SelfieStatusCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: foreground.withValues(alpha: 0.12)),
         boxShadow: const [
           BoxShadow(

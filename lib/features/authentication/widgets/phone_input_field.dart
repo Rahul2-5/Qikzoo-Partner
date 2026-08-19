@@ -7,6 +7,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 
+const _qikzooNavy = Color(0xFF162B4D);
+
 class PhoneInputField extends StatefulWidget {
   final TextEditingController controller;
   final void Function(String) onChanged;
@@ -53,7 +55,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
         : widget.isValid
             ? AppColors.success
             : _focusNode.hasFocus
-                ? AppColors.secondary
+                ? AppColors.primary
                 : AppColors.border;
 
     return Semantics(
@@ -75,7 +77,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
           boxShadow: widget.enabled && _focusNode.hasFocus
               ? [
                   BoxShadow(
-                    color: AppColors.secondary.withValues(alpha: 0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     blurRadius: 0,
                     spreadRadius: 4,
                   ),
@@ -94,15 +96,15 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                       width: 28,
                       height: 28,
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.secondaryBg,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primarySoft,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         'IN',
                         maxLines: 1,
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
+                          color: _qikzooNavy,
                           fontWeight: FontWeight.w800,
                           fontSize: 10,
                         ),

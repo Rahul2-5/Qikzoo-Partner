@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../providers/orders/dispatch_offer_provider.dart';
+import '../../providers/orders/active_order_provider.dart';
 import '../../repositories/notifications/device_token_repository.dart';
 import '../routes/app_routes.dart';
 
@@ -269,8 +271,28 @@ class PushService {
 
   void _handleTap(Map<String, dynamic> data) {
     if (data['type'] != 'NEW_DELIVERY_OFFER') return;
-    _container?.read(dispatchOfferProvider.notifier).refresh();
-    if (Get.currentRoute != AppRoutes.incomingOffer) {
+    unawaited(_openCurrentAssignment());
+  }
+
+  Future<void> _openCurrentAssignment() async {
+    final container = _container;
+    if (container == null) return;
+    await Future.wait([
+      container.read(dispatchOfferProvider.notifier).refresh(),
+      container.read(activeOrderProvider.notifier).refresh(),
+    ]);
+
+    if (container.read(activeOrderProvider).valueOrNull != null) {
+      if (Get.currentRoute != AppRoutes.activeOrder) {
+        Get.toNamed(AppRoutes.activeOrder);
+      }
+      return;
+    }
+
+    final offer = container.read(dispatchOfferProvider).valueOrNull;
+    if (offer != null &&
+        !offer.isExpired &&
+        Get.currentRoute != AppRoutes.incomingOffer) {
       Get.toNamed(AppRoutes.incomingOffer);
     }
   }

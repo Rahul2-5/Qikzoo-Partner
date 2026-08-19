@@ -11,8 +11,7 @@ abstract class WalletRepository {
 }
 
 /// `GET /rider/wallet` returns the rider's wallet balances in paise
-/// (`availableBalancePaise`, plus a pending/locked balance under one of a few
-/// possible keys). Amounts are converted to rupees for [WalletModel].
+/// (`availableBalancePaise`, pending balance, floatingCash, cashLimit).
 class DioWalletRepository implements WalletRepository {
   const DioWalletRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -34,15 +33,28 @@ class DioWalletRepository implements WalletRepository {
       'pendingPayoutPaise',
       'lockedBalancePaise',
     ]);
+    final floatingPaise = _readPaise(wallet, const [
+      'floatingCashPaise',
+      'cashInHandPaise',
+      'codCashPaise',
+      'collectedCashPaise',
+    ]);
+    final limitPaise = _readPaise(wallet, const [
+      'cashLimitPaise',
+      'floatingCashLimitPaise',
+      'availableCashLimitPaise',
+    ]);
+
+    final rawLimit = limitPaise > 0 ? (limitPaise / 100.0) : 2000.0;
+
     return WalletModel(
       balance: availablePaise / 100.0,
       pendingAmount: pendingPaise / 100.0,
+      floatingCash: floatingPaise / 100.0,
+      cashLimit: rawLimit,
     );
   }
 
-  /// The wallet-transactions endpoint is not yet available in this app; return
-  /// an empty list rather than fabricated rows so the UI shows the real
-  /// (empty) state instead of mock data.
   @override
   Future<List<TransactionModel>> getTransactions() async => const [];
 

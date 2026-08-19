@@ -42,7 +42,7 @@ class OnboardingStepIndicator extends StatelessWidget {
                 height: 7,
                 decoration: BoxDecoration(
                   color: index <= currentStep
-                      ? AppColors.secondary
+                      ? AppColors.primary
                       : AppColors.border,
                   borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),

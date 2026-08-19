@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -133,10 +134,20 @@ Future<void> showDocumentPreviewSheet(
   }
 }
 
-Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) {
-  return showModalBottomSheet<bool>(
-    context: context,
+Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) async {
+  final navigator = Navigator.of(context);
+  final localizations = MaterialLocalizations.of(context);
+  final route = ModalBottomSheetRoute<bool>(
     backgroundColor: Colors.transparent,
+    capturedThemes: InheritedTheme.capture(
+      from: context,
+      to: navigator.context,
+    ),
+    isScrollControlled: false,
+    barrierLabel: localizations.scrimLabel,
+    barrierOnTapHint:
+        localizations.scrimOnTapHint(localizations.bottomSheetLabel),
+    modalBarrierColor: Theme.of(context).bottomSheetTheme.modalBarrierColor,
     builder: (sheetContext) => GlassBottomSheet(
       child: SafeArea(
         child: Padding(
@@ -186,6 +197,14 @@ Future<bool?> showSelfieConfirmSheet(BuildContext context, String path) {
       ),
     ),
   );
+
+  final result = await navigator.push<bool>(route);
+  // Navigator.push completes as soon as pop is requested, while the modal
+  // route remains on top until its reverse animation finishes. Waiting for
+  // disposal prevents the caller from popping the page underneath while the
+  // navigator is still finalising this bottom-sheet route.
+  await route.completed;
+  return result;
 }
 
 /// Returns true only after the chosen selfie has been uploaded successfully.
@@ -201,14 +220,18 @@ Future<bool> pickAndConfirmSelfie(
     String? path;
     if (cameraOnly) {
       final cameraConfig = ref.read(cameraConfigProvider);
-      path = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-          builder: (_) => SelfieCameraCaptureScreen(
-            cameraListLoader: cameraConfig.cameraListLoader,
-            controllerBuilder: cameraConfig.controllerBuilder,
-          ),
+      final navigator = Navigator.of(context);
+      final cameraRoute = MaterialPageRoute<String>(
+        builder: (_) => SelfieCameraCaptureScreen(
+          cameraListLoader: cameraConfig.cameraListLoader,
+          controllerBuilder: cameraConfig.controllerBuilder,
         ),
       );
+      path = await navigator.push<String>(cameraRoute);
+      // A route's pop result is delivered before its transition and disposal
+      // complete. Do not place a bool-returning confirmation route above a
+      // String-returning camera route that is still being removed.
+      await cameraRoute.completed;
     } else {
       final source = await showImageSourceSheet(context);
       if (source == null) return false;
@@ -222,6 +245,12 @@ Future<bool> pickAndConfirmSelfie(
     try {
       await ref.read(profileRepositoryProvider).uploadSelfie(File(path));
       return true;
+    } on ApiException catch (error) {
+      if (error.statusCode == 401) rethrow;
+      if (context.mounted) {
+        AppSnackBar.error(context, error.message);
+      }
+      return false;
     } catch (_) {
       if (context.mounted) {
         AppSnackBar.error(context, 'Upload failed, please try again');

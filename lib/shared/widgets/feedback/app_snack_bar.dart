@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -7,7 +8,8 @@ import '../../../core/theme/app_typography.dart';
 
 enum AppSnackBarType { info, success, warning, error }
 
-/// App-wide floating snackbar with consistent semantic colors and typography.
+/// Unified app-wide bottom floating snackbar with consistent semantic colors,
+/// rounded margins, and typography across all screens.
 class AppSnackBar {
   AppSnackBar._();
 
@@ -24,8 +26,11 @@ class AppSnackBar {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: duration,
-          backgroundColor: _backgroundColor(context, type),
+          backgroundColor: _backgroundColor(type),
           content: Row(
             children: [
               Icon(_icon(type), color: Colors.white, size: 20),
@@ -33,7 +38,10 @@ class AppSnackBar {
               Expanded(
                 child: Text(
                   message,
-                  style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -47,6 +55,37 @@ class AppSnackBar {
               : null,
         ),
       );
+  }
+
+  /// Global bottom snackbar that does not require a BuildContext.
+  static void showGlobal({
+    required String message,
+    AppSnackBarType type = AppSnackBarType.info,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    Get.rawSnackbar(
+      messageText: Row(
+        children: [
+          Icon(_icon(type), color: Colors.white, size: 20),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: _backgroundColor(type),
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      borderRadius: 12,
+      duration: duration,
+    );
   }
 
   static void info(BuildContext context, String message) =>
@@ -70,18 +109,12 @@ class AppSnackBar {
         type: AppSnackBarType.error,
       );
 
-  static Color _backgroundColor(
-    BuildContext context,
-    AppSnackBarType type,
-  ) {
+  static Color _backgroundColor(AppSnackBarType type) {
     return switch (type) {
-      AppSnackBarType.info => Theme.of(context).colorScheme.primary,
+      AppSnackBarType.info => AppColors.primary,
       AppSnackBarType.success => AppColors.success,
-      AppSnackBarType.warning => Color.alphaBlend(
-          AppColors.primary.withValues(alpha: 0.22),
-          AppColors.warning,
-        ),
-      AppSnackBarType.error => Theme.of(context).colorScheme.error,
+      AppSnackBarType.warning => const Color(0xFFF59E0B),
+      AppSnackBarType.error => AppColors.error,
     };
   }
 

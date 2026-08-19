@@ -8,6 +8,14 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Google Maps key lives in android/local.properties (git-ignored):
+//   GOOGLE_MAPS_API_KEY=AIza...
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val googleMapsApiKey: String = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+
 // Release signing credentials live outside version control (see
 // android/.gitignore: key.properties, *.jks, *.keystore) and are supplied by
 // whoever holds the upload keystore for this Play Store listing — never
@@ -44,6 +52,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
     }
 
     signingConfigs {

@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Qikzoo Partner uses your location to suggest your delivery city.</string>
+	<string>Qikzoo Partner uses your current location to start your shift, find nearby delivery requests, and support active deliveries.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Qikzoo Partner needs camera access to capture verification selfies and documents.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -71,15 +71,10 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

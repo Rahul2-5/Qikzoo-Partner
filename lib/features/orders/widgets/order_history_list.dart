@@ -6,6 +6,7 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../models/orders/order_history_page_model.dart';
+import '../../../models/orders/rider_order_model.dart';
 import '../../../providers/orders/order_history_provider.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
@@ -19,12 +20,14 @@ class OrderHistoryList extends ConsumerStatefulWidget {
   final OrderHistoryFilter filter;
   final void Function(String riderOrderId) onOpen;
   final int? maxItems;
+  final String searchQuery;
 
   const OrderHistoryList({
     super.key,
     required this.filter,
     required this.onOpen,
     this.maxItems,
+    this.searchQuery = '',
   });
 
   @override
@@ -73,10 +76,7 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
     final stateAsync = ref.watch(orderHistoryProvider(widget.filter));
 
     return stateAsync.when(
-      loading: () => const PageLoadingShimmer(
-        padding: EdgeInsets.zero,
-        itemCount: 3,
-      ),
+      loading: () => const OrdersLoadingShimmer(),
       error: (error, _) => ErrorWidgetCustom(
         message:
             error is ApiException ? error.message : 'Could not load orders.',
@@ -84,18 +84,42 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
             ref.read(orderHistoryProvider(widget.filter).notifier).refresh(),
       ),
       data: (state) {
-        final displayedItems = widget.maxItems == null
+        final matchingItems = widget.searchQuery.isEmpty
             ? state.items
-            : state.items.take(widget.maxItems!).toList(growable: false);
+            : state.items.where(_matchesSearch).toList(growable: false);
+        final displayedItems = widget.maxItems == null
+            ? matchingItems
+            : matchingItems.take(widget.maxItems!).toList(growable: false);
 
         if (displayedItems.isEmpty) {
+          final isSearchEmpty = widget.searchQuery.isNotEmpty;
           return EmptyState(
-            icon: LucideIcons.inbox,
-            message: switch (widget.filter) {
-              OrderHistoryFilter.active => 'No active orders right now.',
-              OrderHistoryFilter.completed => 'No completed orders yet.',
-              OrderHistoryFilter.cancelled => 'No cancelled orders.',
+            icon: switch (widget.filter) {
+              OrderHistoryFilter.completed => LucideIcons.packageCheck,
+              OrderHistoryFilter.cancelled => LucideIcons.ban,
+              OrderHistoryFilter.active => LucideIcons.bike,
             },
+            title: isSearchEmpty
+                ? 'No matching orders'
+                : switch (widget.filter) {
+                    OrderHistoryFilter.active => 'No active orders',
+                    OrderHistoryFilter.completed => 'No completed orders yet',
+                    OrderHistoryFilter.cancelled => 'No cancelled orders',
+                  },
+            message: isSearchEmpty
+                ? 'Try a different order number, customer, restaurant, or location.'
+                : switch (widget.filter) {
+                    OrderHistoryFilter.active =>
+                      'Stay online to receive new delivery orders near you.',
+                    OrderHistoryFilter.completed =>
+                      'Complete your first delivery to see your order history here.',
+                    OrderHistoryFilter.cancelled =>
+                      'You don\'t have any cancelled delivery orders.',
+                  },
+            actionLabel: isSearchEmpty ? null : 'Refresh',
+            onAction: () => ref
+                .read(orderHistoryProvider(widget.filter).notifier)
+                .refresh(),
           );
         }
         return RefreshIndicator(
@@ -128,6 +152,24 @@ class _OrderHistoryListState extends ConsumerState<OrderHistoryList> {
           ),
         );
       },
+    );
+  }
+
+  bool _matchesSearch(RiderOrderModel order) {
+    final query = widget.searchQuery.toLowerCase();
+    final values = <String?>[
+      order.id,
+      order.orderId,
+      order.order.orderNumber,
+      order.order.customerName,
+      order.restaurant.name,
+      order.restaurant.address,
+      order.order.deliveryAddressLine,
+      order.order.deliveryCity,
+      order.order.deliveryPincode,
+    ];
+    return values.any(
+      (value) => value?.toLowerCase().contains(query) ?? false,
     );
   }
 }

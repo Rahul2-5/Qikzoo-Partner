@@ -51,12 +51,13 @@ class DioDashboardRepository implements DashboardRepository {
 
     final city = _asString(profile['city']);
     final state = _asString(profile['state']);
-    final workingZone = [city, state].where((v) => v != null && v.isNotEmpty).join(', ');
+    final workingZone =
+        [city, state].where((v) => v != null && v.isNotEmpty).join(', ');
 
     return DashboardStatsModel(
       riderName: _asString(profile['name']) ?? '',
-      availabilityStatus:
-          RiderAvailabilityStatus.fromBackend(_asString(profile['availabilityStatus'])),
+      availabilityStatus: RiderAvailabilityStatus.fromBackend(
+          _asString(profile['availabilityStatus'])),
       todaysEarningsPaise: _asInt(today['earningsPaise']),
       todaysDeliveries: _asInt(today['deliveries']),
       walletBalancePaise: _asInt(wallet['availableBalancePaise']),

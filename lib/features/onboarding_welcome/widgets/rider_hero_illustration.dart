@@ -1,187 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-
-import '../../../core/theme/app_colors.dart';
 import '../../../core/assets/app_assets.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 
-/// Branded hero artwork for the welcome screen.
-///
-/// The transparent hero art sits over an indigo-aware surface so it stays
-/// crisp and legible across the welcome flow.
 class RiderHeroIllustration extends StatelessWidget {
   final double height;
 
-  const RiderHeroIllustration({super.key, this.height = 220});
+  const RiderHeroIllustration({super.key, this.height = 250});
 
   @override
   Widget build(BuildContext context) {
+    final decodeHeight =
+        (height * MediaQuery.devicePixelRatioOf(context)).round();
+
     return Semantics(
       image: true,
-      label: 'Qikzoo delivery partner riding a scooter. '
-          'Your next opportunity is closer than you think.',
+      label:
+          'Qikzoo delivery partner riding a scooter and accepting nearby orders.',
       excludeSemantics: true,
-      child: Container(
-        width: double.infinity,
-        height: height,
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFF9FAFF), Color(0xFFD8DFFF)],
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.sheet + 6),
-          border: Border.all(
-            color: AppColors.surface.withValues(alpha: 0.8),
-          ),
-          boxShadow: AppShadows.card,
+          color: AppColors.primarySoft,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.sheet + 6),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Positioned(
-                top: -72,
-                right: -48,
-                child: Container(
-                  width: 220,
-                  height: 220,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.secondary.withValues(alpha: 0.13),
-                  ),
-                ),
+        child: SizedBox(
+          width: double.infinity,
+          height: height,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
+              child: Image.asset(
+                AppAssets.riderScooterIndigo3d,
+                cacheHeight: decodeHeight,
+                fit: BoxFit.contain,
+                alignment: Alignment.bottomCenter,
+                excludeFromSemantics: true,
               ),
-              Positioned(
-                left: -42,
-                bottom: 26,
-                child: Container(
-                  width: 132,
-                  height: 132,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.surface.withValues(alpha: 0.36),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Image.asset(
-                      AppAssets.riderScooterIndigo3d,
-                      width: height * 1.12,
-                      fit: BoxFit.contain,
-                      excludeFromSemantics: true,
-                    ),
-                  ),
-                ),
-              ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0xD42D3436)],
-                    stops: [0.54, 1],
-                  ),
-                ),
-              ),
-              Positioned(
-                top: AppSpacing.md,
-                left: AppSpacing.md,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm + 2,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                    border: Border.all(
-                      color: AppColors.surface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        LucideIcons.bike,
-                        size: 15,
-                        color: AppColors.secondary,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        'RIDE. EARN. GROW.',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: AppSpacing.md,
-                right: AppSpacing.md,
-                bottom: AppSpacing.md,
-                child: Container(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: const Color(0xB5212C48),
-                    borderRadius: BorderRadius.circular(AppRadius.control),
-                    border: Border.all(
-                      color: AppColors.surface.withValues(alpha: 0.18),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.control),
-                        ),
-                        child: const Icon(
-                          LucideIcons.mapPin,
-                          color: AppColors.surface,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm + 2),
-                      Expanded(
-                        child: Text(
-                          'Your next opportunity is closer than you think.',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.surface,
-                            fontSize: 13,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

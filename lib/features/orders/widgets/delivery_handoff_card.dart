@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 
 /// Handoff guidance displayed once the rider is on the way to the customer.
-/// [buildingSummary] and [instruction] must come from the real order
-/// (delivery address / customer note) — this widget renders whatever it's
-/// given and never fabricates its own values.
+/// Values are rendered from the real order only.
 class DeliveryHandoffCard extends StatelessWidget {
   final String? preference;
   final String buildingSummary;
@@ -35,8 +33,8 @@ class DeliveryHandoffCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          boxShadow: AppShadows.card,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border, width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,17 +42,26 @@ class DeliveryHandoffCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
-                    color: AppColors.secondaryBg,
+                    color: AppColors.secondarySoft,
                     borderRadius: BorderRadius.circular(AppRadius.control),
                   ),
-                  child: const Icon(Icons.handshake_outlined,
-                      size: 18, color: AppColors.secondary),
+                  child: const Icon(
+                    LucideIcons.packageCheck,
+                    size: 16,
+                    color: AppColors.secondary,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: Text('Delivery instructions', style: AppTypography.h2),
+                  child: Text(
+                    'Delivery instructions',
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -63,14 +70,29 @@ class DeliveryHandoffCard extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                if (preference != null)
-                  _InfoChip(icon: Icons.phone_in_talk_outlined, label: preference!),
-                _InfoChip(icon: Icons.business_outlined, label: buildingSummary),
+                if (preference != null && preference!.trim().isNotEmpty)
+                  _InfoChip(
+                    icon: LucideIcons.phoneCall,
+                    label: preference!.trim(),
+                  ),
+                if (buildingSummary.trim().isNotEmpty)
+                  _InfoChip(
+                    icon: LucideIcons.building2,
+                    label: buildingSummary.trim(),
+                  ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(instruction, style: AppTypography.body),
-            const SizedBox(height: AppSpacing.sm),
+            if (instruction.trim().isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                instruction.trim(),
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
@@ -78,12 +100,12 @@ class DeliveryHandoffCard extends StatelessWidget {
                 if (onCall != null)
                   OutlinedButton.icon(
                     onPressed: onCall,
-                    icon: const Icon(Icons.phone_outlined, size: 18),
+                    icon: const Icon(LucideIcons.phoneCall, size: 16),
                     label: const Text('Call'),
                   ),
                 OutlinedButton.icon(
                   onPressed: onQuickMessage,
-                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                  icon: const Icon(LucideIcons.messageCircle, size: 16),
                   label: const Text('Quick message'),
                 ),
               ],
@@ -92,7 +114,7 @@ class DeliveryHandoffCard extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: onNoResponse,
-                icon: const Icon(Icons.person_off_outlined, size: 17),
+                icon: const Icon(LucideIcons.userX, size: 15),
                 label: const Text('Customer not responding?'),
                 style: TextButton.styleFrom(foregroundColor: AppColors.error),
               ),
@@ -112,7 +134,10 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
         label: label,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
           decoration: BoxDecoration(
             color: AppColors.surfaceMuted,
             borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -122,7 +147,7 @@ class _InfoChip extends StatelessWidget {
             children: [
               Icon(icon, size: 14, color: AppColors.textSecondary),
               const SizedBox(width: AppSpacing.xs),
-              Text(label, style: AppTypography.caption),
+              Flexible(child: Text(label, style: AppTypography.caption)),
             ],
           ),
         ),
@@ -143,7 +168,7 @@ Widget deliveryHandoffCardPreview() => MaterialApp(
             padding: EdgeInsets.all(AppSpacing.md),
             child: DeliveryHandoffCard(
               preference: 'Call on arrival',
-              buildingSummary: 'Tower B · Gate 2',
+              buildingSummary: 'Tower B - Gate 2',
               instruction: 'Please hand over to security if unavailable.',
               onQuickMessage: deliveryHandoffPreviewAction,
               onNoResponse: deliveryHandoffPreviewAction,

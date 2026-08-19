@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+
 /// Concise, reusable capture guidance presented in a premium surface.
 class SelfieInstructionCard extends StatelessWidget {
   const SelfieInstructionCard({super.key});
@@ -18,8 +21,8 @@ class SelfieInstructionCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0F0F172A),
@@ -73,13 +76,13 @@ class _InstructionItem extends StatelessWidget {
           height: 30,
           alignment: Alignment.center,
           decoration: const BoxDecoration(
-            color: Color(0xFFEFF6FF),
+            color: AppColors.primarySoft,
             shape: BoxShape.circle,
           ),
           child: Icon(
             instruction.icon,
             size: 16,
-            color: const Color(0xFF2563EB),
+            color: AppColors.primary,
           ),
         ),
         const SizedBox(width: 10),

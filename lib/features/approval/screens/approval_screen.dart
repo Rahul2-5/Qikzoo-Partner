@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -67,26 +68,26 @@ class _ApprovalCard extends StatelessWidget {
       ApprovalState.pending => (
           'Application pending',
           'We have received your application.',
-          Icons.schedule_outlined,
+          LucideIcons.clock,
           AppColors.warning
         ),
       ApprovalState.underReview => (
           'Application under review',
           'Our team is reviewing your submitted documents.',
-          Icons.manage_search_outlined,
+          LucideIcons.fileSearch,
           AppColors.primary
         ),
       ApprovalState.approved => (
           'You are approved',
           'You can now go online and start delivering.',
-          Icons.verified_outlined,
+          LucideIcons.checkCircle2,
           AppColors.secondary
         ),
       ApprovalState.rejected => (
           'Application needs attention',
           status.rejectionReason ??
               'Please update your application and try again.',
-          Icons.error_outline,
+          LucideIcons.alertTriangle,
           AppColors.error
         ),
     };

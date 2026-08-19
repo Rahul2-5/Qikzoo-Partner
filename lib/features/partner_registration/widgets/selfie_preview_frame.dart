@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
@@ -8,8 +9,13 @@ import '../../../models/document_verification/document_model.dart';
 
 class SelfiePreviewFrame extends StatelessWidget {
   final DocumentModel? profilePhoto;
+  final double size;
 
-  const SelfiePreviewFrame({super.key, this.profilePhoto});
+  const SelfiePreviewFrame({
+    super.key,
+    this.profilePhoto,
+    this.size = 180,
+  });
 
   bool get _hasPhoto {
     final photo = profilePhoto;
@@ -20,7 +26,6 @@ class SelfiePreviewFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const size = 180.0;
     return SizedBox(
       width: size,
       height: size,
@@ -43,10 +48,11 @@ class SelfiePreviewFrame extends StatelessWidget {
   Widget _photo(String url) {
     final isRemote = url.startsWith('http://') || url.startsWith('https://');
     return isRemote
-        ? Image.network(
-            url,
+        ? CachedNetworkImage(
+            imageUrl: url,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _placeholder(),
+            placeholder: (_, __) => _loadingPlaceholder(),
+            errorWidget: (_, __, ___) => _placeholder(),
           )
         : Image.file(
             File(url),
@@ -64,6 +70,16 @@ class SelfiePreviewFrame extends StatelessWidget {
           color: AppColors.textSecondary,
         ),
       );
+
+  Widget _loadingPlaceholder() => Container(
+        color: AppColors.surfaceMuted,
+        alignment: Alignment.center,
+        child: const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
 }
 
 class _DashedGradientRingPainter extends CustomPainter {
@@ -76,7 +92,8 @@ class _DashedGradientRingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
-      ..shader = const SweepGradient(colors: AppColors.ctaGradient).createShader(rect);
+      ..shader =
+          const SweepGradient(colors: AppColors.ctaGradient).createShader(rect);
 
     const dashCount = 24;
     const gapFraction = 0.4;

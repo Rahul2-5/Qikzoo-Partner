@@ -25,7 +25,7 @@ class AppTheme {
           secondary: AppColors.secondary,
           onSecondary: AppColors.onPrimary,
           secondaryContainer: AppColors.secondarySoft,
-          onSecondaryContainer: AppColors.primaryDark,
+          onSecondaryContainer: AppColors.secondary,
           tertiary: AppColors.accent,
           onTertiary: AppColors.textPrimary,
           tertiaryContainer: AppColors.accentBg,
@@ -44,7 +44,7 @@ class AppTheme {
           scrim: Color(0x52000000),
           inverseSurface: AppColors.primaryDark,
           onInverseSurface: AppColors.surface,
-          inversePrimary: Color(0xFFC5CAFF),
+          inversePrimary: AppColors.primarySoft,
         ),
         textTheme: TextTheme(
           displayLarge: AppTypography.display,
@@ -133,14 +133,14 @@ class AppTheme {
           ),
           trackColor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.selected)
-                ? AppColors.secondary
+                ? AppColors.primary
                 : AppColors.border,
           ),
         ),
         checkboxTheme: CheckboxThemeData(
           fillColor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.selected)
-                ? AppColors.secondary
+                ? AppColors.primary
                 : Colors.transparent,
           ),
           side: const BorderSide(color: AppColors.border, width: 1.5),
@@ -149,7 +149,7 @@ class AppTheme {
           ),
         ),
         radioTheme: const RadioThemeData(
-          fillColor: WidgetStatePropertyAll(AppColors.secondary),
+          fillColor: WidgetStatePropertyAll(AppColors.primary),
         ),
         bottomSheetTheme: BottomSheetThemeData(
           backgroundColor: GlassTheme.surfaceColor,
@@ -170,7 +170,7 @@ class AppTheme {
           contentTextStyle: AppTypography.body,
         ),
         progressIndicatorTheme: const ProgressIndicatorThemeData(
-          color: AppColors.secondary,
+          color: AppColors.primary,
         ),
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
@@ -217,9 +217,9 @@ class AppTheme {
           ),
         ),
         textSelectionTheme: TextSelectionThemeData(
-          cursorColor: AppColors.secondary,
-          selectionColor: AppColors.secondary.withValues(alpha: 0.2),
-          selectionHandleColor: AppColors.secondary,
+          cursorColor: AppColors.primary,
+          selectionColor: AppColors.primary.withValues(alpha: 0.2),
+          selectionHandleColor: AppColors.primary,
         ),
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {

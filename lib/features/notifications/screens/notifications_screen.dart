@@ -354,17 +354,23 @@ class NotificationTile extends StatelessWidget {
       {super.key, required this.notification, required this.onTap});
 
   IconData get _icon => switch (notification.type) {
-        NotificationType.order => LucideIcons.phoneCall,
-        NotificationType.earnings => LucideIcons.gift,
-        NotificationType.promotion => LucideIcons.megaphone,
-        NotificationType.system => LucideIcons.info,
+        NotificationType.newOrder => LucideIcons.shoppingBag,
+        NotificationType.orderCancelled => LucideIcons.xCircle,
+        NotificationType.addressUpdated => LucideIcons.mapPin,
+        NotificationType.incentiveUnlocked => LucideIcons.sparkles,
+        NotificationType.paymentCredited => LucideIcons.wallet,
+        NotificationType.accountUpdate => LucideIcons.shieldCheck,
+        NotificationType.system => LucideIcons.bell,
       };
 
   Color get _iconColor => switch (notification.type) {
-        NotificationType.order => const Color(0xFF16A34A),
-        NotificationType.earnings => const Color(0xFF12A04D),
-        NotificationType.promotion => const Color(0xFFF97316),
-        NotificationType.system => AppColors.secondary,
+        NotificationType.newOrder => AppColors.primary,
+        NotificationType.orderCancelled => AppColors.error,
+        NotificationType.addressUpdated => const Color(0xFFF97316),
+        NotificationType.incentiveUnlocked => const Color(0xFF8B5CF6),
+        NotificationType.paymentCredited => AppColors.success,
+        NotificationType.accountUpdate => const Color(0xFF0284C7),
+        NotificationType.system => AppColors.textSecondary,
       };
 
   @override

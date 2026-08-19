@@ -18,7 +18,7 @@ class BenefitListItem extends StatelessWidget {
     required this.icon,
     required this.label,
     this.supportingText,
-    this.color = AppColors.secondary,
+    this.color = const Color(0xFFFF6B5E),
     this.showDivider = true,
   });
 
@@ -68,7 +68,7 @@ class BenefitListItem extends StatelessWidget {
               const Icon(
                 LucideIcons.checkCircle2,
                 size: 18,
-                color: AppColors.secondary,
+                color: const Color(0xFFFF6B5E),
               ),
             ],
           ),

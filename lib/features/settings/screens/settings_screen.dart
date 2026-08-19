@@ -111,14 +111,6 @@ class SettingsScreen extends ConsumerWidget {
                         child: Column(
                           children: [
                             _SettingsTile(
-                              icon: LucideIcons.lock,
-                              title: 'Change password',
-                              subtitle: 'Update your account password',
-                              onTap: () =>
-                                  _comingSoon(context, 'Change password'),
-                            ),
-                            const Divider(height: 1),
-                            _SettingsTile(
                               icon: LucideIcons.shieldCheck,
                               title: 'Privacy & permissions',
                               subtitle: 'Review app access and data use',

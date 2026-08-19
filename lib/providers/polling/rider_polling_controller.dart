@@ -38,6 +38,8 @@ import '../orders/order_history_provider.dart';
 class RiderPollingController extends Notifier<bool> {
   Timer? _pollTimer;
   String? _lastHandledOfferId;
+  int _reconcileVersion = 0;
+  bool _assignmentReconciled = false;
   ProviderSubscription<AsyncValue<DispatchOfferModel?>>? _offerSub;
   ProviderSubscription<AsyncValue<RiderOrderModel?>>? _activeOrderSub;
 
@@ -65,6 +67,7 @@ class RiderPollingController extends Notifier<bool> {
       return;
     }
     state = true;
+    _assignmentReconciled = false;
     _offerSub = ref.listen<AsyncValue<DispatchOfferModel?>>(
       dispatchOfferProvider,
       _onOfferChanged,
@@ -73,10 +76,15 @@ class RiderPollingController extends Notifier<bool> {
       activeOrderProvider,
       _onActiveOrderChanged,
     );
+    // Fetch both authoritative server slots immediately. This restores the
+    // correct flow after process death instead of waiting for the first tick.
+    unawaited(_reconcileAssignmentState());
     _restartTimer();
   }
 
   void stop() {
+    _reconcileVersion++;
+    _assignmentReconciled = false;
     state = false;
     _pollTimer?.cancel();
     _pollTimer = null;
@@ -88,9 +96,56 @@ class RiderPollingController extends Notifier<bool> {
 
   void handleResume() {
     if (!state) return; // never started (still on auth/onboarding) — no-op
-    ref.read(dispatchOfferProvider.notifier).refresh();
+    unawaited(_reconcileAssignmentState(refreshFirst: true));
     ref.read(dashboardStatsProvider.notifier).refresh();
     _restartTimer();
+  }
+
+  Future<void> _reconcileAssignmentState({bool refreshFirst = false}) async {
+    final reconcileVersion = ++_reconcileVersion;
+
+    if (refreshFirst) {
+      await Future.wait([
+        ref.read(dispatchOfferProvider.notifier).refresh(),
+        ref.read(activeOrderProvider.notifier).refresh(),
+      ]);
+    } else {
+      // On cold launch both providers are being built for the first time.
+      // Wait for the active assignment fetch as well as the cached offer so
+      // an already-accepted order always wins over its old offer snapshot.
+      await Future.wait([
+        ref.read(dispatchOfferProvider.future),
+        ref.read(activeOrderProvider.future),
+      ]);
+    }
+    if (!state || reconcileVersion != _reconcileVersion) return;
+    _assignmentReconciled = true;
+
+    // An accepted assignment always wins over a pending offer. This order is
+    // important when the app resumes around the same instant acceptance is
+    // committed by the server.
+    final activeOrder = ref.read(activeOrderProvider).valueOrNull;
+    if (activeOrder != null) {
+      _openRouteOnce(AppRoutes.activeOrder);
+      return;
+    }
+
+    final offer = ref.read(dispatchOfferProvider).valueOrNull;
+    if (offer != null && !offer.isExpired) {
+      _lastHandledOfferId = offer.id;
+      _openRouteOnce(AppRoutes.incomingOffer);
+    }
+
+    if (!refreshFirst) {
+      // Reconcile a restored offer with the server after it has been shown.
+      // DispatchOfferNotifier keeps the valid card visible on network errors.
+      unawaited(ref.read(dispatchOfferProvider.notifier).refresh());
+    }
+  }
+
+  void _openRouteOnce(String route) {
+    if (Get.currentRoute == route) return;
+    Get.toNamed(route);
   }
 
   void handlePause() {
@@ -116,8 +171,14 @@ class RiderPollingController extends Notifier<bool> {
     AsyncValue<DispatchOfferModel?>? previous,
     AsyncValue<DispatchOfferModel?> next,
   ) {
+    if (!_assignmentReconciled) return;
     final offer = next.valueOrNull;
-    if (offer == null || offer.id == _lastHandledOfferId) return;
+    if (offer == null || offer.isExpired || offer.id == _lastHandledOfferId) {
+      return;
+    }
+    // An active assignment is authoritative. The dispatch endpoint can lag
+    // briefly after acceptance, so never route back to an old offer card.
+    if (ref.read(activeOrderProvider).valueOrNull != null) return;
     _lastHandledOfferId = offer.id;
     // Polling is the only *guaranteed* offer-detection path (FCM is best-
     // effort — see PushService.showOfferDetectedAlert) — a rider who isn't
@@ -127,7 +188,7 @@ class RiderPollingController extends Notifier<bool> {
       attemptId: offer.id,
       restaurantName: offer.restaurantName,
     ));
-    Get.toNamed(AppRoutes.incomingOffer);
+    _openRouteOnce(AppRoutes.incomingOffer);
   }
 
   /// Reacts whenever the poll above (or any other trigger) reads a changed
@@ -140,7 +201,17 @@ class RiderPollingController extends Notifier<bool> {
     AsyncValue<RiderOrderModel?>? previous,
     AsyncValue<RiderOrderModel?> next,
   ) {
-    if (previous?.valueOrNull == next.valueOrNull) return;
+    final previousOrder = previous?.valueOrNull;
+    final nextOrder = next.valueOrNull;
+    if (previousOrder == nextOrder) return;
+    // Only a newly-created assignment interrupts the current route. Status
+    // updates must not bounce a rider back after they intentionally opened
+    // the Orders tab; its persistent active-order banner remains available.
+    if (previousOrder == null &&
+        nextOrder != null &&
+        Get.currentRoute != AppRoutes.incomingOffer) {
+      _openRouteOnce(AppRoutes.activeOrder);
+    }
     ref.read(dashboardStatsProvider.notifier).refresh();
     for (final filter in OrderHistoryFilter.values) {
       ref.invalidate(orderHistoryProvider(filter));

@@ -14,6 +14,9 @@ import 'core/push/push_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations(const [
+    DeviceOrientation.portraitUp,
+  ]);
   GoogleFonts.config.allowRuntimeFetching = false;
   _registerFontLicenses();
   await dotenv.load(fileName: '.env');

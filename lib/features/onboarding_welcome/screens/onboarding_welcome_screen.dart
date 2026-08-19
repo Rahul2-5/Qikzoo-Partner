@@ -1,197 +1,255 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/assets/app_assets.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/app_typography.dart';
-import '../../../models/authentication/auth_flow.dart';
-import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
-import '../../../shared/widgets/motion/app_motion_widgets.dart';
-import '../widgets/feature_highlight_chip.dart';
-import '../widgets/onboarding_step_indicator.dart';
-import '../widgets/rider_hero_illustration.dart';
 
-class OnboardingWelcomeScreen extends StatelessWidget {
+class OnboardingWelcomeScreen extends StatefulWidget {
   const OnboardingWelcomeScreen({super.key});
+
+  @override
+  State<OnboardingWelcomeScreen> createState() =>
+      _OnboardingWelcomeScreenState();
+}
+
+class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  void _onPageChanged(int index) {
+    setState(() => _currentPage = index);
+  }
+
+  void _goToNextPage() {
+    if (_currentPage < 2) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _finishOnboarding();
+    }
+  }
+
+  void _finishOnboarding() {
+    Get.offAllNamed(AppRoutes.mobileNumber);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF0F2FF),
-              Color(0xFFF8F9FF),
-              AppColors.background
-            ],
-            stops: [0, 0.34, 0.7],
-          ),
-        ),
-        child: SafeArea(
-          child: ResponsiveFrame(
-            maxWidth: 520,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isCompact = constraints.maxHeight < 760;
-                final isShort = constraints.maxHeight < 680;
-
-                return Column(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: ResponsiveFrame(
+          maxWidth: 480,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            children: [
+              // Swipeable Page Area
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: _onPageChanged,
+                  physics: const BouncingScrollPhysics(),
                   children: [
-                    SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
-                    const AppStaggeredReveal(
-                      index: 0,
-                      child: _WelcomeTopBar(),
-                    ),
-                    SizedBox(
-                        height: isShort
-                            ? AppSpacing.sm
-                            : (isCompact ? AppSpacing.md : AppSpacing.lg)),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.only(
-                            bottom: isShort ? AppSpacing.sm : AppSpacing.lg),
-                        child: Column(
+                    // Step 1: Deliver. Earn. Grow.
+                    _OnboardingStepView(
+                      showHeaderLogo: true,
+                      imageAsset: AppAssets.onboardingStep1Rider,
+                      fallbackAsset: AppAssets.riderScooterIndigo3d,
+                      titleWidget: RichText(
+                        textAlign: TextAlign.center,
+                        text: const TextSpan(
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            fontFamily: 'PlusJakartaSans',
+                            letterSpacing: -0.3,
+                          ),
                           children: [
-                            AppStaggeredReveal(
-                              index: 1,
-                              child: RiderHeroIllustration(
-                                height: isShort ? 208 : (isCompact ? 238 : 278),
-                              ),
+                            TextSpan(text: 'Deliver. '),
+                            TextSpan(
+                              text: 'Earn. ',
+                              style: TextStyle(color: Color(0xFF16A34A)),
                             ),
-                            SizedBox(
-                              height: isShort
-                                  ? AppSpacing.sm + 2
-                                  : (isCompact ? AppSpacing.md : AppSpacing.lg),
-                            ),
-                            const AppStaggeredReveal(
-                              index: 2,
-                              child: _WelcomeCopy(),
-                            ),
-                            SizedBox(
-                              height: isShort
-                                  ? AppSpacing.md
-                                  : (isCompact ? AppSpacing.lg : AppSpacing.xl),
-                            ),
-                            const AppStaggeredReveal(
-                              index: 3,
-                              child: _FeatureRow(),
-                            ),
-                            SizedBox(
-                                height:
-                                    isShort ? AppSpacing.sm : AppSpacing.lg),
+                            TextSpan(text: 'Grow.'),
                           ],
                         ),
                       ),
+                      subtitle:
+                          'Deliver orders, earn more and grow with Qikzoo.',
                     ),
-                    AppStaggeredReveal(
-                      index: 4,
-                      child: _WelcomeActions(
-                        onGetStarted: () =>
-                            Get.toNamed(AppRoutes.partnerBenefits),
-                        onLogin: () => Get.toNamed(
-                          authFlowRoute(AppRoutes.otp, AuthFlow.login),
+
+                    // Step 2: Get Orders Nearby
+                    const _OnboardingStepView(
+                      showHeaderLogo: false,
+                      imageAsset: AppAssets.onboardingStep2Map,
+                      fallbackAsset: AppAssets.orderBagNew3d,
+                      titleWidget: Text(
+                        'Get Orders Nearby',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.3,
                         ),
                       ),
+                      subtitle:
+                          'We notify you instantly when orders are available near you.',
                     ),
-                    SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
+
+                    // Step 3: Track & Earn More
+                    _OnboardingStepView(
+                      showHeaderLogo: false,
+                      imageAsset: AppAssets.onboardingStep3Wallet,
+                      fallbackAsset: AppAssets.profileEarningsWallet3d,
+                      titleWidget: const Text(
+                        'Track & Earn More',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      subtitle:
+                          'Track your earnings and incentives in real-time and grow your income.',
+                      customHeroOverlay: _buildWalletOverlay(),
+                    ),
                   ],
-                );
-              },
-            ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Page Dots Indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (index) {
+                  final isActive = _currentPage == index;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 20 : 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.primary
+                          : const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  );
+                }),
+              ),
+
+              const SizedBox(height: 28),
+
+              // Bottom Primary Action Button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _goToNextPage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    _currentPage == 2 ? 'Get Started' : 'Next',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Secondary Skip Button (Steps 1 & 2 only)
+              SizedBox(
+                height: 44,
+                child: _currentPage < 2
+                    ? TextButton(
+                        onPressed: _finishOnboarding,
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-}
 
-class _WelcomeTopBar extends StatelessWidget {
-  const _WelcomeTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(child: _Wordmark()),
-        SizedBox(width: AppSpacing.md),
-        OnboardingStepIndicator(currentStep: 1, totalSteps: 2),
-      ],
-    );
-  }
-}
-
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      header: true,
-      label: 'Qikzoo Partner',
-      excludeSemantics: true,
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: AppColors.ctaGradient,
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.control),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.secondary.withValues(alpha: 0.2),
-                  blurRadius: 16,
-                  offset: const Offset(0, 7),
-                ),
-              ],
-            ),
-            child: Text(
-              'Q',
-              style: AppTypography.h2.copyWith(
-                color: AppColors.surface,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+  Widget _buildWalletOverlay() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-          const SizedBox(width: AppSpacing.sm + 2),
+        ],
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'QIKZOO',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
+                "Today's Earnings",
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
                 ),
               ),
+              SizedBox(height: 2),
               Text(
-                'PARTNER',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.secondary,
-                  fontSize: 10,
+                '₹1,240',
+                style: TextStyle(
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1.4,
+                  color: Color(0xFF0F172A),
                 ),
               ),
             ],
+          ),
+          SizedBox(width: 14),
+          Icon(
+            LucideIcons.trendingUp,
+            color: Color(0xFF2563EB),
+            size: 24,
           ),
         ],
       ),
@@ -199,233 +257,93 @@ class _Wordmark extends StatelessWidget {
   }
 }
 
-class _WelcomeCopy extends StatelessWidget {
-  const _WelcomeCopy();
-
-  @override
-  Widget build(BuildContext context) {
-    final isCompact = MediaQuery.sizeOf(context).height < 760;
-
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm + 4,
-            vertical: AppSpacing.xs + 2,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-            border: Border.all(
-              color: AppColors.secondary.withValues(alpha: 0.18),
-            ),
-          ),
-          child: Text(
-            'YOUR ROUTE. YOUR SCHEDULE.',
-            textAlign: TextAlign.center,
-            style: AppTypography.caption.copyWith(
-              color: AppColors.primary,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.25,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 390),
-          child: RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: AppTypography.display.copyWith(
-                fontSize: isCompact ? 29 : 33,
-              ),
-              children: const [
-                TextSpan(text: 'Deliver more.\n'),
-                TextSpan(
-                  text: 'Earn on your terms.',
-                  style: TextStyle(color: AppColors.secondary),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm + 2),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 350),
-          child: Text(
-            'Choose your hours, make every trip count, and grow with Qikzoo.',
-            textAlign: TextAlign.center,
-            style: AppTypography.body.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 15,
-              height: 1.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FeatureRow extends StatelessWidget {
-  const _FeatureRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'BUILT AROUND YOUR DAY',
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.05,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm + 2),
-        Semantics(
-          label:
-              'Partner benefits: flexible hours, weekly payouts, and more earning control',
-          child: const Row(
-            children: [
-              Expanded(
-                child: FeatureHighlightChip(
-                  icon: LucideIcons.clock3,
-                  label: 'Flexible\nhours',
-                ),
-              ),
-              SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: FeatureHighlightChip(
-                  icon: LucideIcons.wallet,
-                  label: 'Weekly\npayouts',
-                  color: AppColors.accent,
-                ),
-              ),
-              SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: FeatureHighlightChip(
-                  icon: LucideIcons.trendingUp,
-                  label: 'More earning\ncontrol',
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _WelcomeActions extends StatelessWidget {
-  final VoidCallback onGetStarted;
-  final VoidCallback onLogin;
-
-  const _WelcomeActions({
-    required this.onGetStarted,
-    required this.onLogin,
+class _OnboardingStepView extends StatelessWidget {
+  const _OnboardingStepView({
+    required this.showHeaderLogo,
+    required this.imageAsset,
+    required this.fallbackAsset,
+    required this.titleWidget,
+    required this.subtitle,
+    this.customHeroOverlay,
   });
 
+  final bool showHeaderLogo;
+  final String imageAsset;
+  final String fallbackAsset;
+  final Widget titleWidget;
+  final String subtitle;
+  final Widget? customHeroOverlay;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.background.withValues(alpha: 0),
-            AppColors.background
-          ],
-        ),
-      ),
-      child: Column(
-        children: [
-          PrimaryCtaButton(
-            label: 'Start earning with Qikzoo',
-            trailingIcon: LucideIcons.arrowRight,
-            onPressed: onGetStarted,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const _SetupHint(),
-          const SizedBox(height: AppSpacing.xs),
-          Semantics(
-            button: true,
-            label: 'Already a partner? Log in',
-            child: SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: TextButton(
-                onPressed: onLogin,
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.secondary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button),
-                  ),
-                ),
-                child: Text.rich(
-                  TextSpan(
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
+    return Column(
+      children: [
+        // Top Header Logo (Optional for step 1 or subtle on others)
+        SizedBox(
+          height: 60,
+          child: showHeaderLogo
+              ? Center(
+                  child: Image.asset(
+                    AppAssets.partnerLogoTight,
+                    width: 175,
+                    height: 50,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      AppAssets.mainLogo,
+                      height: 50,
+                      fit: BoxFit.contain,
                     ),
-                    children: const [
-                      TextSpan(text: 'Already a partner?  '),
-                      TextSpan(
-                        text: 'Log in',
-                        style: TextStyle(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
                   ),
+                )
+              : const SizedBox.shrink(),
+        ),
+
+        const Spacer(),
+
+        // Center Hero Graphic
+        Stack(
+          alignment: Alignment.bottomCenter,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              constraints: const BoxConstraints(maxHeight: 260, maxWidth: 280),
+              child: Image.asset(
+                imageAsset,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  fallbackAsset,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
+            if (customHeroOverlay != null)
+              Positioned(
+                bottom: -10,
+                child: customHeroOverlay!,
+              ),
+          ],
+        ),
+
+        const Spacer(),
+
+        // Title & Subtitle Text
+        titleWidget,
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14.5,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }
-
-class _SetupHint extends StatelessWidget {
-  const _SetupHint();
-
-  @override
-  Widget build(BuildContext context) => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(LucideIcons.shieldCheck,
-              size: 14, color: AppColors.success),
-          const SizedBox(width: AppSpacing.xs),
-          Flexible(
-            child: Text(
-              'Set up your partner profile in a few simple steps',
-              textAlign: TextAlign.center,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ],
-      );
-}
-
-@Preview(
-  name: 'Welcome - phone',
-  group: 'Onboarding',
-  size: Size(390, 844),
-)
-Widget onboardingWelcomeScreenPreview() => MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      home: const OnboardingWelcomeScreen(),
-    );

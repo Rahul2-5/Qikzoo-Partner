@@ -7,21 +7,15 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/earnings/earnings_models.dart';
-import '../../../providers/dashboard/dashboard_provider.dart';
 import '../../../providers/earnings/earnings_provider.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/empty_state.dart';
-import '../../../shared/widgets/misc/error_widget_custom.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
-import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
-import '../../../providers/notifications/notifications_provider.dart';
-import '../widgets/today_performance_widgets.dart';
 
 class EarningsScreen extends ConsumerStatefulWidget {
   const EarningsScreen({super.key});
@@ -31,26 +25,16 @@ class EarningsScreen extends ConsumerStatefulWidget {
 }
 
 class _EarningsScreenState extends ConsumerState<EarningsScreen> {
-  EarningsPeriod _period = EarningsPeriod.today;
-
-  void _setPeriod(EarningsPeriod period) => setState(() => _period = period);
-
   @override
   Widget build(BuildContext context) {
     final summaryAsync = ref.watch(earningsSummaryProvider);
     final historyAsync = ref.watch(earningsHistoryProvider);
-    final isOnline = ref
-            .watch(dashboardStatsProvider)
-            .valueOrNull
-            ?.availabilityStatus
-            .isOnlineFacing ??
-        false;
-    final unreadNotificationCount = ref
-            .watch(notificationsProvider)
-            .valueOrNull
-            ?.where((notification) => !notification.isRead)
-            .length ??
-        0;
+    final today = DateTime.now();
+    final weekStart = DateTime(today.year, today.month, today.day)
+        .subtract(Duration(days: today.weekday - DateTime.monday));
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final weekLabel =
+        '${DateFormat('d MMM').format(weekStart)} - ${DateFormat('d MMM').format(weekEnd)}';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -58,7 +42,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
         currentIndex: 3,
         child: ResponsiveFrame(
           maxWidth: 520,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: RefreshIndicator(
             color: AppColors.secondary,
             onRefresh: () => Future.wait([
@@ -72,68 +56,146 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AppStaggeredReveal(
-                    index: 0,
-                    child: TodayPerformanceHeader(
-                      unreadNotificationCount: unreadNotificationCount,
-                      onNotifications: () => Get.toNamed(AppRoutes.notifications),
-                      isOnline: isOnline,
-                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        LucideIcons.calendarDays,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        weekLabel,
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppStaggeredReveal(
-                    index: 1,
-                    child: _PeriodTabs(period: _period, onChanged: _setPeriod),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: 18),
+
+                  // Weekly Earnings Total
                   summaryAsync.when(
-                    loading: () => const LoadingSkeleton(height: 220),
-                    error: (error, _) => ErrorWidgetCustom(
-                      message: 'Could not load earnings.',
-                      onRetry: () =>
-                          ref.read(earningsSummaryProvider.notifier).refresh(),
+                    loading: () => Column(
+                      children: [
+                        LoadingSkeleton(
+                          height: 38,
+                          width: 140,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        const SizedBox(height: 8),
+                        LoadingSkeleton(
+                          height: 14,
+                          width: 90,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ],
                     ),
-                    data: (summary) {
-                      final bucket = summary.forPeriod(_period);
-                      return AppStaggeredReveal(
-                        index: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                    error: (_, __) =>
+                        const Center(child: Text("Error loading weekly total")),
+                    data: (summary) => _WeeklyEarningsCard(
+                      total: summary.thisWeek.total,
+                      deliveries: summary.thisWeek.deliveries,
+                      tips: summary.thisWeek.tips,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Payouts Card Row
+                  Card(
+                    elevation: 0,
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: AppColors.border),
+                    ),
+                    child: InkWell(
+                      onTap: () => Get.toNamed(AppRoutes.payoutsDetail),
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        child: Row(
                           children: [
-                            TodayEarningsCard(
-                              total: bucket.total,
-                              earnings: bucket.earnings,
-                              tips: bucket.tips,
-                              deliveries: bucket.deliveries,
+                            Icon(LucideIcons.landmark,
+                                color: AppColors.primary, size: 22),
+                            SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Payouts & balance',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'View your available balance and payouts',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            TodayStatGrid(deliveries: bucket.deliveries),
+                            Icon(LucideIcons.chevronRight,
+                                color: AppColors.textSecondary, size: 18),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppStaggeredReveal(
-                    index: 3,
-                    child: Text('Recent deliveries', style: AppTypography.h2),
+                  const SizedBox(height: 28),
+
+                  // History Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recent deliveries',
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      // "All Details" Filter Chip
+                      ActionChip(
+                        label: const Text('View all'),
+                        onPressed: () =>
+                            Get.toNamed(AppRoutes.earningsHistoryDetail),
+                        backgroundColor: AppColors.successBg,
+                        labelStyle: const TextStyle(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                        side: const BorderSide(color: AppColors.success),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: 12),
+
                   historyAsync.when(
                     loading: () => const PageLoadingShimmer(
-                      padding: EdgeInsets.zero,
-                      itemCount: 3,
-                    ),
-                    error: (error, _) => ErrorWidgetCustom(
-                      message: 'Could not load your delivery history.',
-                      onRetry: () =>
-                          ref.read(earningsHistoryProvider.notifier).refresh(),
-                    ),
+                        padding: EdgeInsets.zero, itemCount: 3),
+                    error: (error, _) => const Center(
+                        child: Text("Error loading past deliveries")),
                     data: (page) => page.items.isEmpty
                         ? const _EmptyHistory()
                         : _EarningsHistoryList(entries: page.items),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -144,66 +206,74 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   }
 }
 
-class _PeriodTabs extends StatelessWidget {
-  const _PeriodTabs({required this.period, required this.onChanged});
+class _WeeklyEarningsCard extends StatelessWidget {
+  const _WeeklyEarningsCard({
+    required this.total,
+    required this.deliveries,
+    required this.tips,
+  });
 
-  final EarningsPeriod period;
-  final ValueChanged<EarningsPeriod> onChanged;
+  final double total;
+  final int deliveries;
+  final double tips;
 
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          for (final value in EarningsPeriod.values) ...[
-            Expanded(
-              child: _PeriodTab(
-                label: value.label,
-                selected: value == period,
-                onTap: () => onChanged(value),
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This week',
+              style: AppTypography.caption.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              CurrencyFormatter.rupees(total),
+              style: AppTypography.numericLg.copyWith(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            if (value != EarningsPeriod.values.last)
-              const SizedBox(width: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                _SummaryDetail(
+                  icon: LucideIcons.packageCheck,
+                  label: '$deliveries deliveries',
+                ),
+                const SizedBox(width: AppSpacing.lg),
+                _SummaryDetail(
+                  icon: LucideIcons.heart,
+                  label: '${CurrencyFormatter.rupees(tips)} tips',
+                ),
+              ],
+            ),
           ],
-        ],
+        ),
       );
 }
 
-class _PeriodTab extends StatelessWidget {
-  const _PeriodTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+class _SummaryDetail extends StatelessWidget {
+  const _SummaryDetail({required this.icon, required this.label});
 
+  final IconData icon;
   final String label;
-  final bool selected;
-  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: selected ? AppColors.primarySoft : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-              border: Border.all(
-                color: selected ? AppColors.primary : AppColors.border,
-                width: selected ? 1.5 : 1,
-              ),
-            ),
-            child: Text(
-              label,
-              style: AppTypography.bodyMedium.copyWith(
-                color: selected ? AppColors.primary : AppColors.textPrimary,
-              ),
-            ),
-          ),
-        ),
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white70, size: 16),
+          const SizedBox(width: AppSpacing.xs),
+          Text(label,
+              style: AppTypography.caption.copyWith(color: Colors.white)),
+        ],
       );
 }
 
@@ -231,15 +301,16 @@ class _EarningsHistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deliveredAt = entry.deliveredAt;
-    final dateLabel =
-        deliveredAt == null ? '' : DateFormat('d MMM, h:mm a').format(deliveredAt.toLocal());
+    final dateLabel = deliveredAt == null
+        ? ''
+        : DateFormat('d MMM, h:mm a').format(deliveredAt.toLocal());
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        boxShadow: AppShadows.card,
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -251,7 +322,8 @@ class _EarningsHistoryTile extends StatelessWidget {
               color: AppColors.successBg,
               borderRadius: BorderRadius.circular(AppRadius.control),
             ),
-            child: const Icon(LucideIcons.checkCircle, color: AppColors.success),
+            child:
+                const Icon(LucideIcons.checkCircle, color: AppColors.success),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -260,7 +332,8 @@ class _EarningsHistoryTile extends StatelessWidget {
               children: [
                 Text(
                   entry.orderNumber ?? 'Delivery',
-                  style: AppTypography.bodyMedium,
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.bold),
                 ),
                 if (dateLabel.isNotEmpty) ...[
                   const SizedBox(height: 2),
@@ -275,7 +348,8 @@ class _EarningsHistoryTile extends StatelessWidget {
             CurrencyFormatter.rupees(entry.total),
             style: AppTypography.numericMd.copyWith(
               color: AppColors.success,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
             ),
           ),
         ],
@@ -288,9 +362,11 @@ class _EmptyHistory extends StatelessWidget {
   const _EmptyHistory();
 
   @override
-  Widget build(BuildContext context) => const EmptyState(
-        icon: LucideIcons.wallet,
-        title: 'No earnings yet',
-        message: 'Completed deliveries will show up here with what you earned.',
+  Widget build(BuildContext context) => EmptyState(
+        icon: LucideIcons.shoppingBag,
+        title: 'No deliveries yet',
+        message: 'Deliver your first order to start earning weekly payouts!',
+        actionLabel: 'Go online now',
+        onAction: () => Get.offAllNamed(AppRoutes.dashboard),
       );
 }

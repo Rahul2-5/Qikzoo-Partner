@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/glass_theme.dart';
 import '../../../core/theme/app_typography.dart';
 
@@ -26,7 +27,7 @@ class AppDropdown<T> extends StatelessWidget {
       initialValue: value,
       style: AppTypography.body,
       isExpanded: true,
-      icon: const Icon(Icons.keyboard_arrow_down_rounded),
+      icon: const Icon(LucideIcons.chevronDown, size: 18),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

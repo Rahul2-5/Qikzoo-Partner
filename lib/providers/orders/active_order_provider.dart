@@ -20,6 +20,23 @@ class ActiveOrderNotifier extends AsyncNotifier<RiderOrderModel?> {
     state = await AsyncValue.guard(_fetch);
   }
 
+  /// Acceptance returns only the bare RiderOrder row. Switch to loading
+  /// immediately, then fetch its enriched detail before the active-order
+  /// screen renders; this avoids a briefly rendered "No active order" state
+  /// while the post-accept request is in flight.
+  Future<RiderOrderModel> loadAcceptedOrder(String riderOrderId) async {
+    state = const AsyncLoading();
+    try {
+      final order =
+          await ref.read(riderOrdersRepositoryProvider).getOne(riderOrderId);
+      state = AsyncData(order);
+      return order;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
+  }
+
   /// Every action below deliberately does NOT go through AsyncValue.guard:
   /// a failed action (out of GPS range, stale location, a stale status
   /// because another process already advanced it) must not blow away the
@@ -31,13 +48,27 @@ class ActiveOrderNotifier extends AsyncNotifier<RiderOrderModel?> {
     await _refreshAfterAction(riderOrderId);
   }
 
+  Future<void> scanPickupQr(String riderOrderId, String token) async {
+    await ref
+        .read(riderOrdersRepositoryProvider)
+        .scanPickupQr(riderOrderId, token);
+    await _refreshAfterAction(riderOrderId);
+  }
+
+  Future<void> pickupSuccess(String riderOrderId) async {
+    await ref.read(riderOrdersRepositoryProvider).pickupSuccess(riderOrderId);
+    await _refreshAfterAction(riderOrderId);
+  }
+
   Future<void> startDelivery(String riderOrderId) async {
     await ref.read(riderOrdersRepositoryProvider).startDelivery(riderOrderId);
     await _refreshAfterAction(riderOrderId);
   }
 
-  Future<void> completeDelivery(String riderOrderId) async {
-    await ref.read(riderOrdersRepositoryProvider).completeDelivery(riderOrderId);
+  Future<void> completeDelivery(String riderOrderId, String code) async {
+    await ref
+        .read(riderOrdersRepositoryProvider)
+        .completeDelivery(riderOrderId, code);
     // A completed delivery is no longer "active" — the backend excludes
     // DELIVERED from `current`, so re-fetching naturally clears it.
     state = AsyncData(await _fetch());
@@ -55,7 +86,8 @@ class ActiveOrderNotifier extends AsyncNotifier<RiderOrderModel?> {
   /// response, same discipline as DispatchEngineService.acceptAssignment's
   /// caller needing a follow-up fetch.
   Future<void> _refreshAfterAction(String riderOrderId) async {
-    final updated = await ref.read(riderOrdersRepositoryProvider).getOne(riderOrderId);
+    final updated =
+        await ref.read(riderOrdersRepositoryProvider).getOne(riderOrderId);
     state = AsyncData(updated);
   }
 }

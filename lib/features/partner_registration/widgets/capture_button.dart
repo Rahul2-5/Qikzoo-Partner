@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 /// Large, tactile selfie capture control with press and loading animations.
 class CaptureButton extends StatefulWidget {
   const CaptureButton({
@@ -19,8 +21,6 @@ class CaptureButton extends StatefulWidget {
 }
 
 class _CaptureButtonState extends State<CaptureButton> {
-  static const _primary = Color(0xFF2563EB);
-
   bool _isPressed = false;
 
   bool get _enabled => widget.onPressed != null && !widget.isLoading;
@@ -54,18 +54,20 @@ class _CaptureButtonState extends State<CaptureButton> {
             shape: BoxShape.circle,
             color: Colors.white,
             border: Border.all(
-              color: _primary.withValues(alpha: _enabled ? 0.20 : 0.08),
+              color:
+                  AppColors.primary.withValues(alpha: _enabled ? 0.20 : 0.08),
             ),
             boxShadow: [
               BoxShadow(
-                color: _primary.withValues(alpha: _enabled ? 0.28 : 0.08),
+                color:
+                    AppColors.primary.withValues(alpha: _enabled ? 0.28 : 0.08),
                 blurRadius: _isPressed ? 12 : 24,
                 offset: Offset(0, _isPressed ? 4 : 10),
               ),
             ],
           ),
           child: Material(
-            color: _enabled ? _primary : const Color(0xFF94A3B8),
+            color: _enabled ? AppColors.primary : AppColors.textDisabled,
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(

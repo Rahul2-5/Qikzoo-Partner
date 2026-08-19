@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -85,8 +88,14 @@ class HelpSupportScreen extends StatelessWidget {
                                   child: _SupportChannelButton(
                                     icon: LucideIcons.phone,
                                     label: 'Call us',
-                                    onTap: () =>
-                                        _showComingSoon(context, 'Phone'),
+                                    onTap: () async {
+                                      final uri = Uri.parse('tel:1800123456');
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri);
+                                      } else if (context.mounted) {
+                                        _showComingSoon(context, 'Phone');
+                                      }
+                                    },
                                   ),
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
@@ -94,8 +103,15 @@ class HelpSupportScreen extends StatelessWidget {
                                   child: _SupportChannelButton(
                                     icon: LucideIcons.messageCircle,
                                     label: 'Live chat',
-                                    onTap: () =>
-                                        _showComingSoon(context, 'Chat'),
+                                    onTap: () => Get.toNamed(
+                                      AppRoutes.ticketChat,
+                                      arguments: {
+                                        'id': 'TCK-LIVE',
+                                        'title': 'Live Support Assistant',
+                                        'status': 'Open',
+                                        'outlet': 'Qikzoo Partner Care',
+                                      },
+                                    ),
                                   ),
                                 ),
                               ],

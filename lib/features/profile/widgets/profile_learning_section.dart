@@ -55,7 +55,7 @@ class ProfileLearningSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sheet),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x333F51B5),
+            color: Color(0x33E55D50),
             offset: Offset(0, 12),
             blurRadius: 28,
           ),
@@ -157,8 +157,8 @@ class LearningVideoCard extends StatelessWidget {
 
   static const _thumbnailGradients = <List<Color>>[
     [Color(0xFFFFEDD5), Color(0xFFFDBA74)],
-    [Color(0xFFDBEAFE), Color(0xFF93C5FD)],
-    [Color(0xFFE8EAF6), Color(0xFF9FA8DA)],
+    [Color(0xFFFFF1F0), Color(0xFFFFB8B1)],
+    [Color(0xFFE9EDF3), Color(0xFFA9B5C7)],
   ];
 
   static const _thumbnailIcons = <IconData>[

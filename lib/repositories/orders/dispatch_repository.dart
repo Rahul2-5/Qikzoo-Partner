@@ -10,12 +10,10 @@ abstract class DispatchRepository {
   /// AVAILABLE is never assigned an attempt server-side.
   Future<DispatchOfferModel?> getCurrentOffer();
 
-  /// `POST /rider/dispatch/:attemptId/accept` — on success the backend
-  /// creates the RiderOrder; the caller re-fetches it via
-  /// RiderOrdersRepository rather than trusting this endpoint's bare
-  /// return shape (it isn't the same enriched response `getOne`/`current`
-  /// return).
-  Future<void> accept(String attemptId);
+  /// `POST /rider/dispatch/:attemptId/accept` — returns the newly-created
+  /// RiderOrder id. The caller uses it to hydrate the richer `getOne`
+  /// response required by the active-order screen.
+  Future<String> accept(String attemptId);
 
   /// `POST /rider/dispatch/:attemptId/reject`.
   Future<void> reject(String attemptId);
@@ -36,10 +34,15 @@ class DioDispatchRepository implements DispatchRepository {
   }
 
   @override
-  Future<void> accept(String attemptId) async {
-    await _apiClient.post<Map<String, dynamic>>(
+  Future<String> accept(String attemptId) async {
+    final response = await _apiClient.post<Map<String, dynamic>>(
       ApiEndpoints.riderDispatchAccept(attemptId),
     );
+    final id = _unwrapNullable(response.data)?['id'];
+    if (id is! String || id.isEmpty) {
+      throw StateError('The accepted delivery did not include an order id.');
+    }
+    return id;
   }
 
   @override

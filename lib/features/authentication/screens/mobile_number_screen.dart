@@ -13,9 +13,6 @@ import '../../../repositories/authentication/auth_repository.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../widgets/mobile_number_layout.dart';
 
-bool _isSignupNameValid(AuthFlow flow, String name) =>
-    flow != AuthFlow.signUp || Validators.isValidFullName(name);
-
 class MobileNumberScreen extends ConsumerStatefulWidget {
   const MobileNumberScreen({
     super.key,
@@ -30,7 +27,6 @@ class MobileNumberScreen extends ConsumerStatefulWidget {
 
 class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
   late final TextEditingController _controller;
-  late final TextEditingController _nameController;
   bool _isRequesting = false;
 
   @override
@@ -39,15 +35,11 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
     _controller = TextEditingController(
       text: ref.read(phoneNumberUiProvider),
     );
-    _nameController = TextEditingController(
-      text: ref.read(signupNameUiProvider),
-    );
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _nameController.dispose();
     super.dispose();
   }
 
@@ -55,11 +47,6 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
     if (_isRequesting) return;
     if (!Validators.isValidPhone(phone)) {
       AppSnackBar.warning(context, 'Please enter a valid mobile number.');
-      return;
-    }
-    final name = ref.read(signupNameUiProvider);
-    if (!_isSignupNameValid(widget.flow, name)) {
-      AppSnackBar.warning(context, 'Please enter your full name.');
       return;
     }
 
@@ -88,27 +75,29 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
     }
   }
 
+  void _onBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Get.offAllNamed(AppRoutes.welcome);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final phone = ref.watch(phoneNumberUiProvider);
     final isPhoneValid = Validators.isValidPhone(phone);
-    final name = ref.watch(signupNameUiProvider);
-    final isNameValid = _isSignupNameValid(widget.flow, name);
-    final canAttemptContinue = phone.isNotEmpty && isNameValid;
+    final canAttemptContinue = phone.isNotEmpty;
 
     return MobileNumberLayout(
       flow: widget.flow,
       controller: _controller,
       phone: phone,
       isPhoneValid: isPhoneValid,
-      nameController: _nameController,
-      isNameValid: isNameValid,
       isRequesting: _isRequesting,
-      onBack: Get.back,
+      onBack: _onBack,
       onPhoneChanged: (value) =>
           ref.read(phoneNumberUiProvider.notifier).state = value,
-      onNameChanged: (value) =>
-          ref.read(signupNameUiProvider.notifier).state = value,
       onSubmitted: canAttemptContinue && !_isRequesting
           ? (_) => _onContinue(phone)
           : null,

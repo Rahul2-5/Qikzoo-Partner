@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -88,7 +89,7 @@ class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              const Icon(Icons.person_off_outlined, color: AppColors.error),
+              const Icon(LucideIcons.userX, color: AppColors.error),
               const SizedBox(width: AppSpacing.sm),
               Text('Customer not responding', style: AppTypography.h2),
             ]),
@@ -124,7 +125,7 @@ class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
               FilledButton.icon(
                 onPressed: () =>
                     Navigator.of(context).pop(NoResponseOutcome.captureProof),
-                icon: const Icon(Icons.camera_alt_outlined),
+                icon: const Icon(LucideIcons.camera, size: 18),
                 label: const Text('Capture drop-off photo'),
               )
             else
@@ -132,7 +133,7 @@ class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
                 onPressed: _calledAgain
                     ? null
                     : () => setState(() => _calledAgain = true),
-                icon: const Icon(Icons.phone_outlined),
+                icon: const Icon(LucideIcons.phone, size: 18),
                 label:
                     Text(_calledAgain ? 'Call attempt recorded' : 'Call again'),
               ),
@@ -140,7 +141,7 @@ class _NoResponseSheetContentState extends State<_NoResponseSheetContent> {
             TextButton.icon(
               onPressed: () =>
                   Navigator.of(context).pop(NoResponseOutcome.contactSupport),
-              icon: const Icon(Icons.headset_mic_outlined, size: 18),
+              icon: const Icon(LucideIcons.headphones, size: 18),
               label: const Text('Contact support'),
             ),
           ],
@@ -159,7 +160,7 @@ class _Step extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: Row(children: [
-          const Icon(Icons.check_circle_outline,
+          const Icon(LucideIcons.checkCircle,
               size: 18, color: AppColors.secondary),
           const SizedBox(width: AppSpacing.sm),
           Text(text, style: AppTypography.body),

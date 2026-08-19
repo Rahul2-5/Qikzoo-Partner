@@ -3,15 +3,22 @@ import '../../repositories/dashboard/dashboard_repository.dart';
 import '../../models/dashboard/dashboard_stats_model.dart';
 
 class DashboardStatsNotifier extends AsyncNotifier<DashboardStatsModel> {
+  int _refreshVersion = 0;
+
   @override
   Future<DashboardStatsModel> build() =>
       ref.watch(dashboardRepositoryProvider).getStats();
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
+    final refreshVersion = ++_refreshVersion;
+    // Keep the last successful snapshot rendered while a background refresh
+    // runs. Acceptance, completion, polling, and resume can all refresh this
+    // provider around the same navigation transition; replacing data with
+    // AsyncLoading here caused the dashboard to briefly disappear.
+    final refreshed = await AsyncValue.guard(
       () => ref.read(dashboardRepositoryProvider).getStats(),
     );
+    if (refreshVersion == _refreshVersion) state = refreshed;
   }
 
   /// Deliberately does NOT go through [AsyncValue.guard]: a failed toggle

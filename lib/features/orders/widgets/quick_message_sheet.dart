@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -65,7 +66,7 @@ class _QuickMessageSheetContentState extends State<_QuickMessageSheetContent> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.chat_bubble_outline,
+                  const Icon(LucideIcons.messageSquare,
                       color: AppColors.secondary),
                   const SizedBox(width: AppSpacing.sm),
                   Text('Quick message', style: AppTypography.h2),
@@ -91,11 +92,11 @@ class _QuickMessageSheetContentState extends State<_QuickMessageSheetContent> {
               for (final template in _templates[_language]!)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.send_outlined,
-                      color: AppColors.secondary),
+                  leading: const Icon(LucideIcons.send,
+                      color: AppColors.secondary, size: 18),
                   title: Text(template, style: AppTypography.bodyMedium),
-                  trailing: const Icon(Icons.chevron_right,
-                      color: AppColors.textSecondary),
+                  trailing: const Icon(LucideIcons.chevronRight,
+                      color: AppColors.textSecondary, size: 18),
                   onTap: () => Navigator.of(context).pop(template),
                 ),
             ],

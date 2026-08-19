@@ -13,6 +13,8 @@ class PrimaryCtaButton extends StatelessWidget {
   final bool isLoading;
   final bool fullWidth;
   final IconData? trailingIcon;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   const PrimaryCtaButton({
     super.key,
@@ -21,12 +23,16 @@ class PrimaryCtaButton extends StatelessWidget {
     this.isLoading = false,
     this.fullWidth = true,
     this.trailingIcon,
+    this.backgroundColor,
+    this.foregroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDisabled = onPressed == null && !isLoading;
     final isInteractive = !isLoading && !isDisabled;
+    final activeBackground = backgroundColor ?? AppColors.primary;
+    final activeForeground = foregroundColor ?? AppColors.onPrimary;
 
     return Semantics(
       button: true,
@@ -52,7 +58,7 @@ class PrimaryCtaButton extends StatelessWidget {
                         border: Border.all(color: AppColors.border),
                       )
                     : BoxDecoration(
-                        color: AppColors.primary,
+                        color: activeBackground,
                         borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
                 child: InkWell(
@@ -90,7 +96,7 @@ class PrimaryCtaButton extends StatelessWidget {
                                         style: AppTypography.button.copyWith(
                                           color: isDisabled
                                               ? AppColors.textDisabled
-                                              : AppColors.onPrimary,
+                                              : activeForeground,
                                         ),
                                       ),
                                     )
@@ -101,7 +107,7 @@ class PrimaryCtaButton extends StatelessWidget {
                                       style: AppTypography.button.copyWith(
                                         color: isDisabled
                                             ? AppColors.textDisabled
-                                            : AppColors.onPrimary,
+                                            : activeForeground,
                                       ),
                                     ),
                                   if (trailingIcon != null) ...[
@@ -110,7 +116,7 @@ class PrimaryCtaButton extends StatelessWidget {
                                       trailingIcon,
                                       color: isDisabled
                                           ? AppColors.textDisabled
-                                          : AppColors.onPrimary,
+                                          : activeForeground,
                                       size: 20,
                                     ),
                                   ],

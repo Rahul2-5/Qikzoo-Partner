@@ -3,9 +3,9 @@ import 'app_routes.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../../features/onboarding_welcome/screens/onboarding_welcome_screen.dart';
 import '../../features/onboarding_welcome/screens/partner_benefits_screen.dart';
+import '../../features/onboarding_welcome/screens/earnings_onboarding_screen.dart';
 import '../../features/authentication/screens/mobile_number_screen.dart';
 import '../../features/authentication/screens/otp_verification_screen.dart';
-import '../../features/authentication/screens/set_password_screen.dart';
 import '../../features/partner_registration/screens/address_screen.dart';
 import '../../features/partner_registration/screens/emergency_contact_screen.dart';
 import '../../features/partner_registration/screens/kyc_screen.dart';
@@ -32,6 +32,14 @@ import '../../features/orders/screens/incoming_offer_screen.dart';
 import '../../features/orders/screens/order_details_screen.dart';
 import '../../features/orders/screens/orders_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/profile/screens/more_screen.dart';
+import '../../features/profile/screens/wrong_action_screen.dart';
+import '../../features/profile/screens/login_history_screen.dart';
+import '../../features/dashboard/screens/emergency_sos_screen.dart';
+import '../../features/support/screens/ticket_list_screen.dart';
+import '../../features/support/screens/ticket_chat_screen.dart';
+import '../../features/earnings/screens/payouts_detail_screen.dart';
+import '../../features/earnings/screens/earnings_history_detail_screen.dart';
 import '../../features/bank_details/screens/bank_details_screen.dart';
 import '../../features/documents/screens/manage_documents_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
@@ -52,6 +60,10 @@ class AppPages {
               showOnboardingControls: Get.parameters['source'] != 'profile',
             )),
     GetPage(
+      name: AppRoutes.onboardingEarnings,
+      page: () => const EarningsOnboardingScreen(),
+    ),
+    GetPage(
       name: AppRoutes.otp,
       page: () => MobileNumberScreen(
         flow: authFlowFromRoute(Get.parameters['flow']),
@@ -63,7 +75,6 @@ class AppPages {
         flow: authFlowFromRoute(Get.parameters['flow']),
       ),
     ),
-    GetPage(name: AppRoutes.setPassword, page: () => const SetPasswordScreen()),
     GetPage(
         name: AppRoutes.personalInfo, page: () => const PersonalInfoScreen()),
     GetPage(name: AppRoutes.address, page: () => const AddressScreen()),
@@ -117,7 +128,15 @@ class AppPages {
     ),
     GetPage(name: AppRoutes.wallet, page: () => const WalletScreen()),
     GetPage(name: AppRoutes.support, page: () => const HelpSupportScreen()),
-    GetPage(name: AppRoutes.profile, page: () => const ProfileScreen()),
+    GetPage(name: AppRoutes.profile, page: () => const MoreScreen()),
+    GetPage(name: AppRoutes.myProfile, page: () => const ProfileScreen()),
+    GetPage(name: AppRoutes.wrongAction, page: () => const WrongActionScreen()),
+    GetPage(name: AppRoutes.loginHistory, page: () => const LoginHistoryScreen()),
+    GetPage(name: AppRoutes.emergencySos, page: () => const EmergencySosScreen()),
+    GetPage(name: AppRoutes.ticketList, page: () => const TicketListScreen()),
+    GetPage(name: AppRoutes.ticketChat, page: () => const TicketChatScreen()),
+    GetPage(name: AppRoutes.payoutsDetail, page: () => const PayoutsDetailScreen()),
+    GetPage(name: AppRoutes.earningsHistoryDetail, page: () => const EarningsHistoryDetailScreen()),
     GetPage(
         name: AppRoutes.manageVehicleDetails,
         page: () => const ManageVehicleDetailsScreen()),

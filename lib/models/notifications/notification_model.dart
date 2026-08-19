@@ -1,6 +1,14 @@
 import 'package:equatable/equatable.dart';
 
-enum NotificationType { order, earnings, system, promotion }
+enum NotificationType {
+  newOrder,
+  orderCancelled,
+  addressUpdated,
+  incentiveUnlocked,
+  paymentCredited,
+  accountUpdate,
+  system,
+}
 
 class NotificationModel extends Equatable {
   final String id;
@@ -34,33 +42,57 @@ class NotificationModel extends Equatable {
   /// a `data.type` (e.g. `NEW_DELIVERY_OFFER`), so this infers the UI-only
   /// [NotificationType] from those instead of inventing a new backend field.
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    final event = json['event'] is String ? json['event'] as String : '';
+    final event = (json['event'] is String ? json['event'] as String : '').toLowerCase();
     final data = json['data'];
-    final dataType =
-        data is Map && data['type'] is String ? data['type'] as String : '';
+    final dataType = (data is Map && data['type'] is String
+            ? data['type'] as String
+            : '')
+        .toUpperCase();
+    final title = json['subject'] is String ? json['subject'] as String : 'Update';
+    final body = json['message'] is String ? json['message'] as String : '';
+
     return NotificationModel(
       id: json['id'] is String ? json['id'] as String : '',
-      title: json['subject'] is String ? json['subject'] as String : 'Update',
-      body: json['message'] is String ? json['message'] as String : '',
+      title: title,
+      body: body,
       isRead: json['readAt'] != null,
       createdAt:
           DateTime.tryParse('${json['createdAt']}') ?? DateTime.now(),
-      type: _typeFor(event, dataType),
+      type: _typeFor(event, dataType, title, body),
     );
   }
 
-  static NotificationType _typeFor(String event, String dataType) {
+  static NotificationType _typeFor(
+    String event,
+    String dataType,
+    String title,
+    String body,
+  ) {
+    final text = '$event $dataType $title $body'.toLowerCase();
+
+    if (text.contains('cancel')) {
+      return NotificationType.orderCancelled;
+    }
+    if (text.contains('address') || text.contains('location')) {
+      return NotificationType.addressUpdated;
+    }
+    if (text.contains('incentive') || text.contains('bonus') || text.contains('reward') || text.contains('unlocked')) {
+      return NotificationType.incentiveUnlocked;
+    }
+    if (text.contains('earning') || text.contains('payout') || text.contains('payment') || text.contains('credit') || text.contains('settled')) {
+      return NotificationType.paymentCredited;
+    }
+    if (text.contains('kyc') || text.contains('document') || text.contains('account') || text.contains('verification') || text.contains('profile')) {
+      return NotificationType.accountUpdate;
+    }
     if (event.startsWith('dispatch.') ||
         event.startsWith('rider_order.') ||
-        dataType == 'NEW_DELIVERY_OFFER') {
-      return NotificationType.order;
+        dataType == 'NEW_DELIVERY_OFFER' ||
+        text.contains('order') ||
+        text.contains('delivery')) {
+      return NotificationType.newOrder;
     }
-    if (event.contains('earning') || event.contains('payout')) {
-      return NotificationType.earnings;
-    }
-    if (event.contains('promo') || event.contains('incentive')) {
-      return NotificationType.promotion;
-    }
+
     return NotificationType.system;
   }
 

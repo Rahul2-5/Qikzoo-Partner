@@ -7,12 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/buttons/icon_button_custom.dart';
+import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../widgets/capture_button.dart';
 import '../widgets/face_overlay.dart';
-import '../widgets/instruction_card.dart';
 import '../widgets/selfie_camera_preview.dart';
 import '../widgets/status_card.dart';
 import '../services/selfie_image_processor.dart';
+
+const _qikzooNavy = Color(0xFF162B4D);
 
 typedef CameraListLoader = Future<List<CameraDescription>> Function();
 typedef SelfieCameraControllerBuilder = CameraController Function(
@@ -43,10 +49,9 @@ class SelfieCameraCaptureScreen extends StatefulWidget {
 
 class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
-  static const _primary = Color(0xFF2563EB);
-  static const _background = Color(0xFFF8FAFC);
-  static const _textPrimary = Color(0xFF0F172A);
-  static const _textSecondary = Color(0xFF64748B);
+  static const _primary = AppColors.primary;
+  static const _background = AppColors.background;
+  static const _textSecondary = AppColors.textSecondary;
 
   late final AnimationController _entranceController;
   late final Animation<double> _fadeAnimation;
@@ -151,14 +156,20 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
         );
       }
 
-      final frontCamera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.front,
-        orElse: () => cameras.first,
-      );
+      final frontCameras = cameras
+          .where((camera) => camera.lensDirection == CameraLensDirection.front)
+          .toList();
+      if (frontCameras.isEmpty) {
+        throw CameraException(
+          'front_camera_not_found',
+          'No front camera is available on this device.',
+        );
+      }
+      final frontCamera = frontCameras.first;
       candidate = widget.controllerBuilder?.call(frontCamera) ??
           CameraController(
             frontCamera,
-            ResolutionPreset.high,
+            ResolutionPreset.medium,
             enableAudio: false,
           );
       await candidate.initialize();
@@ -207,6 +218,8 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
       'CameraAccessDeniedWithoutPrompt' ||
       'CameraAccessRestricted' =>
         'Camera access is required. Enable it in your device settings and try again.',
+      'front_camera_not_found' =>
+        'A front camera is required to take your shift selfie.',
       _ => 'The camera could not be started. Please try again.',
     };
   }
@@ -231,7 +244,8 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
 
     try {
       final image = await controller.takePicture();
-      final selfiePath = await SelfieImageProcessor.prepareForUpload(image.path);
+      final selfiePath =
+          await SelfieImageProcessor.prepareForUpload(image.path);
       if (mounted) Navigator.of(context).pop(selfiePath);
     } on CameraException {
       if (mounted) {
@@ -277,127 +291,55 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth >= 600 ? 32.0 : 20.0;
-            final verticalPadding = constraints.maxHeight < 700 ? 8.0 : 12.0;
-            final contentWidth = math.min(
-              constraints.maxWidth - (horizontalPadding * 2),
-              680.0,
-            );
-            final guideSize = _guideSize(
-              availableWidth: contentWidth,
-              availableHeight: constraints.maxHeight,
-            );
+        child: ResponsiveFrame(
+          maxWidth: 480,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxHeight < 700;
 
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                verticalPadding,
-                horizontalPadding,
-                math.max(verticalPadding, 16),
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: 680,
-                    minHeight: math.max(
-                      0,
-                      constraints.maxHeight - (verticalPadding * 2),
-                    ),
-                  ),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildTopSection(context),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: constraints.maxHeight < 700 ? 18 : 28,
-                          ),
+              // Column fills the exact available height: fixed-height header
+              // + Expanded camera circle (which fills ALL of its region,
+              // no shrink factor) + a bottom section sized only to what its
+              // content actually needs. Nothing scrolls, nothing floats in
+              // unclaimed space.
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: compact ? AppSpacing.xs : AppSpacing.sm,
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      _Header(onBack: _close, compact: compact),
+                      SizedBox(height: compact ? AppSpacing.xs : AppSpacing.sm),
+                      Expanded(
+                        child: Center(
                           child: ScaleTransition(
                             scale: _cameraScaleAnimation,
-                            child: _buildCameraGuide(guideSize),
+                            child: LayoutBuilder(
+                              builder: (context, inner) {
+                                final guideSize = math
+                                    .min(inner.maxWidth, inner.maxHeight)
+                                    .clamp(180.0, 420.0)
+                                    .toDouble();
+                                return _buildCameraGuide(guideSize);
+                              },
+                            ),
                           ),
                         ),
-                        _buildBottomSection(context),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: compact ? AppSpacing.xs : AppSpacing.sm),
+                      _buildBottomSection(context, compact: compact),
+                    ],
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
-    );
-  }
-
-  double _guideSize({
-    required double availableWidth,
-    required double availableHeight,
-  }) {
-    final heightFraction = availableHeight < 700 ? 0.34 : 0.38;
-    return math
-        .min(availableWidth, availableHeight * heightFraction)
-        .clamp(196.0, 388.0)
-        .toDouble();
-  }
-
-  Widget _buildTopSection(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            IconButton(
-              tooltip: 'Back',
-              onPressed: _close,
-              icon: const Icon(LucideIcons.arrowLeft),
-              color: _textPrimary,
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
-                minimumSize: const Size.square(48),
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                'Selfie Verification',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
-                    ),
-              ),
-            ),
-            const SizedBox(width: 48),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Text(
-          'Place your face inside the circle',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _textPrimary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-              ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Keep your face centered and hold your phone steady',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: _textSecondary,
-                height: 1.4,
-              ),
-        ),
-        const SizedBox(height: 18),
-        const SelfieInstructionCard(),
-      ],
     );
   }
 
@@ -470,7 +412,7 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
     );
   }
 
-  Widget _buildBottomSection(BuildContext context) {
+  Widget _buildBottomSection(BuildContext context, {required bool compact}) {
     final status = switch ((_isCapturing, _cameraError, _captureError)) {
       (true, _, _) => const (
           message: 'Capturing your selfie…',
@@ -492,49 +434,103 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
     final cameraReady =
         _cameraController?.value.isInitialized == true && _cameraError == null;
 
+    // A single row puts the capture control and Cancel side by side, at a
+    // fixed height, so this section never grows to eat the camera's space
+    // and never needs its own scroll.
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         SelfieStatusCard(message: status.message, tone: status.tone),
-        const SizedBox(height: 20),
-        CaptureButton(
-          onPressed: cameraReady ? _captureSelfie : null,
-          isLoading: _isCapturing,
-        ),
-        const SizedBox(height: 14),
+        SizedBox(height: compact ? 10 : 14),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              LucideIcons.shieldCheck,
-              size: 16,
-              color: _primary,
+            SizedBox(
+              width: 72,
+              child: TextButton(
+                onPressed: _close,
+                style: TextButton.styleFrom(
+                  foregroundColor: _textSecondary,
+                  minimumSize: const Size(0, 44),
+                  padding: EdgeInsets.zero,
+                ),
+                child: const Text('Cancel'),
+              ),
             ),
-            const SizedBox(width: 7),
-            Flexible(
-              child: Text(
-                'Secure Face Verification',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _textSecondary,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.1,
-                    ),
+            const SizedBox(width: AppSpacing.lg),
+            CaptureButton(
+              onPressed: cameraReady ? _captureSelfie : null,
+              isLoading: _isCapturing,
+            ),
+            const SizedBox(width: AppSpacing.lg),
+            const SizedBox(width: 72),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.shieldCheck, size: 13, color: _primary),
+            const SizedBox(width: 5),
+            Text(
+              'Secure Face Verification',
+              style: AppTypography.caption.copyWith(
+                color: _textSecondary,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        TextButton(
-          onPressed: _close,
-          style: TextButton.styleFrom(
-            foregroundColor: _textSecondary,
-            minimumSize: const Size(88, 44),
-          ),
-          child: const Text('Cancel'),
-        ),
       ],
     );
   }
+}
+
+/// Back button + title, both vertically centered against an explicit
+/// height so the title's line box always has room for its ascenders —
+/// no clipping — and a [FittedBox] guarantees the text scales down rather
+/// than truncating on narrow screens instead of wrapping/ellipsis.
+class _Header extends StatelessWidget {
+  const _Header({required this.onBack, required this.compact});
+
+  final VoidCallback onBack;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            IconButtonCustom(
+              icon: LucideIcons.arrowLeft,
+              tooltip: 'Back',
+              onPressed: onBack,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Face verification',
+                    maxLines: 1,
+                    style: AppTypography.h2.copyWith(
+                      color: _qikzooNavy,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
+                      fontSize: compact ? 17 : 19,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _CameraLoadingView extends StatelessWidget {
@@ -592,11 +588,11 @@ class _CameraErrorView extends StatelessWidget {
                     maxLines: compact ? 3 : 4,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.86),
-                          fontSize: compact ? 11 : null,
-                          height: compact ? 1.25 : 1.35,
-                        ),
+                    style: AppTypography.caption.copyWith(
+                      color: Colors.white.withValues(alpha: 0.86),
+                      fontSize: compact ? 11 : 12.5,
+                      height: compact ? 1.25 : 1.35,
+                    ),
                   ),
                   SizedBox(height: compact ? 4 : 10),
                   TextButton(

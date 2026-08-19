@@ -7,11 +7,11 @@ import '../../core/location/rider_background_location_service.dart';
 import '../../core/navigation/next_onboarding_step_resolver.dart';
 import '../../core/push/push_service.dart';
 import '../../repositories/authentication/auth_repository.dart';
+import '../location/rider_location_provider.dart';
 import '../../repositories/profile/profile_repository.dart';
 import '../../repositories/onboarding_status/onboarding_status_repository.dart';
 import '../../models/authentication/auth_session_model.dart';
 import '../../models/authentication/session_restore_outcome.dart';
-import '../location/rider_location_provider.dart';
 import '../core/api_providers.dart';
 import '../dashboard/dashboard_provider.dart';
 import '../orders/active_order_provider.dart';
@@ -35,7 +35,9 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
   Future<void> verifyOtp(String phoneNumber, String otp, {String? name}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).verifyOtp(phoneNumber, otp, name: name),
+      () => ref
+          .read(authRepositoryProvider)
+          .verifyOtp(phoneNumber, otp, name: name),
     );
     if (state.valueOrNull?.isAuthenticated == true) {
       // A previous session (this rider logging back in, or a different

@@ -86,7 +86,7 @@ class SignupBonusDialog extends StatelessWidget {
                             style: AppTypography.caption.copyWith(
                               color: const Color(0xFF925600),
                               fontSize: 10,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w800,
                               letterSpacing: 0.75,
                             ),
                           ),
@@ -136,7 +136,7 @@ class SignupBonusDialog extends StatelessWidget {
                                   color: AppColors.primary,
                                   fontSize: 46,
                                   height: 1,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.xs),
@@ -145,7 +145,7 @@ class SignupBonusDialog extends StatelessWidget {
                                 style: AppTypography.caption.copyWith(
                                   color: const Color(0xFF925600),
                                   fontSize: 10,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
                                   letterSpacing: 1.1,
                                 ),
                               ),

@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_motion.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/glass_theme.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../motion/app_motion_widgets.dart';
-import '../layout/glass_container.dart';
 
 class NavItem {
   final IconData icon;
   final IconData activeIcon;
+  final String asset;
   final String label;
 
-  const NavItem(
-      {required this.icon, required this.activeIcon, required this.label});
+  const NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.asset,
+    required this.label,
+  });
 }
 
 class FloatingBottomNav extends StatelessWidget {
@@ -32,143 +31,36 @@ class FloatingBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
-      child: Semantics(
-        container: true,
-        label: 'Main navigation',
-        child: GlassContainer(
-          blur: true,
-          borderRadius: BorderRadius.circular(AppRadius.sheet + 2),
-          boxShadow: GlassTheme.floatingShadow,
-          height: 76,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = constraints.maxWidth / items.length;
-
-              return Stack(
-                children: [
-                  AnimatedPositioned(
-                    key: const Key('active-navigation-indicator'),
-                    duration: AppMotion.duration(context, AppMotion.standard),
-                    curve: AppMotion.emphasizedCurve,
-                    left: itemWidth * currentIndex + AppSpacing.xs,
-                    top: AppSpacing.xs,
-                    width: itemWidth - (AppSpacing.xs * 2),
-                    height: constraints.maxHeight - (AppSpacing.xs * 2),
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: AppColors.ctaGradient,
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.control + 2),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x2E536DFE),
-                              offset: Offset(0, 6),
-                              blurRadius: 14,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              for (int i = 0; i < items.length; i++)
+                Expanded(
+                  child: _NavCell(
+                    item: items[i],
+                    selected: i == currentIndex,
+                    onTap: () => onTap(i),
                   ),
-                  Row(
-                    children: List.generate(items.length, (index) {
-                      final isActive = index == currentIndex;
-                      final item = items[index];
-                      return Expanded(
-                        child: Semantics(
-                          button: true,
-                          selected: isActive,
-                          label: item.label,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => onTap(index),
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.control + 2),
-                              child: AppPressEffect(
-                                pressedScale: 0.94,
-                                child: Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.xs,
-                                      vertical: AppSpacing.xs + 2,
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        AnimatedScale(
-                                          duration: AppMotion.duration(
-                                            context,
-                                            AppMotion.quick,
-                                          ),
-                                          curve: AppMotion.enter,
-                                          scale: isActive ? 1.1 : 1,
-                                          child: AnimatedSwitcher(
-                                            duration: AppMotion.duration(
-                                              context,
-                                              AppMotion.quick,
-                                            ),
-                                            switchInCurve: AppMotion.enter,
-                                            switchOutCurve: AppMotion.exit,
-                                            child: Icon(
-                                              key: ValueKey(isActive),
-                                              isActive
-                                                  ? item.activeIcon
-                                                  : item.icon,
-                                              color: isActive
-                                                  ? Colors.white
-                                                  : AppColors.textSecondary,
-                                              size: 20,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: AnimatedDefaultTextStyle(
-                                            duration: AppMotion.duration(
-                                              context,
-                                              AppMotion.quick,
-                                            ),
-                                            curve: AppMotion.enter,
-                                            style:
-                                                AppTypography.caption.copyWith(
-                                              color: isActive
-                                                  ? Colors.white
-                                                  : AppColors.textSecondary,
-                                              fontSize: 10.5,
-                                              fontWeight: isActive
-                                                  ? FontWeight.w800
-                                                  : FontWeight.w700,
-                                            ),
-                                            child:
-                                                Text(item.label, maxLines: 1),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              );
-            },
+                ),
+            ],
           ),
         ),
       ),
@@ -176,45 +68,83 @@ class FloatingBottomNav extends StatelessWidget {
   }
 }
 
-@Preview(
-  name: 'Bottom navigation',
-  group: 'Navigation',
-  size: Size(390, 130),
-)
-Widget floatingBottomNavPreview() => MaterialApp(
-      theme: ThemeData.light(),
-      home: Scaffold(
-        backgroundColor: AppColors.background,
-        bottomNavigationBar: FloatingBottomNav(
-          currentIndex: 0,
-          onTap: (_) {},
-          items: const [
-            NavItem(
-              icon: Icons.home_outlined,
-              activeIcon: Icons.home_rounded,
-              label: 'Home',
+class _NavCell extends StatelessWidget {
+  const _NavCell({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final NavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.primary : AppColors.textSecondary;
+
+    final Widget glyph = Image.asset(
+      item.asset,
+      width: 24,
+      height: 24,
+      color: color,
+      errorBuilder: (_, __, ___) => Icon(
+        selected ? item.activeIcon : item.icon,
+        size: 24,
+        color: color,
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: item.label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: AppPressEffect(
+            pressedScale: 0.94,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  width: 48,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColors.primary.withValues(alpha: 0.09)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: AnimatedScale(
+                    scale: selected ? 1.06 : 1.0,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutBack,
+                    child: glyph,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(
+                    fontSize: 10.5,
+                    letterSpacing: 0,
+                    color: color,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            NavItem(
-              icon: Icons.calendar_month_outlined,
-              activeIcon: Icons.calendar_month_rounded,
-              label: 'Gigs',
-            ),
-            NavItem(
-              icon: Icons.receipt_long_outlined,
-              activeIcon: Icons.receipt_long_rounded,
-              label: 'Orders',
-            ),
-            NavItem(
-              icon: Icons.bar_chart_outlined,
-              activeIcon: Icons.bar_chart_rounded,
-              label: 'Earnings',
-            ),
-            NavItem(
-              icon: Icons.person_outline_rounded,
-              activeIcon: Icons.person_rounded,
-              label: 'Profile',
-            ),
-          ],
+          ),
         ),
       ),
     );
+  }
+}

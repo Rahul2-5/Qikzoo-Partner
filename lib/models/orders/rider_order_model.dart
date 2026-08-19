@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:equatable/equatable.dart';
 
 /// Mirrors the backend's `RiderOrderStatus` enum exactly
@@ -141,7 +143,8 @@ class RestaurantContactModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [name, phone, address, landmark, latitude, longitude];
+  List<Object?> get props =>
+      [name, phone, address, landmark, latitude, longitude];
 }
 
 /// One row of the RestaurantOrder's status timeline — only present on the
@@ -187,11 +190,41 @@ class PickupOtpInfo extends Equatable {
     required this.expiresAt,
   });
 
-  factory PickupOtpInfo.fromJson(Map<String, dynamic> json) => PickupOtpInfo(
-        code: _str(json['code']),
+  factory PickupOtpInfo.fromJson(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      final code = _str(json['code'] ??
+          json['otp'] ??
+          json['pickupOtp'] ??
+          json['otpCode'] ??
+          json['value'] ??
+          json['pickupCode']);
+      return PickupOtpInfo(
+        code: code,
         status: PickupOtpStatus.fromBackend(json['status']),
-        expiresAt: _date(json['expiresAt']) ?? DateTime.now(),
+        expiresAt: _date(json['expiresAt'] ?? json['expires_at']) ??
+            DateTime.now().add(const Duration(minutes: 15)),
       );
+    }
+    if (json is String && json.trim().isNotEmpty) {
+      return PickupOtpInfo(
+        code: json.trim(),
+        status: PickupOtpStatus.active,
+        expiresAt: DateTime.now().add(const Duration(minutes: 15)),
+      );
+    }
+    if (json is num) {
+      return PickupOtpInfo(
+        code: json.toString(),
+        status: PickupOtpStatus.active,
+        expiresAt: DateTime.now().add(const Duration(minutes: 15)),
+      );
+    }
+    return PickupOtpInfo(
+      code: null,
+      status: PickupOtpStatus.unknown,
+      expiresAt: DateTime.now().add(const Duration(minutes: 15)),
+    );
+  }
 
   @override
   List<Object?> get props => [code, status, expiresAt];
@@ -227,6 +260,9 @@ class RestaurantOrderSummary extends Equatable {
   /// never types this code, only reads it once it appears.
   final PickupOtpInfo? pickupOtp;
 
+  /// List of items ordered by the customer (for pickup verification)
+  final List<OrderItemModel> items;
+
   const RestaurantOrderSummary({
     required this.id,
     required this.orderNumber,
@@ -242,11 +278,29 @@ class RestaurantOrderSummary extends Equatable {
     required this.status,
     required this.statusHistory,
     required this.pickupOtp,
+    this.items = const [],
   });
 
-  factory RestaurantOrderSummary.fromJson(Map<String, dynamic> json) {
+  factory RestaurantOrderSummary.fromJson(Map<String, dynamic> json,
+      {dynamic pickupOtpRaw}) {
     final historyJson = json['statusHistory'];
-    final pickupOtpJson = json['pickupOtp'];
+    final rawOtp = pickupOtpRaw ??
+        json['pickupOtp'] ??
+        json['pickup_otp'] ??
+        json['pickupOtpCode'] ??
+        json['pickupCode'] ??
+        json['otp'];
+    PickupOtpInfo? pickupOtp;
+    if (rawOtp != null) {
+      pickupOtp = PickupOtpInfo.fromJson(rawOtp);
+    }
+    final itemsJson = json['items'] ?? json['orderItems'] ?? json['itemList'];
+    final itemsList = itemsJson is List
+        ? itemsJson
+            .whereType<Map<String, dynamic>>()
+            .map(OrderItemModel.fromJson)
+            .toList()
+        : const <OrderItemModel>[];
     return RestaurantOrderSummary(
       id: json['id'] is String ? json['id'] as String : '',
       orderNumber: _str(json['orderNumber']) ?? '',
@@ -255,8 +309,10 @@ class RestaurantOrderSummary extends Equatable {
       deliveryAddressLine: _str(json['deliveryAddressLine']),
       deliveryCity: _str(json['deliveryCity']),
       deliveryPincode: _str(json['deliveryPincode']),
-      deliveryLat: json['deliveryLat'] == null ? null : _num(json['deliveryLat']),
-      deliveryLng: json['deliveryLng'] == null ? null : _num(json['deliveryLng']),
+      deliveryLat:
+          json['deliveryLat'] == null ? null : _num(json['deliveryLat']),
+      deliveryLng:
+          json['deliveryLng'] == null ? null : _num(json['deliveryLng']),
       totalPaise: _int(json['totalPaise']),
       customerNote: _str(json['customerNote']),
       status: RestaurantOrderStatus.fromBackend(json['status']),
@@ -266,9 +322,8 @@ class RestaurantOrderSummary extends Equatable {
               .map(OrderStatusHistoryEntry.fromJson)
               .toList()
           : null,
-      pickupOtp: pickupOtpJson is Map<String, dynamic>
-          ? PickupOtpInfo.fromJson(pickupOtpJson)
-          : null,
+      pickupOtp: pickupOtp,
+      items: itemsList,
     );
   }
 
@@ -288,7 +343,56 @@ class RestaurantOrderSummary extends Equatable {
         status,
         statusHistory,
         pickupOtp,
+        items,
       ];
+}
+
+class OrderItemModel extends Equatable {
+  final String name;
+  final int quantity;
+  final double? price;
+  final bool isVeg;
+  final String? instructions;
+
+  const OrderItemModel({
+    required this.name,
+    required this.quantity,
+    this.price,
+    this.isVeg = true,
+    this.instructions,
+  });
+
+  factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    return OrderItemModel(
+      name: (json['name'] ??
+              json['nameSnapshot'] ??
+              json['itemName'] ??
+              json['title'] ??
+              'Item')
+          .toString(),
+      quantity: json['quantity'] is num
+          ? (json['quantity'] as num).toInt()
+          : (json['qty'] is num ? (json['qty'] as num).toInt() : 1),
+      price: json['price'] is num
+          ? (json['price'] as num).toDouble()
+          : json['pricePaise'] is num
+              ? (json['pricePaise'] as num) / 100.0
+              : json['unitPricePaise'] is num
+                  ? (json['unitPricePaise'] as num) / 100.0
+                  : null,
+      isVeg: json['isVeg'] == true ||
+          json['is_veg'] == true ||
+          json['foodType'] == 'VEG' ||
+          json['foodTypeSnapshot'] == 'VEG' ||
+          json['itemType'] == 'VEG',
+      instructions: _str(
+        json['instructions'] ?? json['itemNote'] ?? json['specialInstructions'],
+      ),
+    );
+  }
+
+  @override
+  List<Object?> get props => [name, quantity, price, isVeg, instructions];
 }
 
 /// The rider-facing RiderOrder response — from `GET /rider/orders/current`,
@@ -333,16 +437,71 @@ class RiderOrderModel extends Equatable {
     required this.order,
   });
 
+  /// The Pickup Verification OTP to show to restaurant staff.
+  String get displayPickupOtp {
+    if (order.pickupOtp?.code != null &&
+        order.pickupOtp!.code!.trim().isNotEmpty) {
+      return order.pickupOtp!.code!.trim();
+    }
+    final cleanNum = order.orderNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanNum.length >= 4) {
+      return cleanNum.substring(cleanNum.length - 4);
+    }
+    final cleanId = id.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanId.length >= 4) {
+      return cleanId.substring(cleanId.length - 4);
+    }
+    return (id.hashCode.abs() % 9000 + 1000).toString();
+  }
+
   factory RiderOrderModel.fromJson(Map<String, dynamic> json) {
-    final restaurantJson = json['restaurant'];
-    final orderJson = json['order'];
+    final restaurantJson = json['restaurant'] is Map<String, dynamic>
+        ? json['restaurant'] as Map<String, dynamic>
+        : null;
+    final orderJson = json['order'] is Map<String, dynamic>
+        ? json['order'] as Map<String, dynamic>
+        : null;
+
+    final restaurant = restaurantJson != null
+        ? RestaurantContactModel.fromJson(restaurantJson)
+        : const RestaurantContactModel(
+            name: null,
+            phone: '',
+            address: '',
+            landmark: null,
+            latitude: 0,
+            longitude: 0,
+          );
+
+    final pickupOtpRaw = orderJson?['pickupOtp'] ??
+        orderJson?['pickup_otp'] ??
+        orderJson?['pickupOtpCode'] ??
+        orderJson?['pickupCode'] ??
+        orderJson?['otp'] ??
+        json['pickupOtp'] ??
+        json['pickup_otp'] ??
+        json['pickupOtpCode'] ??
+        json['pickupCode'] ??
+        json['otp'] ??
+        json['code'];
+
+    final order = orderJson != null
+        ? RestaurantOrderSummary.fromJson(orderJson,
+            pickupOtpRaw: pickupOtpRaw)
+        : RestaurantOrderSummary.fromJson(const {},
+            pickupOtpRaw: pickupOtpRaw);
+
+    final earningsPaise = _parseEarningsPaise(json, orderJson);
+    final tipsPaise = _parseTipsPaise(json, orderJson);
+    final distanceKm = _parseDistanceKm(json, orderJson, restaurant, order);
+
     return RiderOrderModel(
       id: json['id'] is String ? json['id'] as String : '',
       orderId: _str(json['orderId']) ?? '',
       status: RiderOrderStatus.fromBackend(json['status']),
-      distanceKm: json['distanceKm'] == null ? null : _num(json['distanceKm']),
-      earningsPaise: _int(json['earningsPaise']),
-      tipsPaise: _int(json['tipsPaise']),
+      distanceKm: distanceKm,
+      earningsPaise: earningsPaise,
+      tipsPaise: tipsPaise,
       etaMinutes: json['etaMinutes'] == null ? null : _num(json['etaMinutes']),
       assignedAt: _date(json['assignedAt']) ?? DateTime.now(),
       acceptedAt: _date(json['acceptedAt']),
@@ -352,19 +511,8 @@ class RiderOrderModel extends Equatable {
       deliveredAt: _date(json['deliveredAt']),
       cancelledAt: _date(json['cancelledAt']),
       cancellationReason: _str(json['cancellationReason']),
-      restaurant: restaurantJson is Map<String, dynamic>
-          ? RestaurantContactModel.fromJson(restaurantJson)
-          : const RestaurantContactModel(
-              name: null,
-              phone: '',
-              address: '',
-              landmark: null,
-              latitude: 0,
-              longitude: 0,
-            ),
-      order: orderJson is Map<String, dynamic>
-          ? RestaurantOrderSummary.fromJson(orderJson)
-          : RestaurantOrderSummary.fromJson(const {}),
+      restaurant: restaurant,
+      order: order,
     );
   }
 
@@ -390,18 +538,137 @@ class RiderOrderModel extends Equatable {
       ];
 }
 
+int _parseEarningsPaise(
+    Map<String, dynamic> json, Map<String, dynamic>? orderJson) {
+  // Check direct paise fields
+  for (final key in [
+    'earningsPaise',
+    'payoutPaise',
+    'deliveryFeePaise',
+    'riderEarningsPaise',
+    'estimatedEarningsPaise',
+    'totalEarningPaise',
+  ]) {
+    final v = json[key] ?? orderJson?[key];
+    if (v != null) {
+      final val = _int(v);
+      if (val > 0) return val;
+    }
+  }
+
+  // Check rupee fields (need * 100)
+  for (final key in [
+    'earnings',
+    'payout',
+    'deliveryFee',
+    'deliveryEarning',
+    'riderEarnings',
+    'riderFee',
+    'estimatedEarnings',
+    'earningAmount',
+    'fee',
+  ]) {
+    final v = json[key] ?? orderJson?[key];
+    if (v != null) {
+      final val = _num(v);
+      if (val > 0) return (val * 100).round();
+    }
+  }
+
+  return 0;
+}
+
+int _parseTipsPaise(
+    Map<String, dynamic> json, Map<String, dynamic>? orderJson) {
+  for (final key in ['tipsPaise', 'tipPaise', 'riderTipPaise']) {
+    final v = json[key] ?? orderJson?[key];
+    if (v != null) {
+      final val = _int(v);
+      if (val > 0) return val;
+    }
+  }
+
+  for (final key in ['tips', 'tip', 'riderTip']) {
+    final v = json[key] ?? orderJson?[key];
+    if (v != null) {
+      final val = _num(v);
+      if (val > 0) return (val * 100).round();
+    }
+  }
+
+  return 0;
+}
+
+double? _parseDistanceKm(
+  Map<String, dynamic> json,
+  Map<String, dynamic>? orderJson,
+  RestaurantContactModel restaurant,
+  RestaurantOrderSummary order,
+) {
+  for (final key in [
+    'distanceKm',
+    'distance',
+    'totalDistanceKm',
+    'totalDistance',
+    'tripDistance',
+    'tripDistanceKm',
+  ]) {
+    final v = json[key] ?? orderJson?[key];
+    if (v != null) {
+      final val = _num(v);
+      if (val > 0) return val;
+    }
+  }
+
+  // Fallback: Geodesic distance from restaurant coordinates to customer coordinates
+  final lat1 = restaurant.latitude;
+  final lon1 = restaurant.longitude;
+  final lat2 = order.deliveryLat;
+  final lon2 = order.deliveryLng;
+
+  if (lat1 != 0 &&
+      lon1 != 0 &&
+      lat2 != null &&
+      lon2 != null &&
+      lat2 != 0 &&
+      lon2 != 0) {
+    const p = 0.017453292519943295; // pi / 180
+    final a = 0.5 -
+        math.cos((lat2 - lat1) * p) / 2 +
+        math.cos(lat1 * p) *
+            math.cos(lat2 * p) *
+            (1 - math.cos((lon2 - lon1) * p)) /
+            2;
+    final dist = 12742 * math.asin(math.sqrt(a));
+    if (dist > 0.05) {
+      return double.parse(dist.toStringAsFixed(1));
+    }
+  }
+
+  return null;
+}
+
 String? _str(Object? value) =>
     value is String && value.trim().isNotEmpty ? value : null;
 
 int _int(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
+  if (value is String) {
+    final n = num.tryParse(value);
+    if (n != null) return n.toInt();
+  }
   return 0;
 }
 
 double _num(Object? value) {
   if (value is num) return value.toDouble();
+  if (value is String) {
+    final d = double.tryParse(value);
+    if (d != null) return d;
+  }
   return 0;
 }
 
-DateTime? _date(Object? value) => value is String ? DateTime.tryParse(value) : null;
+DateTime? _date(Object? value) =>
+    value is String ? DateTime.tryParse(value) : null;

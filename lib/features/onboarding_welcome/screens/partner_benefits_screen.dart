@@ -3,11 +3,8 @@ import 'package:flutter/widget_previews.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/assets/app_assets.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
@@ -15,9 +12,6 @@ import '../../../models/authentication/auth_flow.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
-import '../../../shared/widgets/misc/app_3d_illustration.dart';
-import '../../../shared/widgets/motion/app_motion_widgets.dart';
-import '../widgets/onboarding_step_indicator.dart';
 
 class PartnerBenefitsScreen extends StatelessWidget {
   const PartnerBenefitsScreen({
@@ -25,530 +19,416 @@ class PartnerBenefitsScreen extends StatelessWidget {
     this.showOnboardingControls = true,
   });
 
-  /// Profile benefits are informational; only the onboarding flow needs
-  /// navigation controls and a sign-up CTA.
   final bool showOnboardingControls;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFF1F3FF), AppColors.background],
-            stops: [0, 0.46],
-          ),
-        ),
-        child: SafeArea(
-          child: ResponsiveFrame(
-            maxWidth: 520,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isCompact = constraints.maxHeight < 760;
-                final isShort = constraints.maxHeight < 680;
+      body: SafeArea(
+        child: ResponsiveFrame(
+          maxWidth: 480,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxHeight < 720;
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
-                    if (showOnboardingControls) ...[
-                      const _BenefitsTopBar(),
-                      SizedBox(
-                          height: isShort
-                              ? AppSpacing.sm
-                              : (isCompact ? AppSpacing.md : AppSpacing.lg)),
-                    ] else
-                      const SizedBox(height: AppSpacing.md),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.only(
-                          bottom: isShort ? AppSpacing.sm : AppSpacing.lg,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const AppStaggeredReveal(
-                              index: 0,
-                              child: _BenefitsHeader(),
-                            ),
-                            SizedBox(
-                              height: isCompact ? AppSpacing.md : AppSpacing.lg,
-                            ),
-                            AppStaggeredReveal(
-                              index: 1,
-                              child: _InsuranceSpotlight(compact: isCompact),
-                            ),
-                            SizedBox(
-                              height: isCompact ? AppSpacing.md : AppSpacing.lg,
-                            ),
-                            const AppStaggeredReveal(
-                              index: 2,
-                              child: _EverydayBenefits(),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
-                        ),
+              return Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.sm,
+                        AppSpacing.md,
+                        AppSpacing.sm,
+                        AppSpacing.sm,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildTopBar(),
+                          const SizedBox(height: AppSpacing.md),
+                          _buildHeaderSection(isCompact),
+                          const SizedBox(height: AppSpacing.md),
+                          _buildInsuranceCard(isCompact),
+                          const SizedBox(height: AppSpacing.lg),
+                          _buildReasonsSection(isCompact),
+                        ],
                       ),
                     ),
-                    if (showOnboardingControls) ...[
-                      Container(
-                        padding: const EdgeInsets.only(top: AppSpacing.sm),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              AppColors.background.withValues(alpha: 0),
-                              AppColors.background,
-                            ],
-                          ),
-                        ),
-                        child: AppStaggeredReveal(
-                          index: 3,
-                          child: Column(
-                            children: [
-                              PrimaryCtaButton(
-                                label: 'Get Started',
-                                trailingIcon: LucideIcons.arrowRight,
-                                onPressed: () => Get.toNamed(
-                                  authFlowRoute(
-                                    AppRoutes.otp,
-                                    AuthFlow.signUp,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              const _OnboardingReassurance(),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: isShort ? AppSpacing.xs : AppSpacing.sm),
-                    ],
-                  ],
-                );
-              },
-            ),
+                  ),
+                  _buildBottomActions(),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
-}
 
-class _BenefitsTopBar extends StatelessWidget {
-  const _BenefitsTopBar();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTopBar() {
     return Row(
       children: [
-        Semantics(
-          button: true,
-          label: 'Go back',
-          child: IconButtonCustom(
-            icon: LucideIcons.arrowLeft,
-            onPressed: () => Get.back(),
-          ),
+        IconButtonCustom(
+          icon: LucideIcons.arrowLeft,
+          tooltip: 'Back',
+          onPressed: () => Get.back(),
         ),
         const Spacer(),
-        const OnboardingStepIndicator(currentStep: 2, totalSteps: 2),
+        if (showOnboardingControls)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 4,
+                  height: 4,
+                  decoration: const BoxDecoration(
+                    color: AppColors.border,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  width: 14,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '2/2',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
-}
 
-class _BenefitsHeader extends StatelessWidget {
-  const _BenefitsHeader();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildHeaderSection(bool isCompact) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm + 3,
-            vertical: AppSpacing.xs + 2,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
             color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-            border: Border.all(
-              color: AppColors.secondary.withValues(alpha: 0.2),
-            ),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             'WELCOME TO QIKZOO',
             style: AppTypography.caption.copyWith(
-              color: AppColors.secondary,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w800,
               fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.15,
+              letterSpacing: 0.6,
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.sm + 2),
-        RichText(
-          text: TextSpan(
-            style: AppTypography.display.copyWith(fontSize: 31),
-            children: const [
-              TextSpan(text: 'Earn with freedom.\n'),
-              TextSpan(
-                text: 'Grow with support.',
-                style: TextStyle(color: AppColors.secondary),
-              ),
-            ],
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Earn with freedom.\nGrow with support.',
+          style: AppTypography.display.copyWith(
+            color: const Color(0xFF162B4D),
+            fontSize: isCompact ? 25 : 28,
+            fontWeight: FontWeight.w800,
+            height: 1.15,
           ),
         ),
-        const SizedBox(height: AppSpacing.sm + 4),
+        const SizedBox(height: AppSpacing.xs + 2),
         Text(
           'Benefits designed to support you on the road and care for the people waiting at home.',
           style: AppTypography.body.copyWith(
             color: AppColors.textSecondary,
-            fontSize: 15.5,
-            height: 1.48,
+            fontSize: 13.5,
+            height: 1.4,
           ),
         ),
       ],
     );
   }
-}
 
-class _InsuranceSpotlight extends StatelessWidget {
-  const _InsuranceSpotlight({required this.compact});
-
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      excludeSemantics: true,
-      label: 'Medical and health insurance cover up to 15 lakh rupees.',
-      child: Container(
-        width: double.infinity,
-        constraints: BoxConstraints(minHeight: compact ? 204 : 224),
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.sm,
-          AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryDark],
+  Widget _buildInsuranceCard(bool isCompact) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
-          borderRadius: BorderRadius.circular(AppRadius.sheet + 4),
-          border: Border.all(
-            color: AppColors.surface.withValues(alpha: 0.12),
-          ),
-          boxShadow: AppShadows.card,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 7,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm + 2,
-                      vertical: AppSpacing.xs + 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                      border: Border.all(
-                        color: AppColors.surface.withValues(alpha: 0.2),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.heart, size: 12, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        'FAMILY COVER',
+                        style: AppTypography.caption.copyWith(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          LucideIcons.heartPulse,
-                          color: Color(0xFFAAB7FF),
-                          size: 14,
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          'FAMILY COVER',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.surface,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.65,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm + 2),
-                  Text(
-                    'Medical & health\ninsurance',
-                    style: AppTypography.h2.copyWith(
-                      color: AppColors.surface,
-                      fontSize: compact ? 17 : 19,
-                      height: 1.22,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm + 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm + 2,
-                      vertical: AppSpacing.xs + 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.32),
-                          blurRadius: 14,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      'COVER UP TO ₹15 LAKH',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.primaryDark,
-                        fontSize: compact ? 10 : 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.35,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Protection for you and your family, wherever the road takes you.',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.surface.withValues(alpha: 0.78),
-                      fontSize: 11,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 4,
-              child: ExcludeSemantics(
-                child: Transform.translate(
-                  offset: const Offset(5, 4),
-                  child: App3dIllustration(
-                    assetPath: AppAssets.applicationSubmitted3d,
-                    semanticLabel: 'Medical and health insurance protection',
-                    size: compact ? 100 : 114,
-                    glowColor: const Color(0xFFAAB7FF),
-                    fallbackIcon: LucideIcons.shieldCheck,
+                    ],
                   ),
                 ),
-              ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Medical & health\ninsurance',
+                  style: AppTypography.h2.copyWith(
+                    color: Colors.white,
+                    fontSize: isCompact ? 18 : 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'COVER UP TO ₹15 LAKH',
+                    style: AppTypography.caption.copyWith(
+                      color: const Color(0xFF162B4D),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Protection for you and your family, wherever the road takes you.',
+                  style: AppTypography.caption.copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Container(
+            width: 78,
+            height: 78,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              LucideIcons.clipboardCheck,
+              color: Colors.white,
+              size: 38,
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
-class _EverydayBenefits extends StatelessWidget {
-  const _EverydayBenefits();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildReasonsSection(bool isCompact) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'More reasons to partner',
-          style: AppTypography.h2.copyWith(fontSize: 17),
+          style: AppTypography.h2.copyWith(
+            color: const Color(0xFF162B4D),
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        const SizedBox(height: AppSpacing.xs),
         Text(
           'Built around the way you want to work.',
           style: AppTypography.caption.copyWith(
             color: AppColors.textSecondary,
+            fontSize: 12.5,
           ),
         ),
-        const SizedBox(height: AppSpacing.sm + 2),
-        const _BenefitTile(
-          assetPath: AppAssets.partnerStatusOffline3d,
-          fallbackIcon: LucideIcons.power,
-          glowColor: AppColors.secondary,
+        const SizedBox(height: AppSpacing.sm),
+        _buildReasonTile(
+          icon: LucideIcons.bike,
           title: 'Flexible earning',
-          description: 'Go online and earn when it works for your day.',
+          description: 'Go online and earn when it suits you.',
         ),
-        const SizedBox(height: AppSpacing.sm),
-        const _BenefitTile(
-          assetPath: AppAssets.orderSearch3d,
-          fallbackIcon: LucideIcons.bike,
-          glowColor: AppColors.accent,
-          title: 'Nearby opportunities',
-          description: 'Find delivery opportunities around your area.',
+        const SizedBox(height: 8),
+        _buildReasonTile(
+          icon: LucideIcons.packageCheck,
+          title: 'Instant orders',
+          description: 'Receive delivery requests near you.',
         ),
-        const SizedBox(height: AppSpacing.sm),
-        const _BenefitTile(
-          assetPath: AppAssets.welcomeKit3d,
-          fallbackIcon: LucideIcons.packageCheck,
-          glowColor: AppColors.primary,
-          title: 'Weekly payouts & partner support',
-          description: 'Predictable payouts, essential gear, and help 24/7.',
+        const SizedBox(height: 8),
+        _buildReasonTile(
+          icon: LucideIcons.shieldAlert,
+          title: 'Accident coverage',
+          description: 'Stay safe with round-the-clock trip insurance.',
         ),
       ],
     );
   }
-}
 
-class _BenefitTile extends StatelessWidget {
-  const _BenefitTile({
-    required this.assetPath,
-    required this.fallbackIcon,
-    required this.glowColor,
-    required this.title,
-    required this.description,
-  });
-
-  final String assetPath;
-  final IconData fallbackIcon;
-  final Color glowColor;
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      label: '$title. $description',
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 96),
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.sm,
-          AppSpacing.sm,
-          AppSpacing.md,
-          AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.sheet),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.85)),
-          boxShadow: AppShadows.control,
-        ),
-        child: Row(
-          children: [
-            App3dIllustration(
-              assetPath: assetPath,
-              semanticLabel: title,
-              size: 68,
-              glowColor: glowColor,
-              fallbackIcon: fallbackIcon,
+  Widget _buildReasonTile({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.02),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
+            child: Icon(icon, color: AppColors.primary, size: 18),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF162B4D),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    description,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
-                      height: 1.35,
-                    ),
+                ),
+                Text(
+                  description,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Container(
-              width: 30,
-              height: 30,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEEF1FF),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                LucideIcons.check,
-                color: AppColors.secondary,
-                size: 16,
-              ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
+            child: const Icon(
+              LucideIcons.check,
+              color: AppColors.success,
+              size: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActions() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.md,
+      ),
+      color: AppColors.background,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PrimaryCtaButton(
+            label: 'Get Started',
+            trailingIcon: LucideIcons.arrowRight,
+            onPressed: () => Get.toNamed(
+              authFlowRoute(AppRoutes.otp, AuthFlow.signUp),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                LucideIcons.checkCircle2,
+                size: 14,
+                color: AppColors.success,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  'Takes only a few minutes to get started',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
       ),
     );
   }
 }
 
-class _OnboardingReassurance extends StatelessWidget {
-  const _OnboardingReassurance();
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        label: 'Takes only a few minutes to get started',
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              LucideIcons.shieldCheck,
-              size: 14,
-              color: AppColors.success,
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Flexible(
-              child: Text(
-                'Takes only a few minutes to get started',
-                textAlign: TextAlign.center,
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-}
-
 @Preview(
-  name: 'Partner benefits - phone',
+  name: 'Benefits - phone',
   group: 'Onboarding',
   size: Size(390, 844),
 )
-Widget partnerBenefitsScreenPreview() {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppTheme.light,
-    home: const PartnerBenefitsScreen(),
-  );
-}
-
-@Preview(
-  name: 'Partner benefits - profile',
-  group: 'Profile',
-  size: Size(390, 844),
-)
-Widget partnerBenefitsProfilePreview() => MaterialApp(
+Widget partnerBenefitsScreenPreview() => MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const PartnerBenefitsScreen(showOnboardingControls: false),
+      home: const PartnerBenefitsScreen(),
     );

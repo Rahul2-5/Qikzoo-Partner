@@ -22,6 +22,7 @@ class AppTextField extends StatelessWidget {
   final void Function(String)? onChanged;
   final List<TextInputFormatter>? inputFormatters;
   final int? maxLength;
+  final int maxLines;
   final TextCapitalization textCapitalization;
   final TextInputAction? textInputAction;
   final Iterable<String>? autofillHints;
@@ -44,6 +45,7 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.inputFormatters,
     this.maxLength,
+    this.maxLines = 1,
     this.textCapitalization = TextCapitalization.none,
     this.textInputAction,
     this.autofillHints,
@@ -62,6 +64,7 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       inputFormatters: inputFormatters,
       maxLength: maxLength,
+      maxLines: maxLines,
       textCapitalization: textCapitalization,
       textInputAction: textInputAction,
       autofillHints: autofillHints,

@@ -17,6 +17,11 @@ import '../../../shared/widgets/inputs/otp_field.dart';
 import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/countdown_timer.dart';
+import '../../../repositories/profile/profile_repository.dart';
+import '../../../repositories/onboarding_status/onboarding_status_repository.dart';
+import '../../../core/navigation/next_onboarding_step_resolver.dart';
+
+const _qikzooNavy = Color(0xFF162B4D);
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
   const OtpVerificationScreen({
@@ -121,9 +126,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
 
     final session = authState.value;
     if (session?.isAuthenticated == true) {
-      if (widget.flow == AuthFlow.signUp) {
-        Get.offNamed(AppRoutes.setPassword);
-      } else {
+      setState(() => _isVerifying = true);
+      try {
+        final profile = await ref.read(profileRepositoryProvider).getProfile();
+        final onboarding =
+            await ref.read(onboardingStatusRepositoryProvider).getStatus();
+        final nextRoute =
+            NextOnboardingStepResolver.resolve(onboarding, profile: profile);
+        Get.offAllNamed(nextRoute);
+      } catch (_) {
         Get.offAllNamed(AppRoutes.dashboard);
       }
     }
@@ -182,88 +193,118 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.md,
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: AppSpacing.sm),
-                      IconButtonCustom(
-                          icon: LucideIcons.arrowLeft,
-                          onPressed: () => Get.back()),
+                      // No logo here: the mobile-number screen already
+                      // showed it as the flow's entry point. This screen
+                      // just advances the step badge, matching the
+                      // welcome (1/2) → benefits (2/2) onboarding pattern.
+                      const _OtpTopBar(),
                       const SizedBox(height: AppSpacing.lg),
-                      RichText(
-                        text: TextSpan(
-                          style: AppTypography.h1.copyWith(fontSize: 28),
-                          children: [
-                            const TextSpan(
-                                text: 'Verify ',
-                                style: TextStyle(color: AppColors.textPrimary)),
-                            TextSpan(
-                              text: 'OTP',
-                              style: TextStyle(
-                                foreground: Paint()
-                                  ..shader = const LinearGradient(
-                                          colors: AppColors.ctaGradient)
-                                      .createShader(
-                                          const Rect.fromLTWH(0, 0, 90, 28)),
-                              ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm, vertical: AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                              color: AppColors.border.withValues(alpha: 0.5)),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  AppColors.textPrimary.withValues(alpha: 0.04),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        'Enter the ${AppConstants.otpLength} digit OTP sent to',
-                        style: AppTypography.body
-                            .copyWith(color: AppColors.textSecondary),
-                      ),
-                      Text(
-                        _maskedPhone(displayPhone),
-                        style: AppTypography.bodyMedium
-                            .copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      IgnorePointer(
-                        ignoring: _isVerifying,
-                        child: Opacity(
-                          opacity: _isVerifying ? 0.5 : 1,
-                          child: AutofillGroup(
-                            child: OtpField(
-                              length: AppConstants.otpLength,
-                              controller: _otpController,
-                              autoFocus: true,
-                              onCompleted: _onOtpCompleted,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'VERIFY YOUR NUMBER',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                                letterSpacing: 0.8,
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                      Center(
-                        child: _canResend
-                            ? GestureDetector(
-                                onTap: _onResend,
-                                child: Text(
-                                  'Resend OTP',
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.secondary,
-                                    fontWeight: FontWeight.w700,
+                            const SizedBox(height: 6),
+                            Text(
+                              'Verify OTP',
+                              style: AppTypography.h1.copyWith(
+                                fontSize: 25,
+                                fontWeight: FontWeight.w800,
+                                color: _qikzooNavy,
+                                letterSpacing: -0.5,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Enter the ${AppConstants.otpLength} digit OTP sent to',
+                              style: AppTypography.body
+                                  .copyWith(color: AppColors.textSecondary),
+                            ),
+                            Text(
+                              _maskedPhone(displayPhone),
+                              style: AppTypography.bodyMedium
+                                  .copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            IgnorePointer(
+                              ignoring: _isVerifying,
+                              child: Opacity(
+                                opacity: _isVerifying ? 0.5 : 1,
+                                child: AutofillGroup(
+                                  child: OtpField(
+                                    length: AppConstants.otpLength,
+                                    controller: _otpController,
+                                    autoFocus: true,
+                                    onCompleted: _onOtpCompleted,
                                   ),
                                 ),
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('Resend OTP in  ',
-                                      style: AppTypography.body.copyWith(
-                                          color: AppColors.textSecondary)),
-                                  CountdownTimer(
-                                    key: ValueKey(_resendAttempt),
-                                    seconds: 30,
-                                    color: AppColors.accent,
-                                    onExpired: () =>
-                                        setState(() => _canResend = true),
-                                  ),
-                                ],
                               ),
+                            ),
+                            const SizedBox(height: AppSpacing.xl),
+                            Center(
+                              child: _canResend
+                                  ? GestureDetector(
+                                      onTap: _onResend,
+                                      child: Text(
+                                        'Resend OTP',
+                                        style:
+                                            AppTypography.bodyMedium.copyWith(
+                                          color: AppColors.secondary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text('Resend OTP in  ',
+                                            style: AppTypography.body.copyWith(
+                                                color:
+                                                    AppColors.textSecondary)),
+                                        CountdownTimer(
+                                          key: ValueKey(_resendAttempt),
+                                          seconds: 30,
+                                          color: AppColors.accent,
+                                          onExpired: () =>
+                                              setState(() => _canResend = true),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -275,4 +316,73 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       ),
     );
   }
+}
+
+/// Back button + a "2/2" step badge — the same widget shape used for the
+/// login flow's first step and for onboarding's welcome/benefits pair.
+class _OtpTopBar extends StatelessWidget {
+  const _OtpTopBar();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 56,
+        child: Row(
+          children: [
+            IconButtonCustom(
+              icon: LucideIcons.arrowLeft,
+              tooltip: 'Back',
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  Get.offAllNamed(AppRoutes.mobileNumber);
+                }
+              },
+            ),
+            const Spacer(),
+            const _StepBadge(current: 2, total: 2),
+          ],
+        ),
+      );
+}
+
+class _StepBadge extends StatelessWidget {
+  const _StepBadge({required this.current, required this.total});
+
+  final int current;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 1; i <= total; i++) ...[
+              if (i > 1) const SizedBox(width: 4),
+              Container(
+                width: i == current ? 14 : 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: i <= current ? AppColors.primary : AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+            const SizedBox(width: 8),
+            Text(
+              '$current/$total',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      );
 }

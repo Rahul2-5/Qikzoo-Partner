@@ -37,6 +37,10 @@ class ApiEndpoints {
       '/rider/orders/$riderOrderId';
   static String riderOrderArrived(String riderOrderId) =>
       '/rider/orders/$riderOrderId/arrived';
+  static String riderOrderScanPickupQr(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/scan-pickup-qr';
+  static String riderOrderPickupSuccess(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/pickup-success';
   static String riderOrderStartDelivery(String riderOrderId) =>
       '/rider/orders/$riderOrderId/start-delivery';
   static String riderOrderCompleteDelivery(String riderOrderId) =>
@@ -53,13 +57,6 @@ class ApiEndpoints {
   static const riderEarningsSummary = '/rider/earnings/summary';
   static const riderEarningsHistory = '/rider/earnings/history';
   static const riderWallet = '/rider/wallet';
-  // Consumed only by DeviceTokensRepository (lib/repositories/device_tokens),
-  // which in turn is only used by PushNotificationService — neither is
-  // wired into app init (see main.dart, which uses PushService +
-  // DeviceTokenRepository below instead). Kept rather than deleted: this
-  // endpoint doesn't conflict with the one below, and removing the
-  // now-dead PushNotificationService subsystem outright is a separate
-  // cleanup decision, not part of this conflict-marker fix.
   static const riderDeviceTokens = '/rider/device-tokens';
 
   // Actor-agnostic — shared with the customer/admin/restaurant apps.

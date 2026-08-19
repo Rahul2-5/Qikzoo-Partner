@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -77,8 +78,11 @@ class _TrainingModuleCard extends StatelessWidget {
           final useStackedLayout = constraints.maxWidth < 400 ||
               MediaQuery.textScalerOf(context).scale(1) > 1.3;
           final icon = Icon(
-            module.isCompleted ? Icons.check_circle : Icons.play_circle_outline,
+            module.isCompleted
+                ? LucideIcons.checkCircle2
+                : LucideIcons.playCircle,
             color: module.isCompleted ? AppColors.secondary : AppColors.primary,
+            size: 22,
           );
           final details = _ModuleDetails(module: module);
           final action = TextButton(

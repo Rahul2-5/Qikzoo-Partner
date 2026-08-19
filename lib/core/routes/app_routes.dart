@@ -4,9 +4,10 @@ class AppRoutes {
   static const splash = '/splash';
   static const welcome = '/welcome';
   static const partnerBenefits = '/partner-benefits';
+  static const onboardingEarnings = '/onboarding/earnings';
   static const otp = '/otp';
+  static const mobileNumber = '/otp';
   static const otpVerification = '/otp/verify';
-  static const setPassword = '/set-password';
   static const personalInfo = '/registration/personal-info';
   static const address = '/registration/address';
   static const kyc = '/registration/kyc';
@@ -36,8 +37,18 @@ class AppRoutes {
   static const wallet = '/wallet';
   static const support = '/support';
   static const profile = '/profile';
+  static const myProfile = '/profile/my-profile';
+  static const wrongAction = '/profile/wrong-action';
+  static const loginHistory = '/profile/login-history';
+  static const emergencySos = '/emergency-sos';
+  static const ticketList = '/support/tickets';
+  static const ticketChat = '/support/tickets/chat';
+  static const payoutsDetail = '/earnings/payouts';
+  static const earningsHistoryDetail = '/earnings/history';
   static const manageVehicleDetails = '/profile/vehicle-details';
   static const manageDocuments = '/profile/documents';
   static const notifications = '/notifications';
   static const settings = '/settings';
 }
+
+

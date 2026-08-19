@@ -3,6 +3,7 @@ import 'package:flutter/widget_previews.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/assets/app_assets.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
@@ -89,41 +90,15 @@ class PartnerWordmark extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Qikzoo',
-                  style: AppTypography.h2.copyWith(
-                    color: AppColors.primaryDark,
-                    fontSize: compact ? 18 : 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.7,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primarySoft,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                  child: Text(
-                    'PARTNER',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.primary,
-                      fontSize: compact ? 7 : 8,
-                      height: 1,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: compact ? 0.6 : 0.8,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+             Image.asset(
+                AppAssets.mainLogo,
+                width: compact ? 110 : 135,
+                height: compact ? 32 : 38,
+                fit: BoxFit.contain,
+                alignment: Alignment.centerLeft,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+          
             if (subtitle != null) ...[
               const SizedBox(height: 2),
               Text(
@@ -307,11 +282,21 @@ class PartnerAvatarAction extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: Text(
-                        initials.toUpperCase(),
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w900,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/icons/user.webp',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Text(
+                              initials.toUpperCase(),
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),

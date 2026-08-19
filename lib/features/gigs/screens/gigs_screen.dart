@@ -1,234 +1,285 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../models/dashboard/dashboard_stats_model.dart';
-import '../../../providers/dashboard/dashboard_provider.dart';
-import '../../../providers/notifications/notifications_provider.dart';
-import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
-import '../../../shared/widgets/misc/empty_state.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
-import '../../../shared/widgets/navigation/partner_app_header.dart';
 
-/// Scheduled/bookable gig shifts are not backed by any API yet — this
-/// screen deliberately shows an honest "coming soon" state rather than
-/// fabricated bookings, payouts, or slot counts.
-class GigsScreen extends ConsumerWidget {
+class GigsScreen extends StatelessWidget {
   const GigsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final availability =
-        ref.watch(dashboardStatsProvider).valueOrNull?.availabilityStatus;
-    final unreadNotificationCount = ref
-        .watch(notificationsProvider)
-        .valueOrNull
-        ?.where((notification) => !notification.isRead)
-        .length ??
-        0;
-
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: AppTabScaffold(
-        currentIndex: 1,
+        currentIndex: 1, // 2nd tab
         child: ResponsiveFrame(
-          maxWidth: 680,
+          maxWidth: 520,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xs,
-                  AppSpacing.sm,
-                  AppSpacing.xs,
-                  0,
-                ),
-                child: _GigsHeader(
-                  availability: availability,
-                  unreadNotificationCount: unreadNotificationCount,
-                ),
-              ),
-              const Expanded(
-                child: EmptyState(
-                  icon: LucideIcons.calendarClock,
-                  title: 'Gig scheduling is coming soon',
-                  message:
-                      "You'll be able to book fixed-hour gigs and see estimated payouts here once it launches.",
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GigsHeader extends StatelessWidget {
-  const _GigsHeader({
-    this.availability,
-    required this.unreadNotificationCount,
-  });
-
-  final RiderAvailabilityStatus? availability;
-  final int unreadNotificationCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final isOnline = availability?.isOnlineFacing ?? false;
-    final isOffline = availability == RiderAvailabilityStatus.offline;
-    final statusLabel = availability?.label ?? 'Checking status';
-    final statusColor = isOnline
-        ? AppColors.success
-        : isOffline
-            ? AppColors.textSecondary
-            : AppColors.warning;
-
-    return SizedBox(
-      height: 58,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // The previous stacked header let its left and right controls cover
-          // the wordmark on narrow phones. A regular row gives every control a
-          // real width, while retaining the brand on standard phone widths.
-          final showWordmark = constraints.maxWidth >= 330;
-
-          return Row(
-            children: [
-              _AvailabilityControl(
-                label: statusLabel,
-                color: statusColor,
-                compact: !showWordmark,
-                onTap: () => AppSnackBar.info(
-                  context,
-                  isOnline
-                      ? 'You are online and ready for deliveries.'
-                      : 'Go online from the dashboard to start receiving deliveries.',
-                ),
-              ),
-              if (showWordmark) ...[
-                const Spacer(),
-                const _PartnerWordmark(),
-                const Spacer(),
-              ] else
-                const Spacer(),
-              PartnerNotificationButton(
-                unreadCount: unreadNotificationCount,
-                onPressed: () => Get.toNamed(AppRoutes.notifications),
-              ),
-              _HeaderAction(
-                icon: LucideIcons.helpCircle,
-                label: 'Gig help',
-                onTap: () => AppSnackBar.info(
-                  context,
-                  'Booking support is available in Help & Support.',
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _AvailabilityControl extends StatelessWidget {
-  const _AvailabilityControl({
-    required this.label,
-    required this.color,
-    required this.onTap,
-    this.compact = false,
-  });
-
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: 'You are $label',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-            child: Ink(
-              height: 44,
-              width: compact ? 118 : 128,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-                border:
-                    Border.all(color: AppColors.border.withValues(alpha: .75)),
-                boxShadow: AppShadows.control,
-              ),
-              child: Row(
+              const SizedBox(height: 12),
+              // Calendar Mockup Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration:
-                        BoxDecoration(color: color, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMedium.copyWith(fontSize: 13),
+                  Text(
+                    'Gigs Schedule',
+                    style: AppTypography.h1.copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const Icon(
-                    LucideIcons.chevronDown,
-                    color: AppColors.textPrimary,
-                    size: 16,
+                  TextButton.icon(
+                    onPressed: () {
+                      Get.rawSnackbar(
+                        message: 'Gigs history is coming soon',
+                        backgroundColor: Colors.black,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                    icon: const Icon(LucideIcons.history, size: 14, color: AppColors.primary),
+                    label: const Text(
+                      'History',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 16),
+              _buildMockCalendarRow(),
+              const SizedBox(height: 20),
+
+              // Slots list locked behind Coming Soon overlay
+              Expanded(
+                child: Stack(
+                  children: [
+                    // Mock Gigs slots lists
+                    ListView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildMockSlotCard(
+                          time: '07:00 AM - 11:00 AM',
+                          name: 'Breakfast Shift',
+                          payout: '₹180 - ₹220',
+                        ),
+                        const SizedBox(height: 12),
+                        _buildMockSlotCard(
+                          time: '12:00 PM - 04:00 PM',
+                          name: 'Lunch Shift',
+                          payout: '₹220 - ₹280',
+                        ),
+                        const SizedBox(height: 12),
+                        _buildMockSlotCard(
+                          time: '07:00 PM - 11:00 PM',
+                          name: 'Dinner Shift',
+                          payout: '₹250 - ₹350',
+                        ),
+                      ],
+                    ),
+
+                    // Glassmorphic Coming Soon Overlay Card
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.border),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.primarySoft,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(LucideIcons.calendarClock, color: AppColors.primary, size: 32),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Gigs Scheduling is Coming Soon',
+                                    textAlign: TextAlign.center,
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'You will be able to book fixed-hour slots and see estimated payouts once it launches in your area.',
+                                    textAlign: TextAlign.center,
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 44,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Get.rawSnackbar(
+                                          message: 'Gigs history is coming soon',
+                                          backgroundColor: Colors.black,
+                                          duration: const Duration(seconds: 2),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'View Gig History',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-      );
-}
-
-class _PartnerWordmark extends StatelessWidget {
-  const _PartnerWordmark();
-
-  @override
-  Widget build(BuildContext context) => const PartnerWordmark();
-}
-
-class _HeaderAction extends StatelessWidget {
-  const _HeaderAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => PartnerHeaderIconButton(
-        icon: icon,
-        label: label,
-        onPressed: onTap,
-      );
-}
-
-@Preview(name: 'Gigs schedule', group: 'Gigs', size: Size(390, 844))
-Widget gigsScreenPreview() => const ProviderScope(
-      child: MaterialApp(home: GigsScreen()),
+      ),
     );
+  }
+
+  Widget _buildMockCalendarRow() {
+    final days = [
+      {'day': 'Mon', 'date': '17'},
+      {'day': 'Tue', 'date': '18', 'selected': 'true'},
+      {'day': 'Wed', 'date': '19'},
+      {'day': 'Thu', 'date': '20'},
+      {'day': 'Fri', 'date': '21'},
+      {'day': 'Sat', 'date': '22'},
+      {'day': 'Sun', 'date': '23'},
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: days.map((d) {
+        final isSelected = d['selected'] == 'true';
+        return Container(
+          width: 44,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+          ),
+          child: Column(
+            children: [
+              Text(
+                d['day']!,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                d['date']!,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildMockSlotCard({
+    required String time,
+    required String name,
+    required String payout,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                time,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                payout,
+                style: const TextStyle(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            name,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
