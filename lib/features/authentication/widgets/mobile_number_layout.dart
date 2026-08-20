@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -9,6 +11,7 @@ import '../../../models/authentication/auth_flow.dart';
 import '../../../shared/widgets/buttons/icon_button_custom.dart';
 import '../../../shared/widgets/buttons/primary_cta_button.dart';
 import '../../../shared/widgets/branding/qikzoo_partner_logo.dart';
+import '../../../shared/widgets/inputs/app_text_field.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import 'phone_input_field.dart';
@@ -25,6 +28,9 @@ class MobileNumberLayout extends StatelessWidget {
     required this.onPhoneChanged,
     required this.onContinue,
     this.onSubmitted,
+    this.nameController,
+    this.nameErrorText,
+    this.onNameChanged,
   });
 
   final AuthFlow flow;
@@ -36,6 +42,9 @@ class MobileNumberLayout extends StatelessWidget {
   final ValueChanged<String> onPhoneChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
+  final TextEditingController? nameController;
+  final String? nameErrorText;
+  final ValueChanged<String>? onNameChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +115,9 @@ class MobileNumberLayout extends StatelessWidget {
                                       onPhoneChanged: onPhoneChanged,
                                       onContinue: onContinue,
                                       onSubmitted: onSubmitted,
+                                      nameController: nameController,
+                                      nameErrorText: nameErrorText,
+                                      onNameChanged: onNameChanged,
                                     ),
                                   ),
                                 ),
@@ -137,6 +149,9 @@ class _NarrowLoginLayout extends StatelessWidget {
     required this.onPhoneChanged,
     required this.onContinue,
     required this.onSubmitted,
+    this.nameController,
+    this.nameErrorText,
+    this.onNameChanged,
   });
 
   final AuthFlow flow;
@@ -148,6 +163,9 @@ class _NarrowLoginLayout extends StatelessWidget {
   final ValueChanged<String> onPhoneChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
+  final TextEditingController? nameController;
+  final String? nameErrorText;
+  final ValueChanged<String>? onNameChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +201,9 @@ class _NarrowLoginLayout extends StatelessWidget {
               onPhoneChanged: onPhoneChanged,
               onContinue: onContinue,
               onSubmitted: onSubmitted,
+              nameController: nameController,
+              nameErrorText: nameErrorText,
+              onNameChanged: onNameChanged,
             ),
           ),
         ),
@@ -280,6 +301,9 @@ class _LoginFormCard extends StatelessWidget {
     required this.onPhoneChanged,
     required this.onContinue,
     required this.onSubmitted,
+    this.nameController,
+    this.nameErrorText,
+    this.onNameChanged,
   });
 
   final AuthFlow flow;
@@ -291,6 +315,9 @@ class _LoginFormCard extends StatelessWidget {
   final ValueChanged<String> onPhoneChanged;
   final VoidCallback? onContinue;
   final ValueChanged<String>? onSubmitted;
+  final TextEditingController? nameController;
+  final String? nameErrorText;
+  final ValueChanged<String>? onNameChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +386,21 @@ class _LoginFormCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: isCompact ? AppSpacing.md : AppSpacing.lg),
+          if (flow == AuthFlow.signUp && nameController != null) ...[
+            const _FieldLabel(text: 'Full name'),
+            const SizedBox(height: 6),
+            AppTextField(
+              label: 'Full name',
+              controller: nameController!,
+              showFloatingLabel: false,
+              hint: 'Enter your full name',
+              enabled: !isRequesting,
+              textCapitalization: TextCapitalization.words,
+              errorText: nameErrorText,
+              onChanged: onNameChanged,
+            ),
+            SizedBox(height: isCompact ? AppSpacing.md : AppSpacing.lg),
+          ],
           const _FieldLabel(text: 'Mobile number'),
           const SizedBox(height: 6),
           PhoneInputField(
@@ -380,7 +422,53 @@ class _LoginFormCard extends StatelessWidget {
             isLoading: isRequesting,
             onPressed: onContinue,
           ),
+          const SizedBox(height: AppSpacing.md),
+          _FlowSwitchLink(flow: flow),
         ],
+      ),
+    );
+  }
+}
+
+/// The only place [AuthFlow.signUp] is ever reachable from the default
+/// splash -> onboarding-carousel path, which always lands on login.
+class _FlowSwitchLink extends StatelessWidget {
+  const _FlowSwitchLink({required this.flow});
+
+  final AuthFlow flow;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLogin = flow == AuthFlow.login;
+    final prompt = isLogin ? "New here?" : 'Already a partner?';
+    final actionLabel = isLogin ? 'Create a partner account' : 'Log in';
+
+    return Center(
+      child: TextButton(
+        onPressed: () => Get.offNamed(
+          authFlowRoute(
+            AppRoutes.mobileNumber,
+            isLogin ? AuthFlow.signUp : AuthFlow.login,
+          ),
+        ),
+        child: RichText(
+          text: TextSpan(
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+            children: [
+              TextSpan(text: '$prompt  '),
+              TextSpan(
+                text: actionLabel,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

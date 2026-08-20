@@ -27,7 +27,11 @@ class MobileNumberScreen extends ConsumerStatefulWidget {
 
 class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
   late final TextEditingController _controller;
+  late final TextEditingController _nameController;
   bool _isRequesting = false;
+  bool _nameTouched = false;
+
+  bool get _isNameValid => Validators.isValidFullName(_nameController.text);
 
   @override
   void initState() {
@@ -35,11 +39,18 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
     _controller = TextEditingController(
       text: ref.read(phoneNumberUiProvider),
     );
+    _nameController = TextEditingController(
+      text: ref.read(signupNameUiProvider),
+    );
+    _nameController.addListener(() {
+      ref.read(signupNameUiProvider.notifier).state = _nameController.text;
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -47,6 +58,15 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
     if (_isRequesting) return;
     if (!Validators.isValidPhone(phone)) {
       AppSnackBar.warning(context, 'Please enter a valid mobile number.');
+      return;
+    }
+
+    // The backend requires a name to create a brand-new rider account on
+    // the verify-otp call (see RiderAuthService.verifyOtpLogin) — collect
+    // it here, before the OTP is even sent, rather than on the next screen.
+    if (widget.flow == AuthFlow.signUp && !_isNameValid) {
+      setState(() => _nameTouched = true);
+      AppSnackBar.warning(context, 'Please enter your full name.');
       return;
     }
 
@@ -102,6 +122,11 @@ class _MobileNumberScreenState extends ConsumerState<MobileNumberScreen> {
           ? (_) => _onContinue(phone)
           : null,
       onContinue: canAttemptContinue ? () => _onContinue(phone) : null,
+      nameController: _nameController,
+      nameErrorText: _nameTouched && !_isNameValid
+          ? 'Enter 2-60 characters, no emoji'
+          : null,
+      onNameChanged: (_) => setState(() => _nameTouched = true),
     );
   }
 }
