@@ -151,11 +151,13 @@ class AppTheme {
         radioTheme: const RadioThemeData(
           fillColor: WidgetStatePropertyAll(AppColors.primary),
         ),
-        bottomSheetTheme: BottomSheetThemeData(
+        bottomSheetTheme: const BottomSheetThemeData(
           backgroundColor: GlassTheme.surfaceColor,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sheet),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadius.sheet),
+            ),
           ),
           showDragHandle: true,
           dragHandleColor: GlassTheme.borderColor,

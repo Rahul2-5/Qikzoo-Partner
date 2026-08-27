@@ -11,11 +11,15 @@ class RiderLocationPing {
   final double? speed;
   final int? batteryPercent;
   final LocationMovementState movementState;
+  final DateTime recordedAt;
+  final int sequence;
 
   const RiderLocationPing({
     required this.lat,
     required this.lng,
     required this.movementState,
+    required this.recordedAt,
+    required this.sequence,
     this.accuracy,
     this.heading,
     this.speed,
@@ -30,5 +34,7 @@ class RiderLocationPing {
         if (speed != null) 'speed': speed,
         if (batteryPercent != null) 'batteryPercent': batteryPercent,
         'movementState': movementState.wireValue,
+        'recordedAt': recordedAt.toUtc().toIso8601String(),
+        'sequence': sequence,
       };
 }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sms_autofill/sms_autofill.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../shared/widgets/branding/qikzoo_partner_logo.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -20,6 +21,9 @@ import '../../../shared/widgets/misc/countdown_timer.dart';
 import '../../../repositories/profile/profile_repository.dart';
 import '../../../repositories/onboarding_status/onboarding_status_repository.dart';
 import '../../../core/navigation/next_onboarding_step_resolver.dart';
+import '../../../core/referrals/referral_attribution_service.dart';
+import '../../../core/storage/secure_storage.dart';
+import '../../../repositories/referrals/referral_repository.dart';
 
 const _qikzooNavy = Color(0xFF162B4D);
 
@@ -128,6 +132,14 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
     if (session?.isAuthenticated == true) {
       setState(() => _isVerifying = true);
       try {
+        if (session!.isNewRider) {
+          final attribution = ReferralAttributionService(SecureTokenStorage());
+          final code = await attribution.pendingCode();
+          if (code != null) {
+            await ref.read(referralRepositoryProvider).applyCode(code);
+            await attribution.clear();
+          }
+        }
         final profile = await ref.read(profileRepositoryProvider).getProfile();
         final onboarding =
             await ref.read(onboardingStatusRepositoryProvider).getStatus();
@@ -200,10 +212,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // No logo here: the mobile-number screen already
-                      // showed it as the flow's entry point. This screen
-                      // just advances the step badge, matching the
-                      // welcome (1/2) → benefits (2/2) onboarding pattern.
                       const _OtpTopBar(),
                       const SizedBox(height: AppSpacing.lg),
                       Container(
@@ -318,7 +326,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   }
 }
 
-/// Back button + a "2/2" step badge — the same widget shape used for the
+/// Back button + a "2/2" step badge Ã¢â‚¬â€ the same widget shape used for the
 /// login flow's first step and for onboarding's welcome/benefits pair.
 class _OtpTopBar extends StatelessWidget {
   const _OtpTopBar();
@@ -339,6 +347,8 @@ class _OtpTopBar extends StatelessWidget {
                 }
               },
             ),
+            const Spacer(),
+            const QikzooPartnerLogo(width: 150),
             const Spacer(),
             const _StepBadge(current: 2, total: 2),
           ],

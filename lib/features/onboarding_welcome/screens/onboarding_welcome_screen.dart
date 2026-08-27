@@ -286,11 +286,11 @@ class _OnboardingStepView extends StatelessWidget {
                   child: Image.asset(
                     AppAssets.partnerLogoTight,
                     width: 175,
-                    height: 50,
+                    height: 58,
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => Image.asset(
-                      AppAssets.mainLogo,
-                      height: 50,
+                      AppAssets.partnerLogoTight,
+                      height: 58,
                       fit: BoxFit.contain,
                     ),
                   ),

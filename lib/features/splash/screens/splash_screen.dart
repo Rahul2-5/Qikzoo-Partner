@@ -35,14 +35,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Future<void> _bootstrap() async {
     try {
       final delay = Future.delayed(const Duration(milliseconds: 1000));
-      final result = await ref
-          .read(authSessionProvider.notifier)
-          .restoreSession()
-          .timeout(
-            const Duration(seconds: 6),
-            onTimeout: () =>
-                const SessionRestoreResult(SessionRestoreOutcome.offline),
-          );
+      final result =
+          await ref.read(authSessionProvider.notifier).restoreSession().timeout(
+                const Duration(seconds: 6),
+                onTimeout: () =>
+                    const SessionRestoreResult(SessionRestoreOutcome.offline),
+              );
       await delay;
       if (!mounted) return;
       _handleResult(result);
@@ -107,9 +105,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       ),
     );
     final logo = Image.asset(
-      AppAssets.mainLogo,
+      AppAssets.partnerLogoTight,
       width: isCompact ? 280 : 340,
-      height: isCompact ? 140 : 170,
+      height: isCompact ? 100 : 120,
       fit: BoxFit.contain,
       semanticLabel: 'Qikzoo Delivery Partner logo',
     );

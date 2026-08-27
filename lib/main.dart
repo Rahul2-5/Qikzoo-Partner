@@ -10,6 +10,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app.dart';
 import 'core/location/rider_background_location_service.dart';
 import 'core/push/push_service.dart';
+import 'core/referrals/referral_attribution_service.dart';
+import 'core/storage/secure_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +20,12 @@ Future<void> main() async {
   ]);
   _registerFontLicenses();
   await dotenv.load(fileName: '.env');
+  await ReferralAttributionService(SecureTokenStorage())
+      .captureLaunchReferral();
   RiderBackgroundLocationService.instance.initialize();
 
   // iOS has no GoogleService-Info.plist yet (see ios/Runner/Info.plist and
-  // push_service.dart) — Firebase.initializeApp() would throw without it,
+  // push_service.dart) â€” Firebase.initializeApp() would throw without it,
   // so this stays Android-only until real iOS config is supplied.
   if (Platform.isAndroid) {
     await Firebase.initializeApp();

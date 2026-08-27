@@ -33,6 +33,7 @@ class RiderLocationController extends Notifier<RiderLocationTrackingState> {
   Position? _lastPosition;
   bool _appInBackground = false;
   int _consecutiveFailures = 0;
+  int _lastSequence = 0;
 
   static const _maxConsecutiveFailuresBeforeSignalLost = 3;
 
@@ -202,6 +203,8 @@ class RiderLocationController extends Notifier<RiderLocationTrackingState> {
               heading: position.heading.isNaN ? null : position.heading,
               speed: position.speed.isNaN ? null : position.speed,
               movementState: movementState,
+              recordedAt: position.timestamp,
+              sequence: _nextSequence(),
             ),
           );
       _consecutiveFailures = 0;
@@ -229,6 +232,12 @@ class RiderLocationController extends Notifier<RiderLocationTrackingState> {
       // must never crash the loop or force the rider offline; the next
       // scheduled tick tries again on its own.
     }
+  }
+
+  int _nextSequence() {
+    final now = DateTime.now().microsecondsSinceEpoch;
+    _lastSequence = now > _lastSequence ? now : _lastSequence + 1;
+    return _lastSequence;
   }
 }
 

@@ -1,18 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/payment_failure_message.dart';
+import '../../../providers/wallet/wallet_provider.dart';
+import '../../../repositories/wallet/wallet_repository.dart';
 
-class DepositCashSheet extends StatefulWidget {
-  final double currentCashInHand;
-  final VoidCallback? onDepositSuccess;
-
+class DepositCashSheet extends ConsumerStatefulWidget {
   const DepositCashSheet({
     super.key,
     required this.currentCashInHand,
     this.onDepositSuccess,
   });
+
+  final double currentCashInHand;
+  final VoidCallback? onDepositSuccess;
 
   static Future<void> show(
     BuildContext context, {
@@ -31,123 +37,94 @@ class DepositCashSheet extends StatefulWidget {
   }
 
   @override
-  State<DepositCashSheet> createState() => _DepositCashSheetState();
+  ConsumerState<DepositCashSheet> createState() => _DepositCashSheetState();
 }
 
-class _DepositCashSheetState extends State<DepositCashSheet> {
-  late TextEditingController _amountController;
-  int _selectedMethod = 0; // 0: UPI, 1: QR Code, 2: NetBanking
-  bool _isProcessing = false;
+class _DepositCashSheetState extends ConsumerState<DepositCashSheet> {
+  late final TextEditingController _amountController;
+  CashDepositModel? _deposit;
+  Timer? _poller;
+  bool _loading = false;
+  bool _successReported = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    final defaultAmount = widget.currentCashInHand > 0 ? widget.currentCashInHand : 500.0;
-    _amountController = TextEditingController(text: defaultAmount.toInt().toString());
+    _amountController = TextEditingController(
+      text: widget.currentCashInHand.toStringAsFixed(2),
+    );
   }
 
   @override
   void dispose() {
+    _poller?.cancel();
     _amountController.dispose();
     super.dispose();
   }
 
-  void _setAmount(double amount) {
-    setState(() {
-      _amountController.text = amount.toInt().toString();
-    });
-  }
-
-  Future<void> _processDeposit() async {
-    final amount = double.tryParse(_amountController.text.trim()) ?? 0;
-    if (amount <= 0) {
-      Get.rawSnackbar(
-        message: 'Please enter a valid amount',
-        backgroundColor: Colors.red,
-      );
+  Future<void> _createDeposit() async {
+    final rupees = double.tryParse(_amountController.text.trim()) ?? 0;
+    final amountPaise = (rupees * 100).round();
+    final maxPaise = (widget.currentCashInHand * 100).round();
+    if (amountPaise <= 0 || amountPaise > maxPaise) {
+      setState(() {
+        _error = 'Enter an amount up to your COD cash in hand.';
+      });
       return;
     }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final deposit = await ref
+          .read(walletRepositoryProvider)
+          .createCashDeposit(amountPaise);
+      if (!mounted) return;
+      setState(() => _deposit = deposit);
+      _startPolling();
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _error = paymentFailureMessage(error.toString()) ??
+              'Payment QR could not be generated. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
-    setState(() => _isProcessing = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
+  void _startPolling() {
+    _poller?.cancel();
+    _poller = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
+    unawaited(_checkStatus());
+  }
 
-    if (!mounted) return;
-    setState(() => _isProcessing = false);
-    Navigator.of(context).pop();
-
-    // Show Success Dialog
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDCFCE7),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(LucideIcons.checkCheck, color: Color(0xFF0D8538), size: 36),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Deposit Successful!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '₹${amount.toStringAsFixed(0)} deposited to Qikzoo COD settlement.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF4B5563),
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Your cash holding limit has been restored.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0D8538),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: ElevatedButton(
-                  onPressed: () => Get.back(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D8538),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Done', style: TextStyle(fontWeight: FontWeight.w800)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    widget.onDepositSuccess?.call();
+  Future<void> _checkStatus() async {
+    final current = _deposit;
+    if (current == null || current.isTerminal) return;
+    try {
+      final latest =
+          await ref.read(walletRepositoryProvider).getCashDeposit(current.id);
+      if (!mounted) return;
+      setState(() => _deposit = latest);
+      if (latest.isTerminal) _poller?.cancel();
+      if (latest.isPaid && !_successReported) {
+        _successReported = true;
+        ref.invalidate(walletProvider);
+        ref.invalidate(transactionsProvider);
+        widget.onDepositSuccess?.call();
+      }
+    } catch (_) {
+      // Keep the last confirmed status and let the next poll retry.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final deposit = _deposit;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -164,7 +141,6 @@ class _DepositCashSheetState extends State<DepositCashSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drag handle
             Center(
               child: Container(
                 width: 40,
@@ -176,245 +152,154 @@ class _DepositCashSheetState extends State<DepositCashSheet> {
               ),
             ),
             const SizedBox(height: 14),
-
-            // Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Deposit Floating Cash',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                const Expanded(
+                  child: Text(
+                    'Deposit COD Cash',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.x, color: Color(0xFF6B7280), size: 20),
                   onPressed: () => Navigator.of(context).pop(),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  icon: const Icon(LucideIcons.x),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
             Text(
-              'Current Cash in Hand: ${CurrencyFormatter.rupeesPrecise(widget.currentCashInHand)}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF6B7280),
-              ),
+              'Cash held for Qikzoo: ${CurrencyFormatter.rupeesPrecise(widget.currentCashInHand)}',
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Delivery earnings are not included here. Deposits only reduce physical COD cash recorded from completed cash orders.',
+              style: TextStyle(color: Color(0xFF4B5563), fontSize: 12.5),
             ),
             const SizedBox(height: 16),
-
-            // Amount Input
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
-              ),
-              decoration: InputDecoration(
-                prefixText: '₹ ',
-                prefixStyle: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
-                labelText: 'Enter amount to deposit',
-                labelStyle: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
-                filled: true,
-                fillColor: const Color(0xFFF9FAFB),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF0D8538), width: 1.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Quick Chips
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildQuickChip('₹500', 500),
-                _buildQuickChip('₹1,000', 1000),
-                _buildQuickChip('₹2,000', 2000),
-                if (widget.currentCashInHand > 0)
-                  _buildQuickChip('Full Amount', widget.currentCashInHand),
-              ],
-            ),
-            const SizedBox(height: 18),
-
-            // Payment Methods
-            const Text(
-              'Select Payment Option',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            _buildPaymentMethodTile(
-              index: 0,
-              icon: LucideIcons.smartphone,
-              title: 'UPI Apps (GPay, PhonePe, Paytm)',
-              subtitle: 'Instant auto-verification',
-            ),
-            const SizedBox(height: 8),
-            _buildPaymentMethodTile(
-              index: 1,
-              icon: LucideIcons.qrCode,
-              title: 'Show Dynamic UPI QR Code',
-              subtitle: 'Scan and pay from any banking app',
-            ),
-            const SizedBox(height: 8),
-            _buildPaymentMethodTile(
-              index: 2,
-              icon: LucideIcons.landmark,
-              title: 'Net Banking / Debit Card',
-              subtitle: 'Via secure banking gateway',
-            ),
-            const SizedBox(height: 20),
-
-            // Proceed Button
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isProcessing ? null : _processDeposit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0D8538),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
+            if (deposit == null) ...[
+              TextField(
+                controller: _amountController,
+                enabled: !_loading && widget.currentCashInHand > 0,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  prefixText: '₹ ',
+                  labelText: 'Amount to deposit',
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: _isProcessing
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Proceed to Deposit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickChip(String label, double amount) {
-    return InkWell(
-      onTap: () => _setAmount(amount),
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF374151),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentMethodTile({
-    required int index,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    final isSelected = _selectedMethod == index;
-    return InkWell(
-      onTap: () => setState(() => _selectedMethod = index),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF0D8538) : const Color(0xFFE5E7EB),
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFF3F4F6),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: isSelected ? const Color(0xFF0D8538) : const Color(0xFF4B5563),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? const Color(0xFF0D8538) : const Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
+                  for (final amount in [
+                    500.0,
+                    1000.0,
+                    widget.currentCashInHand
+                  ])
+                    if (amount > 0 && amount <= widget.currentCashInHand)
+                      ActionChip(
+                        label: Text(
+                          amount == widget.currentCashInHand
+                              ? 'Full amount'
+                              : CurrencyFormatter.rupeesPrecise(amount),
+                        ),
+                        onPressed: () =>
+                            _amountController.text = amount.toStringAsFixed(2),
+                      ),
                 ],
               ),
-            ),
-            Radio<int>(
-              value: index,
-              groupValue: _selectedMethod,
-              activeColor: const Color(0xFF0D8538),
-              onChanged: (val) => setState(() => _selectedMethod = val!),
-            ),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                Text(_error!, style: const TextStyle(color: Colors.red)),
+              ],
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _loading || widget.currentCashInHand <= 0
+                      ? null
+                      : _createDeposit,
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(LucideIcons.qrCode),
+                  label: const Text('Generate payment QR'),
+                ),
+              ),
+            ] else ...[
+              _DepositQrState(deposit: deposit, onCheck: _checkStatus),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DepositQrState extends StatelessWidget {
+  const _DepositQrState({required this.deposit, required this.onCheck});
+
+  final CashDepositModel deposit;
+  final VoidCallback onCheck;
+
+  @override
+  Widget build(BuildContext context) {
+    final paid = deposit.isPaid;
+    return Column(
+      children: [
+        Text(
+          CurrencyFormatter.rupeesPrecise(deposit.amountPaise / 100),
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 12),
+        if (!paid && deposit.qrPayload.startsWith('upi://pay?'))
+          Container(
+            width: 240,
+            height: 240,
+            padding: const EdgeInsets.all(12),
+            color: Colors.white,
+            child: QrImageView(data: deposit.qrPayload),
+          )
+        else
+          Icon(
+            paid ? LucideIcons.badgeCheck : LucideIcons.alertCircle,
+            size: 64,
+            color: paid ? const Color(0xFF0D8538) : Colors.orange,
+          ),
+        const SizedBox(height: 12),
+        Text(
+          paid
+              ? 'Deposit verified. COD cash in hand is updated.'
+              : deposit.status == 'PENDING'
+                  ? 'Scan with any UPI banking app. Payment status and the exact amount are verified automatically.'
+                  : deposit.failureReason ??
+                      'This deposit could not be completed.',
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        if (!paid)
+          OutlinedButton.icon(
+            onPressed: onCheck,
+            icon: const Icon(LucideIcons.refreshCw),
+            label: const Text('Check payment status'),
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Done'),
+            ),
+          ),
+      ],
     );
   }
 }

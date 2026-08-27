@@ -140,7 +140,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       _isDirty;
 
   /// Asks the backend where the rider belongs next rather than hardcoding
-  /// the following onboarding screen — see [NextOnboardingStepResolver].
+  /// the following onboarding screen ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â see [NextOnboardingStepResolver].
   /// [profile] is the just-saved profile returned by [updatePersonalDetails]
   /// so this needs no extra fetch. If the status lookup is unavailable, the
   /// saved profile tells us whether Address is still needed, preventing an
@@ -169,15 +169,17 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       _isOffline = false;
     });
     try {
-      final updatedProfile =
-          await ref.read(profileRepositoryProvider).updatePersonalDetails(
-                name: _nameController.text.trim(),
-                email: _emailController.text.trim().isEmpty
-                    ? null
-                    : _emailController.text.trim(),
-                dateOfBirth: _dateOfBirth!,
-                gender: _gender!,
-              ).timeout(_saveTimeout);
+      final updatedProfile = await ref
+          .read(profileRepositoryProvider)
+          .updatePersonalDetails(
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim().isEmpty
+                ? null
+                : _emailController.text.trim(),
+            dateOfBirth: _dateOfBirth!,
+            gender: _gender!,
+          )
+          .timeout(_saveTimeout);
       if (!mounted) return;
       final nextRoute = await _resolveNextRoute(updatedProfile);
       if (!mounted) return;
@@ -390,7 +392,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               icon: LucideIcons.lock,
               color: AppColors.warning,
               message:
-                  'This section is locked and can no longer be edited — it has already been submitted for review.',
+                  'This section is locked and can no longer be edited ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â it has already been submitted for review.',
             ),
             const SizedBox(height: AppSpacing.md),
           ],

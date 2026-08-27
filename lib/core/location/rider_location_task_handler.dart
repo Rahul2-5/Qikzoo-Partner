@@ -29,6 +29,7 @@ void riderLocationTaskCallback() {
 
 class RiderLocationTaskHandler extends TaskHandler {
   LocationRepository? _repository;
+  int _lastSequence = 0;
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -63,6 +64,8 @@ class RiderLocationTaskHandler extends TaskHandler {
           heading: position.heading.isNaN ? null : position.heading,
           speed: position.speed.isNaN ? null : position.speed,
           movementState: LocationMovementState.background,
+          recordedAt: position.timestamp,
+          sequence: _nextSequence(),
         ),
       );
     } catch (_) {
@@ -71,6 +74,12 @@ class RiderLocationTaskHandler extends TaskHandler {
       // backend's own stale-presence sweep (120s) force-offlines the rider
       // rather than leaving them silently stuck "available" server-side.
     }
+  }
+
+  int _nextSequence() {
+    final now = DateTime.now().microsecondsSinceEpoch;
+    _lastSequence = now > _lastSequence ? now : _lastSequence + 1;
+    return _lastSequence;
   }
 
   @override

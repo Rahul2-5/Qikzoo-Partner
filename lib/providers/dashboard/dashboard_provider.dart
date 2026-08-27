@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../repositories/dashboard/dashboard_repository.dart';
 import '../../models/dashboard/dashboard_stats_model.dart';
+import '../../models/dashboard/go_online_eligibility_model.dart';
 
 class DashboardStatsNotifier extends AsyncNotifier<DashboardStatsModel> {
   int _refreshVersion = 0;
@@ -20,6 +21,9 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStatsModel> {
     );
     if (refreshVersion == _refreshVersion) state = refreshed;
   }
+
+  Future<GoOnlineEligibilityModel> checkOnlineEligibility() =>
+      ref.read(dashboardRepositoryProvider).getOnlineEligibility();
 
   /// Deliberately does NOT go through [AsyncValue.guard]: a failed toggle
   /// (offline, a 400 on an invalid backend transition, a 401) must not

@@ -28,6 +28,7 @@ import '../../features/training/screens/training_screen.dart';
 import '../../features/agreement/screens/agreement_screen.dart';
 import '../../features/approval/screens/approval_screen.dart';
 import '../../features/orders/screens/active_order_screen.dart';
+import '../../features/orders/screens/delivery_success_screen.dart';
 import '../../features/orders/screens/incoming_offer_screen.dart';
 import '../../features/orders/screens/order_details_screen.dart';
 import '../../features/orders/screens/orders_screen.dart';
@@ -46,6 +47,7 @@ import '../../features/settings/screens/settings_screen.dart';
 import '../../features/support/screens/help_support_screen.dart';
 import '../../features/vehicle_details/screens/manage_vehicle_details_screen.dart';
 import '../../models/authentication/auth_flow.dart';
+import '../../models/orders/delivery_success_model.dart';
 
 class AppPages {
   AppPages._();
@@ -123,6 +125,12 @@ class AppPages {
         name: AppRoutes.incomingOffer, page: () => const IncomingOfferScreen()),
     GetPage(name: AppRoutes.activeOrder, page: () => const ActiveOrderScreen()),
     GetPage(
+      name: AppRoutes.deliverySuccess,
+      page: () => DeliverySuccessScreen(
+        details: Get.arguments as DeliverySuccessModel,
+      ),
+    ),
+    GetPage(
       name: AppRoutes.orderDetails,
       page: () => OrderDetailsScreen(riderOrderId: Get.arguments as String),
     ),
@@ -131,12 +139,17 @@ class AppPages {
     GetPage(name: AppRoutes.profile, page: () => const MoreScreen()),
     GetPage(name: AppRoutes.myProfile, page: () => const ProfileScreen()),
     GetPage(name: AppRoutes.wrongAction, page: () => const WrongActionScreen()),
-    GetPage(name: AppRoutes.loginHistory, page: () => const LoginHistoryScreen()),
-    GetPage(name: AppRoutes.emergencySos, page: () => const EmergencySosScreen()),
+    GetPage(
+        name: AppRoutes.loginHistory, page: () => const LoginHistoryScreen()),
+    GetPage(
+        name: AppRoutes.emergencySos, page: () => const EmergencySosScreen()),
     GetPage(name: AppRoutes.ticketList, page: () => const TicketListScreen()),
     GetPage(name: AppRoutes.ticketChat, page: () => const TicketChatScreen()),
-    GetPage(name: AppRoutes.payoutsDetail, page: () => const PayoutsDetailScreen()),
-    GetPage(name: AppRoutes.earningsHistoryDetail, page: () => const EarningsHistoryDetailScreen()),
+    GetPage(
+        name: AppRoutes.payoutsDetail, page: () => const PayoutsDetailScreen()),
+    GetPage(
+        name: AppRoutes.earningsHistoryDetail,
+        page: () => const EarningsHistoryDetailScreen()),
     GetPage(
         name: AppRoutes.manageVehicleDetails,
         page: () => const ManageVehicleDetailsScreen()),

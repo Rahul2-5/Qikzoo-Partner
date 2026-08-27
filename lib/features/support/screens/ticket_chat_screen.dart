@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/core/api_providers.dart';
+import '../../../repositories/support/support_repository.dart';
+import '../../../models/support/support_models.dart';
+import '../../../core/api/api_exception.dart';
+import '../../../shared/widgets/feedback/app_snack_bar.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -33,110 +39,50 @@ class _TicketChatScreenState extends State<TicketChatScreen> {
   final List<ChatMessage> _messages = [];
   late String _ticketTitle;
   late String _ticketStatus;
+  String? _ticketId;
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     _ticketTitle = args['title'] ?? 'Support Inquiry';
-    _ticketStatus = args['status'] ?? 'Pending';
-
-    if (_ticketStatus == 'Resolved' || _ticketStatus == 'Closed') {
-      _messages.addAll([
-        ChatMessage(
-          sender: 'Agent',
-          text:
-              'Hello Partner, we have received your query. We will get back to you shortly via call or chat. You can revisit your ticket anytime to check status.',
-          time: 'Jul 28, 10:01 PM',
-        ),
-        ChatMessage(
-          sender: 'User',
-          text: '?',
-          time: 'Jul 28, 10:04 PM',
-        ),
-        ChatMessage(
-          sender: 'System',
-          text: 'Support agent is assigned to your ticket',
-          time: '',
-        ),
-        ChatMessage(
-          sender: 'Agent',
-          text:
-              'Namaste, this is your Support Agent and I will be assisting you to resolve your concern. Let us quickly check this for you. Kindly stay online.',
-          time: 'Jul 29, 01:07 AM',
-        ),
-        ChatMessage(
-          sender: 'Agent',
-          text:
-              'After checking your issue regarding "$_ticketTitle", we have updated the details in your delivery ledger accordingly. Thanks for your understanding!',
-          time: 'Jul 29, 01:14 AM',
-        ),
-        ChatMessage(
-          sender: 'Agent',
-          text:
-              'Thank you for raising your query with Qikzoo Partner Support. If you are satisfied with this resolution, you can close this ticket.',
-          time: 'Jul 29, 01:14 AM',
-        ),
-      ]);
-    } else {
-      _messages.addAll([
-        ChatMessage(
-          sender: 'System',
-          text: 'Support agent is assigned to your live chat',
-          time: '',
-        ),
-        ChatMessage(
-          sender: 'Agent',
-          text:
-              'Namaste! Welcome to Qikzoo Live Support. How can we assist you with "$_ticketTitle" today?',
-          time: 'Just now',
-        ),
-      ]);
-    }
+    _ticketStatus = args['status'] ?? 'OPEN';
+    _ticketId = args['id']?.toString();
+    _messages.add(ChatMessage(sender: 'Agent', text: 'Namaste! Welcome to Qikzoo Partner Support. How can we help you today?', time: 'Just now'));
+    _loadTicket();
   }
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  Future<void> _loadTicket() async {
+    try {
+      final repo = SupportRepository(ProviderScope.containerOf(context, listen: false).read(apiClientProvider));
+      SupportTicketModel? ticket;
+      if (_ticketId != null && _ticketId!.isNotEmpty) { ticket = await repo.get(_ticketId!); }
+      else { final tickets = await repo.list(); final active = tickets.where((x) => !['RESOLVED', 'CLOSED'].contains(x.status)).toList(); if (active.isNotEmpty) { ticket = active.first; _ticketId = ticket.id; } }
+      if (!mounted || ticket == null) return;
+      setState(() { _ticketStatus = ticket!.status; _messages..clear()..addAll(ticket.messages.map((m) => ChatMessage(sender: m.senderId.startsWith('QIKZOO') ? 'Agent' : 'User', text: m.body, time: m.createdAt.toLocal().toString().substring(11, 16)))); });
+      _scrollToBottom();
+    } catch (_) {}
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          sender: 'User',
-          text: text,
-          time: 'Just now',
-        ),
-      );
-      _textController.clear();
-    });
-
-    _scrollToBottom();
-
-    // Mock auto-reply
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _messages.add(
-            ChatMessage(
-              sender: 'Agent',
-              text:
-                  'Thanks for your response. Our team has recorded this update.',
-              time: 'Just now',
-            ),
-          );
-        });
-        _scrollToBottom();
+    _textController.clear();
+    try {
+      final repo = SupportRepository(ProviderScope.containerOf(context, listen: false).read(apiClientProvider));
+      if (_ticketId == null || _ticketId!.isEmpty) {
+        final ticket = await repo.create('GENERAL', text);
+        if (!mounted) return;
+        setState(() { _ticketId = ticket.id; _ticketStatus = ticket.status; _messages..clear()..addAll(ticket.messages.map((m) => ChatMessage(sender: m.senderId.startsWith('QIKZOO') ? 'Agent' : 'User', text: m.body, time: m.createdAt.toLocal().toString().substring(11, 16)))); });
+      } else {
+        await repo.send(_ticketId!, text);
+        if (mounted) setState(() => _messages.add(ChatMessage(sender: 'User', text: text, time: 'Just now')));
       }
-    });
+      _scrollToBottom();
+    } catch (error) {
+      if (mounted) AppSnackBar.error(context, error is ApiException ? error.message : 'Unable to send your message. Please try again.');
+    }
   }
-
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -151,7 +97,8 @@ class _TicketChatScreenState extends State<TicketChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isClosed = _ticketStatus == 'Resolved' || _ticketStatus == 'Closed';
+    final normalizedStatus = _ticketStatus.toUpperCase();
+    final isClosed = normalizedStatus == 'RESOLVED' || normalizedStatus == 'CLOSED';
 
     return Scaffold(
       backgroundColor: AppColors.background,

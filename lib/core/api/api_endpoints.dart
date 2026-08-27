@@ -26,6 +26,8 @@ class ApiEndpoints {
   static const riderOnboardingSubmit = '/rider/onboarding/submit';
   static const riderOnboardingReapply = '/rider/onboarding/reapply';
   static const riderAvailability = '/rider/availability';
+  static const riderActivity = '/rider/availability/activity';
+  static const riderAvailabilityEligibility = '/rider/availability/eligibility';
   static const riderAvailabilityOnline = '/rider/availability/online';
   static const riderAvailabilityAvailable = '/rider/availability/available';
   static const riderAvailabilityOffline = '/rider/availability/offline';
@@ -43,6 +45,10 @@ class ApiEndpoints {
       '/rider/orders/$riderOrderId/pickup-success';
   static String riderOrderStartDelivery(String riderOrderId) =>
       '/rider/orders/$riderOrderId/start-delivery';
+  static String riderOrderPaymentSession(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/payment-session';
+  static String riderOrderCollectCash(String riderOrderId) =>
+      '/rider/orders/$riderOrderId/collect-cash';
   static String riderOrderCompleteDelivery(String riderOrderId) =>
       '/rider/orders/$riderOrderId/complete-delivery';
   static String riderOrderCancel(String riderOrderId) =>
@@ -57,8 +63,19 @@ class ApiEndpoints {
   static const riderEarningsSummary = '/rider/earnings/summary';
   static const riderEarningsHistory = '/rider/earnings/history';
   static const riderWallet = '/rider/wallet';
+  static const riderWalletTransactions = '/rider/wallet/transactions';
+  static const riderWalletDeposits = '/rider/wallet/deposits';
+  static String riderWalletDeposit(String depositId) =>
+      '/rider/wallet/deposits/$depositId';
+  static const riderReferrals = '/rider/referrals';
+  static const riderReferralApply = '/rider/referrals/apply';
   static const riderDeviceTokens = '/rider/device-tokens';
 
+  static const riderSupportTickets = '/rider/support/tickets';
+  static String riderSupportTicket(String ticketId) =>
+      '/rider/support/tickets/$ticketId';
+  static String riderSupportTicketMessages(String ticketId) =>
+      '/rider/support/tickets/$ticketId/messages';
   // Actor-agnostic — shared with the customer/admin/restaurant apps.
   static const deviceTokens = '/notifications/device-tokens';
 

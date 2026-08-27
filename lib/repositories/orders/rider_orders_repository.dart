@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../models/orders/order_history_page_model.dart';
+import '../../models/orders/delivery_completion_model.dart';
+import '../../models/orders/delivery_payment_session.dart';
 import '../../models/orders/rider_order_model.dart';
 import '../../providers/core/api_providers.dart';
 
@@ -42,7 +44,13 @@ abstract class RiderOrdersRepository {
   Future<void> startDelivery(String riderOrderId);
 
   /// `POST /rider/orders/:id/complete-delivery` — sends the verification OTP code
-  Future<void> completeDelivery(String riderOrderId, String code);
+  Future<DeliveryPaymentSession> createPaymentSession(String riderOrderId);
+
+  Future<DeliveryPaymentSession> getPaymentSession(String riderOrderId);
+
+  Future<void> collectCash(String riderOrderId);
+
+  Future<DeliveryCompletionModel> completeDelivery(String riderOrderId);
 
   /// `POST /rider/orders/:id/cancel`.
   Future<void> cancel(String riderOrderId, String reason);
@@ -116,11 +124,46 @@ class DioRiderOrdersRepository implements RiderOrdersRepository {
   }
 
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) async {
-    await _apiClient.post<Map<String, dynamic>>(
-      ApiEndpoints.riderOrderCompleteDelivery(riderOrderId),
-      data: {'code': code},
+  Future<DeliveryPaymentSession> createPaymentSession(
+    String riderOrderId,
+  ) async {
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.riderOrderPaymentSession(riderOrderId),
     );
+    return DeliveryPaymentSession.fromJson(
+      _unwrap(response.data),
+      riderOrderId: riderOrderId,
+    );
+  }
+
+  @override
+  Future<DeliveryPaymentSession> getPaymentSession(
+    String riderOrderId,
+  ) async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiEndpoints.riderOrderPaymentSession(riderOrderId),
+    );
+    return DeliveryPaymentSession.fromJson(
+      _unwrap(response.data),
+      riderOrderId: riderOrderId,
+    );
+  }
+
+  @override
+  Future<void> collectCash(String riderOrderId) async {
+    await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.riderOrderCollectCash(riderOrderId),
+    );
+  }
+
+  @override
+  Future<DeliveryCompletionModel> completeDelivery(
+    String riderOrderId,
+  ) async {
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.riderOrderCompleteDelivery(riderOrderId),
+    );
+    return DeliveryCompletionModel.fromJson(_unwrap(response.data));
   }
 
   @override

@@ -11,10 +11,101 @@ import '../../../shared/widgets/layout/glass_container.dart';
 class GoOnlineReadinessDialog {
   const GoOnlineReadinessDialog._();
 
-  static Future<bool?> show(BuildContext context) {
-    return showDialog<bool>(
+  static Future<bool?> show(
+    BuildContext context, {
+    required bool selfieRequired,
+  }) {
+    return showModalBottomSheet<bool>(
       context: context,
-      builder: (dialogContext) => GlassDialog(
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: AppColors.textPrimary.withValues(alpha: 0.58),
+      builder: (dialogContext) => GlassBottomSheet(
+        scrollable: true,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Location is required to go online', style: AppTypography.h2),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Qikzoo Delivery Partner collects your precise location while you are online to match you with nearby delivery requests, track active deliveries, and confirm delivery progress.',
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            const _ReadinessStep(
+              icon: LucideIcons.mapPin,
+              title: 'Live location while online',
+              subtitle: 'Required to receive and complete deliveries',
+            ),
+            if (selfieRequired) ...[
+              const SizedBox(height: AppSpacing.sm),
+              const _ReadinessStep(
+                icon: LucideIcons.scanFace,
+                title: 'Live selfie',
+                subtitle: 'Required for this shift by Qikzoo verification',
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.shieldCheck,
+                  size: 16,
+                  color: AppColors.success,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    'You cannot receive or complete deliveries without location access. Location sharing stops when you go offline.',
+                    style: AppTypography.caption,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: PrimaryCtaButton(
+                label: 'Continue',
+                trailingIcon: LucideIcons.arrowRight,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Center(
+              child: TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Stay offline'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Policy disclosure shown immediately before requesting Android's
+/// "Allow all the time" location permission. It is intentionally separate
+/// from the foreground-location disclosure: background collection has a
+/// different user expectation and Android presents a separate permission UI.
+class BackgroundLocationDisclosureDialog {
+  const BackgroundLocationDisclosureDialog._();
+
+  static Future<bool?> show(BuildContext context) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: AppColors.textPrimary.withValues(alpha: 0.58),
+      builder: (dialogContext) => GlassBottomSheet(
+        scrollable: true,
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -28,53 +119,35 @@ class GoOnlineReadinessDialog {
                 borderRadius: BorderRadius.circular(AppRadius.control),
               ),
               child: const Icon(
-                LucideIcons.navigation,
+                LucideIcons.mapPin,
                 color: AppColors.primary,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Text('Ready to start your shift?', style: AppTypography.h2),
+            Text(
+              'Keep deliveries active in the background',
+              style: AppTypography.h2,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Two quick checks keep your account secure and help us send nearby deliveries.',
+              'Qikzoo Delivery Partner collects location data to enable '
+              'nearby delivery offers, active-delivery tracking, and '
+              'delivery progress even when the app is closed or not in use.',
               style: AppTypography.body.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            const _ReadinessStep(
-              icon: LucideIcons.mapPin,
-              title: 'Current location',
-              subtitle: 'Required every time you go online',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const _ReadinessStep(
-              icon: LucideIcons.scanFace,
-              title: 'Live selfie',
-              subtitle: 'A fresh camera photo for shift verification',
-            ),
             const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                const Icon(
-                  LucideIcons.shieldCheck,
-                  size: 16,
-                  color: AppColors.success,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: Text(
-                    'Location sharing stops when you go offline.',
-                    style: AppTypography.caption,
-                  ),
-                ),
-              ],
+            Text(
+              'Background location is used only while you are online. Go '
+              'offline at any time to stop location sharing.',
+              style: AppTypography.caption,
             ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
               child: PrimaryCtaButton(
-                label: 'Continue',
+                label: 'Enable background location',
                 trailingIcon: LucideIcons.arrowRight,
                 onPressed: () => Navigator.of(dialogContext).pop(true),
               ),

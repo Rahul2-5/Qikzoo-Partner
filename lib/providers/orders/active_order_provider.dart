@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/orders/rider_order_model.dart';
+import '../../models/orders/delivery_completion_model.dart';
 import '../../repositories/orders/rider_orders_repository.dart';
 
 /// The rider's single active (not yet delivered/cancelled) order, if any —
@@ -65,13 +66,19 @@ class ActiveOrderNotifier extends AsyncNotifier<RiderOrderModel?> {
     await _refreshAfterAction(riderOrderId);
   }
 
-  Future<void> completeDelivery(String riderOrderId, String code) async {
-    await ref
+  Future<void> collectCash(String riderOrderId) async {
+    await ref.read(riderOrdersRepositoryProvider).collectCash(riderOrderId);
+    await _refreshAfterAction(riderOrderId);
+  }
+
+  Future<DeliveryCompletionModel> completeDelivery(String riderOrderId) async {
+    final completion = await ref
         .read(riderOrdersRepositoryProvider)
-        .completeDelivery(riderOrderId, code);
+        .completeDelivery(riderOrderId);
     // A completed delivery is no longer "active" — the backend excludes
     // DELIVERED from `current`, so re-fetching naturally clears it.
     state = AsyncData(await _fetch());
+    return completion;
   }
 
   Future<void> cancel(String riderOrderId, String reason) async {

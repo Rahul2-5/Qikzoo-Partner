@@ -90,15 +90,14 @@ class PartnerWordmark extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             Image.asset(
-                AppAssets.mainLogo,
-                width: compact ? 110 : 135,
-                height: compact ? 32 : 38,
-                fit: BoxFit.contain,
-                alignment: Alignment.centerLeft,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-          
+            Image.asset(
+              AppAssets.partnerLogoTight,
+              width: compact ? 110 : 135,
+              height: compact ? 37 : 45,
+              fit: BoxFit.contain,
+              alignment: Alignment.centerLeft,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
             if (subtitle != null) ...[
               const SizedBox(height: 2),
               Text(

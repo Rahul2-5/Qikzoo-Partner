@@ -2,12 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../models/dashboard/dashboard_stats_model.dart';
+import '../../models/dashboard/go_online_eligibility_model.dart';
 import '../../providers/core/api_providers.dart';
 
 abstract class DashboardRepository {
   /// Combines `GET /rider/profile` + `GET /rider/earnings/summary` +
   /// `GET /rider/wallet` into a single dashboard-ready snapshot.
   Future<DashboardStatsModel> getStats();
+
+  /// Backend-owned preflight for account/document/vehicle readiness and
+  /// whether this particular shift requires a live selfie.
+  Future<GoOnlineEligibilityModel> getOnlineEligibility();
 
   /// `POST /rider/availability/online`, then re-fetches the full snapshot
   /// so earnings/wallet/rates stay consistent with the new status rather
@@ -70,6 +75,14 @@ class DioDashboardRepository implements DashboardRepository {
       rating: _asDouble(profile['rating']) ?? 5.0,
       workingZone: workingZone.isEmpty ? null : workingZone,
     );
+  }
+
+  @override
+  Future<GoOnlineEligibilityModel> getOnlineEligibility() async {
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiEndpoints.riderAvailabilityEligibility,
+    );
+    return GoOnlineEligibilityModel.fromJson(_unwrap(response.data));
   }
 
   @override

@@ -4,14 +4,17 @@ class AuthSessionModel extends Equatable {
   final String partnerId;
   final String token;
   final bool isAuthenticated;
+  final bool isNewRider;
 
   const AuthSessionModel({
     required this.partnerId,
     required this.token,
     required this.isAuthenticated,
+    this.isNewRider = false,
   });
 
-  static const empty = AuthSessionModel(partnerId: '', token: '', isAuthenticated: false);
+  static const empty =
+      AuthSessionModel(partnerId: '', token: '', isAuthenticated: false);
 
   @override
   List<Object?> get props => [partnerId, token, isAuthenticated];

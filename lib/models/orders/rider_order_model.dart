@@ -111,6 +111,44 @@ enum PickupOtpStatus {
       };
 }
 
+enum OrderPaymentMethod {
+  cod,
+  online,
+  unknown;
+
+  static OrderPaymentMethod fromBackend(Object? value) {
+    final normalized = value?.toString().trim().toUpperCase();
+    if (normalized == 'COD') return OrderPaymentMethod.cod;
+    if (normalized == null || normalized.isEmpty) {
+      return OrderPaymentMethod.unknown;
+    }
+    // Gateway selection belongs to the backend. Every non-COD method is
+    // presented to the rider as online payment, including future providers.
+    return OrderPaymentMethod.online;
+  }
+}
+
+enum OrderPaymentStatus {
+  pending,
+  paid,
+  failed,
+  refunded,
+  refundPending,
+  refundFailed,
+  unknown;
+
+  static OrderPaymentStatus fromBackend(Object? value) =>
+      switch (value?.toString().trim().toUpperCase()) {
+        'PENDING' => OrderPaymentStatus.pending,
+        'PAID' => OrderPaymentStatus.paid,
+        'FAILED' => OrderPaymentStatus.failed,
+        'REFUNDED' => OrderPaymentStatus.refunded,
+        'REFUND_PENDING' => OrderPaymentStatus.refundPending,
+        'REFUND_FAILED' => OrderPaymentStatus.refundFailed,
+        _ => OrderPaymentStatus.unknown,
+      };
+}
+
 /// The restaurant's pickup contact/location — from `RiderOrdersService`'s
 /// `restaurant` field (branch phone/address/landmark/coordinates + the
 /// parent Restaurant's display name).
@@ -246,6 +284,11 @@ class RestaurantOrderSummary extends Equatable {
   final double? deliveryLat;
   final double? deliveryLng;
   final int totalPaise;
+  final OrderPaymentMethod paymentMethod;
+  final OrderPaymentStatus paymentStatus;
+  final DateTime? paidAt;
+  final String? paymentReference;
+  final String? collectionSource;
   final String? customerNote;
   final RestaurantOrderStatus status;
 
@@ -274,12 +317,26 @@ class RestaurantOrderSummary extends Equatable {
     required this.deliveryLat,
     required this.deliveryLng,
     required this.totalPaise,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.paidAt,
+    required this.paymentReference,
+    required this.collectionSource,
     required this.customerNote,
     required this.status,
     required this.statusHistory,
     required this.pickupOtp,
     this.items = const [],
   });
+
+  bool get isPaid => paymentStatus == OrderPaymentStatus.paid;
+
+  bool get isPaidOnline => paymentMethod == OrderPaymentMethod.online && isPaid;
+
+  bool get cashCollectionRequired =>
+      paymentMethod == OrderPaymentMethod.cod && !isPaid;
+
+  bool get isPaidCod => paymentMethod == OrderPaymentMethod.cod && isPaid;
 
   factory RestaurantOrderSummary.fromJson(Map<String, dynamic> json,
       {dynamic pickupOtpRaw}) {
@@ -314,6 +371,18 @@ class RestaurantOrderSummary extends Equatable {
       deliveryLng:
           json['deliveryLng'] == null ? null : _num(json['deliveryLng']),
       totalPaise: _int(json['totalPaise']),
+      paymentMethod: OrderPaymentMethod.fromBackend(json['paymentMethod']),
+      paymentStatus: OrderPaymentStatus.fromBackend(json['paymentStatus']),
+      paidAt: _date(json['paidAt'] ?? json['paid_at']),
+      paymentReference: _str(
+        json['paymentReference'] ??
+            json['transactionId'] ??
+            (json['paymentAttempt'] is Map<String, dynamic>
+                ? (json['paymentAttempt']
+                    as Map<String, dynamic>)['transactionId']
+                : null),
+      ),
+      collectionSource: _str(json['collectionSource']),
       customerNote: _str(json['customerNote']),
       status: RestaurantOrderStatus.fromBackend(json['status']),
       statusHistory: historyJson is List
@@ -339,6 +408,11 @@ class RestaurantOrderSummary extends Equatable {
         deliveryLat,
         deliveryLng,
         totalPaise,
+        paymentMethod,
+        paymentStatus,
+        paidAt,
+        paymentReference,
+        collectionSource,
         customerNote,
         status,
         statusHistory,
@@ -486,10 +560,8 @@ class RiderOrderModel extends Equatable {
         json['code'];
 
     final order = orderJson != null
-        ? RestaurantOrderSummary.fromJson(orderJson,
-            pickupOtpRaw: pickupOtpRaw)
-        : RestaurantOrderSummary.fromJson(const {},
-            pickupOtpRaw: pickupOtpRaw);
+        ? RestaurantOrderSummary.fromJson(orderJson, pickupOtpRaw: pickupOtpRaw)
+        : RestaurantOrderSummary.fromJson(const {}, pickupOtpRaw: pickupOtpRaw);
 
     final earningsPaise = _parseEarningsPaise(json, orderJson);
     final tipsPaise = _parseTipsPaise(json, orderJson);

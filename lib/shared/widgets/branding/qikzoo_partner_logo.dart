@@ -23,10 +23,10 @@ class QikzooPartnerLogo extends StatelessWidget {
         child: Image.asset(
           AppAssets.partnerLogoTight,
           width: width,
-          height: width * 0.283, // 930 x 263 natural aspect ratio
+          height: width * 0.333,
           fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => Image.asset(
-            AppAssets.mainLogo,
+            AppAssets.partnerLogoTight,
             width: width,
             fit: BoxFit.contain,
           ),

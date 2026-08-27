@@ -81,6 +81,42 @@ class OrderItemsChecklistCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: order.order.cashCollectionRequired
+                  ? AppColors.warning.withValues(alpha: 0.1)
+                  : AppColors.success.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  order.order.cashCollectionRequired
+                      ? LucideIcons.banknote
+                      : LucideIcons.badgeCheck,
+                  size: 16,
+                  color: order.order.cashCollectionRequired
+                      ? AppColors.warning
+                      : AppColors.success,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    order.order.cashCollectionRequired
+                        ? 'COD — collect through the secure payment flow'
+                        : 'Paid online — do not collect cash from the customer',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
           if (items.isNotEmpty)
             ...items.asMap().entries.map((entry) {
               final isLast = entry.key == items.length - 1;

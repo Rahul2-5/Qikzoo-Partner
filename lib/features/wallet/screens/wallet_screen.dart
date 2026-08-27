@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/wallet/wallet_model.dart';
+import '../../../models/wallet/transaction_model.dart';
 import '../../../providers/wallet/wallet_provider.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 import '../../../shared/widgets/misc/loading_skeleton.dart';
@@ -59,7 +60,8 @@ class WalletScreen extends ConsumerWidget {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.helpCircle, color: Color(0xFF6B7280), size: 20),
+                    icon: const Icon(LucideIcons.helpCircle,
+                        color: Color(0xFF6B7280), size: 20),
                     onPressed: () => Get.toNamed(AppRoutes.support),
                     tooltip: 'Payment Support',
                   ),
@@ -115,7 +117,7 @@ class WalletScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     WalletModel wallet,
-    AsyncValue transactionsAsync,
+    AsyncValue<List<TransactionModel>> transactionsAsync,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -154,7 +156,8 @@ class WalletScreen extends ConsumerWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(999),
@@ -192,7 +195,8 @@ class WalletScreen extends ConsumerWidget {
                     children: [
                       const Text(
                         'Pending Settlement',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                        style:
+                            TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -212,7 +216,8 @@ class WalletScreen extends ConsumerWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -301,7 +306,8 @@ class WalletScreen extends ConsumerWidget {
                         onPressed: () => Get.toNamed(AppRoutes.payoutsDetail),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFD1D5DB)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                         child: const Text(
                           'Details & Limits',
@@ -319,22 +325,29 @@ class WalletScreen extends ConsumerWidget {
                     child: SizedBox(
                       height: 44,
                       child: ElevatedButton(
-                        onPressed: () {
-                          DepositCashSheet.show(
-                            context,
-                            currentCashInHand: wallet.floatingCash,
-                            onDepositSuccess: () => ref.invalidate(walletProvider),
-                          );
-                        },
+                        onPressed: wallet.cashDepositAvailable &&
+                                wallet.floatingCash > 0
+                            ? () {
+                                DepositCashSheet.show(
+                                  context,
+                                  currentCashInHand: wallet.floatingCash,
+                                  onDepositSuccess: () =>
+                                      ref.invalidate(walletProvider),
+                                );
+                              }
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0D8538),
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text(
-                          'Deposit Cash',
-                          style: TextStyle(
+                        child: Text(
+                          wallet.cashDepositAvailable
+                              ? 'Deposit Cash'
+                              : 'Deposit unavailable',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
@@ -427,50 +440,61 @@ class WalletScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
 
-        // Activity Card
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+        transactionsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const Text(
+            'Wallet activity is temporarily unavailable.',
+            style: TextStyle(color: Color(0xFF6B7280)),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF1F5F9),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(LucideIcons.clock3, color: Color(0xFF64748B), size: 22),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'No recent wallet deductions',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF111827),
-                      ),
+          data: (transactions) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: transactions.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'No wallet activity yet. Delivery earnings and COD cash movements will appear here.',
+                      style: TextStyle(color: Color(0xFF6B7280)),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Weekly settlements are transferred directly to your bank account.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  )
+                : Column(
+                    children: [
+                      for (final entry in transactions.take(5))
+                        ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor:
+                                entry.type == TransactionType.earning
+                                    ? const Color(0xFFDCFCE7)
+                                    : const Color(0xFFFFEDD5),
+                            child: Icon(
+                              entry.type == TransactionType.earning
+                                  ? LucideIcons.arrowDownLeft
+                                  : entry.type == TransactionType.cashHeld
+                                      ? LucideIcons.banknote
+                                      : LucideIcons.arrowUpRight,
+                              color: entry.type == TransactionType.earning
+                                  ? const Color(0xFF0D8538)
+                                  : const Color(0xFFC2410C),
+                            ),
+                          ),
+                          title: Text(
+                            entry.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            '${entry.date.day}/${entry.date.month}/${entry.date.year}',
+                          ),
+                          trailing: Text(
+                            '${entry.type == TransactionType.earning ? '+' : entry.type == TransactionType.cashHeld ? 'Held ' : '-'}${CurrencyFormatter.rupeesPrecise(entry.amount)}',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                    ],
+                  ),
           ),
         ),
         const SizedBox(height: 24),

@@ -22,12 +22,16 @@ class AppAssets {
   static const happyDeliveryRider3d =
       '$imagesPath/happy_delivery_rider_3d_transparent.png';
   static const mainLogo = '$imagesPath/new_logo.png';
-  static const partnerLogoTight = '$imagesPath/qikzoo_partner_logo_tight.png';
+  static const partnerLogoTight =
+      '$imagesPath/qikzoo_partner_logo_generated.png';
+  static const referralPartners3d = '$imagesPath/referral_partners_3d.png';
 
   static const onboardingPath = '$imagesPath/onboarding';
-  static const onboardingStep1Rider = '$onboardingPath/onboarding_step1_rider.png';
+  static const onboardingStep1Rider =
+      '$onboardingPath/onboarding_step1_rider.png';
   static const onboardingStep2Map = '$onboardingPath/onboarding_step2_map.png';
-  static const onboardingStep3Wallet = '$onboardingPath/onboarding_step3_wallet.png';
+  static const onboardingStep3Wallet =
+      '$onboardingPath/onboarding_step3_wallet.png';
 
   static const earningsPath = '$imagesPath/earnings';
   static const earningsWallet3d = '$earningsPath/earnings_wallet_3d.png';

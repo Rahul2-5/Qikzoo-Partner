@@ -41,7 +41,7 @@ class OnboardingPageShell extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(
-                    height: 40,
+                    height: 52,
                     child: QikzooPartnerLogo(width: 142),
                   ),
                   const SizedBox(height: 4),

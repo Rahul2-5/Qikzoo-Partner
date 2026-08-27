@@ -18,6 +18,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/dashboard/dashboard_stats_model.dart';
+import '../../../models/dashboard/go_online_eligibility_model.dart';
 import '../../../models/orders/rider_order_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
@@ -33,6 +34,7 @@ import '../../../shared/widgets/motion/app_motion_widgets.dart';
 import '../../../shared/widgets/navigation/app_tab_scaffold.dart';
 import '../../orders/widgets/contact_actions.dart';
 import '../../partner_registration/screens/selfie_verification_screen.dart';
+import '../widgets/go_online_readiness_dialog.dart';
 
 /// Rider dashboard home for active partner accounts.
 ///
@@ -81,6 +83,10 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
 
   Future<void> _onEnableBackgroundLocation() async {
     if (_isRequestingBackgroundPermission) return;
+
+    final approved = await BackgroundLocationDisclosureDialog.show(context);
+    if (approved != true || !mounted) return;
+
     setState(() => _isRequestingBackgroundPermission = true);
     final granted = await RiderBackgroundLocationService.instance
         .requestBackgroundPermission();
@@ -197,6 +203,21 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
   Future<void> _goOnline() async {
     if (_isTogglingAvailability) return;
 
+    final eligibility = await _loadOnlineEligibility();
+    if (eligibility == null || !mounted) return;
+    if (!eligibility.eligible) {
+      AppSnackBar.error(context, eligibility.message);
+      return;
+    }
+
+    // Shown immediately before Android's runtime prompt. A rider who
+    // declines remains offline and cannot receive delivery requests.
+    final locationDisclosureAccepted = await GoOnlineReadinessDialog.show(
+      context,
+      selfieRequired: eligibility.selfieRequired,
+    );
+    if (locationDisclosureAccepted != true || !mounted) return;
+
     final tracker = ref.read(riderLocationControllerProvider.notifier);
     final readiness = await tracker.ensureReadyForOnline();
     if (!mounted) return;
@@ -208,17 +229,20 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
     final approved = await ConfirmationDialog.show(
       context,
       title: 'Go online?',
-      message:
-          'Confirm that you are ready to accept deliveries. A quick selfie is required before your shift starts.',
+      message: eligibility.selfieRequired
+          ? 'Confirm that you are ready to accept deliveries. A quick live selfie is required for this shift.'
+          : 'Confirm that you are ready to accept deliveries.',
     );
     if (approved != true || !mounted) return;
 
-    final selfieCaptured = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => const SelfieVerificationScreen(isOnlineCheck: true),
-      ),
-    );
-    if (selfieCaptured != true || !mounted) return;
+    if (eligibility.selfieRequired) {
+      final selfieCaptured = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => const SelfieVerificationScreen(isOnlineCheck: true),
+        ),
+      );
+      if (selfieCaptured != true || !mounted) return;
+    }
 
     setState(() => _isTogglingAvailability = true);
     try {
@@ -274,6 +298,28 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen>
       }
     } finally {
       if (mounted) setState(() => _isTogglingAvailability = false);
+    }
+  }
+
+  Future<GoOnlineEligibilityModel?> _loadOnlineEligibility() async {
+    try {
+      return await ref
+          .read(dashboardStatsProvider.notifier)
+          .checkOnlineEligibility();
+    } on ApiException catch (error) {
+      if (!mounted) return null;
+      if (error.statusCode == 401) {
+        await ref.read(authSessionProvider.notifier).logout();
+        if (mounted) Get.offAllNamed(AppRoutes.welcome);
+        return null;
+      }
+      AppSnackBar.error(context, error.message);
+      return null;
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.error(context, 'Could not verify online eligibility.');
+      }
+      return null;
     }
   }
 
@@ -1040,9 +1086,9 @@ class _OnlineStatusBanner extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
-                    AppSpacing.md,
+                    AppSpacing.sm,
                     116,
-                    AppSpacing.md,
+                    AppSpacing.sm,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1068,7 +1114,7 @@ class _OnlineStatusBanner extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: AppSpacing.sm),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
@@ -1085,7 +1131,7 @@ class _OnlineStatusBanner extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: 2),
                       Text(
                         isRiderBusy
                             ? 'Currently on an active delivery. Tap below to navigate.'
@@ -1129,7 +1175,7 @@ class _OnlineStatusBanner extends StatelessWidget {
                       ],
                       const Spacer(),
                       SizedBox(
-                        height: 46,
+                        height: 42,
                         child: FilledButton.icon(
                           key: const Key('availability-toggle'),
                           onPressed: isTogglingAvailability ? null : onPressed,

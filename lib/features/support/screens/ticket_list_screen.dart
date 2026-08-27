@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/core/api_providers.dart';
+import '../../../repositories/support/support_repository.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -34,29 +37,42 @@ class TicketListScreen extends StatefulWidget {
 class _TicketListScreenState extends State<TicketListScreen> {
   String _activeFilter = 'All';
 
-  final List<SupportTicket> _tickets = [
-    SupportTicket(
-      id: 'TCK-1002',
-      title: 'Payout delay issue',
-      date: '18 Aug 2026',
-      outletName: 'Noodle House, Mumbai',
-      status: 'Pending',
-    ),
-    SupportTicket(
-      id: 'TCK-0985',
-      title: 'Wrong cash collection',
-      date: '15 Aug 2026',
-      outletName: 'Pizza Point',
-      status: 'Resolved',
-    ),
-    SupportTicket(
-      id: 'TCK-0961',
-      title: 'Customer not reachable',
-      date: '12 Aug 2026',
-      outletName: 'Burger Bistro',
-      status: 'Resolved',
-    ),
-  ];
+  final List<SupportTicket> _tickets = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTickets();
+  }
+
+  Future<void> _loadTickets() async {
+    try {
+      final repo = SupportRepository(
+          ProviderScope.containerOf(context, listen: false)
+              .read(apiClientProvider));
+      final tickets = await repo.list();
+      if (!mounted) return;
+      setState(() {
+        _tickets
+          ..clear()
+          ..addAll(tickets.map((x) => SupportTicket(
+              id: x.id,
+              title: x.category,
+              date: x.updatedAt.toLocal().toString().split(' ').first,
+              outletName: x.category,
+              status: x.status)));
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          _loading = false;
+          _error = 'Unable to load support tickets.';
+        });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,16 +112,20 @@ class _TicketListScreenState extends State<TicketListScreen> {
 
               // Ticket List
               Expanded(
-                child: filteredTickets.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: filteredTickets.length,
-                        itemBuilder: (context, index) {
-                          final ticket = filteredTickets[index];
-                          return _buildTicketCard(ticket);
-                        },
-                      ),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(child: Text(_error!))
+                        : filteredTickets.isEmpty
+                            ? _buildEmptyState()
+                            : ListView.builder(
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: filteredTickets.length,
+                                itemBuilder: (context, index) {
+                                  final ticket = filteredTickets[index];
+                                  return _buildTicketCard(ticket);
+                                },
+                              ),
               ),
             ],
           ),
@@ -170,15 +190,15 @@ class _TicketListScreenState extends State<TicketListScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    ticket.id,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Expanded(
+                    child: Text('Support request',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusBg,
                       borderRadius: BorderRadius.circular(20),
@@ -197,6 +217,8 @@ class _TicketListScreenState extends State<TicketListScreen> {
               const SizedBox(height: 10),
               Text(
                 ticket.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: AppTypography.bodyMedium.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -206,7 +228,8 @@ class _TicketListScreenState extends State<TicketListScreen> {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(LucideIcons.store, size: 12, color: AppColors.textSecondary),
+                  const Icon(LucideIcons.store,
+                      size: 12, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
@@ -219,7 +242,8 @@ class _TicketListScreenState extends State<TicketListScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Icon(LucideIcons.calendar, size: 12, color: AppColors.textSecondary),
+                  const Icon(LucideIcons.calendar,
+                      size: 12, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     ticket.date,
@@ -241,11 +265,13 @@ class _TicketListScreenState extends State<TicketListScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(LucideIcons.helpCircle, size: 48, color: AppColors.textDisabled),
+          const Icon(LucideIcons.helpCircle,
+              size: 48, color: AppColors.textDisabled),
           const SizedBox(height: 12),
           Text(
             'No tickets found',
-            style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+            style:
+                AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           const Text('You do not have any tickets in this category.'),

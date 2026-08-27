@@ -15,6 +15,7 @@ class SecureTokenStorage {
 
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
+  static const _pendingReferralCodeKey = 'pending_referral_code';
 
   final FlutterSecureStorage _storage;
 
@@ -54,6 +55,26 @@ class SecureTokenStorage {
     if (refreshToken != null && refreshToken.isNotEmpty) {
       await saveRefreshToken(refreshToken);
     }
+  }
+
+  Future<String?> getPendingReferralCode() async {
+    try {
+      return await _storage.read(key: _pendingReferralCodeKey);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> savePendingReferralCode(String code) async {
+    try {
+      await _storage.write(key: _pendingReferralCodeKey, value: code);
+    } catch (_) {}
+  }
+
+  Future<void> clearPendingReferralCode() async {
+    try {
+      await _storage.delete(key: _pendingReferralCodeKey);
+    } catch (_) {}
   }
 
   Future<void> clearTokens() async {

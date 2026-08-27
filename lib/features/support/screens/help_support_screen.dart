@@ -105,11 +105,9 @@ class HelpSupportScreen extends StatelessWidget {
                                     label: 'Live chat',
                                     onTap: () => Get.toNamed(
                                       AppRoutes.ticketChat,
-                                      arguments: {
-                                        'id': 'TCK-LIVE',
-                                        'title': 'Live Support Assistant',
-                                        'status': 'Open',
-                                        'outlet': 'Qikzoo Partner Care',
+                                      arguments: const {
+                                        'title': 'Qikzoo Partner Support',
+                                        'status': 'OPEN',
                                       },
                                     ),
                                   ),

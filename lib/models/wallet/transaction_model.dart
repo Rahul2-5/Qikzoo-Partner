@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum TransactionType { credit, debit }
+enum TransactionType { earning, cashHeld, cashDeposited, payout, adjustment }
 
 class TransactionModel extends Equatable {
   final String id;

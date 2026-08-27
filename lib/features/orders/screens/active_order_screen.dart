@@ -17,6 +17,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/orders/order_history_page_model.dart';
+import '../../../models/orders/delivery_success_model.dart';
 import '../../../models/orders/rider_order_model.dart';
 import '../../../providers/authentication/auth_provider.dart';
 import '../../../providers/dashboard/dashboard_provider.dart';
@@ -35,7 +36,9 @@ import '../widgets/contact_actions.dart';
 import '../widgets/delivery_handoff_card.dart';
 import '../widgets/no_response_sheet.dart';
 import '../widgets/order_items_checklist_card.dart';
+import '../widgets/payment_status_widgets.dart';
 import '../widgets/quick_message_sheet.dart';
+import '../utils/delivery_error_message.dart';
 
 /// Client-side-only UX threshold for the "Mark delivered" button/copy. The
 /// backend enforces its own real 150m default radius independently via a
@@ -91,12 +94,10 @@ class ActiveOrderScreen extends ConsumerStatefulWidget {
 class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
   GoogleMapController? _mapController;
   bool _isProcessing = false;
-  final TextEditingController _otpController = TextEditingController();
 
   @override
   void dispose() {
     _mapController?.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -113,7 +114,7 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
         Get.offAllNamed(AppRoutes.welcome);
         return;
       }
-      AppSnackBar.error(context, e.message);
+      AppSnackBar.error(context, riderMessageForDeliveryAction(e));
     } catch (_) {
       if (!mounted) return;
       AppSnackBar.error(context, 'Something went wrong. Please try again.');
@@ -122,38 +123,137 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
     }
   }
 
+  /// Backend transition text is useful in logs, but it is not actionable for
+  /// riders. Keep the UI message short and explain the recovery path instead.
+  // ignore: unused_element
+  String _riderMessageForOrderAction(ApiException error) {
+    final technicalMessage = error.message.toLowerCase();
+    if (technicalMessage.contains('payment') ||
+        technicalMessage.contains('collect')) {
+      return 'Payment is not confirmed yet. Check the payment status and try again.';
+    }
+    if (technicalMessage.contains('location is outdated') ||
+        technicalMessage.contains('fresh location')) {
+      return 'Waiting for a fresh GPS location. Keep location enabled and try again.';
+    }
+    if (technicalMessage.contains('too far')) {
+      return 'Move closer to the customer’s delivery location and try again.';
+    }
+    if (technicalMessage.contains('already completed') ||
+        technicalMessage.contains('already delivered')) {
+      return 'This delivery was already completed. Refreshing your active orders.';
+    }
+    if (error.statusCode == 404 || technicalMessage.contains('assignment')) {
+      return 'This delivery assignment is no longer available to your account.';
+    }
+    if (error.statusCode == 409 ||
+        technicalMessage.contains('cannot transition') ||
+        technicalMessage.contains('already picked')) {
+      return 'This order was just updated. Please review the next delivery step.';
+    }
+    if (error.statusCode == 400 || error.statusCode == 422) {
+      return 'We could not complete that step. Refresh the order and try again.';
+    }
+    if (error.statusCode == 403) {
+      return 'This action is not available for your current delivery step.';
+    }
+    return 'We could not update this order. Please try again.';
+  }
+
+  bool _isAlreadyPickedUp(ApiException error) {
+    final message = error.message.toLowerCase();
+    return message.contains('picked_up to picked_up') ||
+        message.contains('already picked') ||
+        (message.contains('cannot transition') &&
+            message.contains('picked_up'));
+  }
+
   Future<void> _markArrived(String riderOrderId) => _run(
       () => ref.read(activeOrderProvider.notifier).markArrived(riderOrderId));
 
   Future<void> _verifyAndConfirmPickup(RiderOrderModel order) async {
     await _run(() async {
+      final activeOrder = ref.read(activeOrderProvider.notifier);
+
+      // The restaurant, a second device, or a delayed poll can advance the
+      // order before this tap. Read server truth first rather than attempting
+      // a duplicate PICKED_UP transition from a stale on-screen order.
+      await activeOrder.refresh();
+      final latest = ref.read(activeOrderProvider).valueOrNull;
+      if (!mounted || latest == null) return;
+
+      if (latest.status == RiderOrderStatus.pickedUp) {
+        AppSnackBar.success(
+          context,
+          'Pickup is already confirmed. You can start delivery.',
+        );
+        return;
+      }
+      if (latest.status != RiderOrderStatus.arrivedAtRestaurant) {
+        AppSnackBar.info(
+          context,
+          'This order was updated. Please review the next delivery step.',
+        );
+        return;
+      }
+
       try {
-        await ref
-            .read(activeOrderProvider.notifier)
-            .pickupSuccess(order.id);
+        await activeOrder.pickupSuccess(latest.id);
         if (!mounted) return;
         AppSnackBar.success(context, 'Order picked up successfully.');
-      } on ApiException catch (e) {
-        if (e.message.toLowerCase().contains('pickup qr') ||
-            e.message.toLowerCase().contains('scan')) {
-          // Try validating with the displayed OTP code
+      } on ApiException catch (error) {
+        if (_isAlreadyPickedUp(error)) {
+          await activeOrder.refresh();
+          if (!mounted) return;
+          AppSnackBar.success(
+            context,
+            'Pickup is already confirmed. You can start delivery.',
+          );
+          return;
+        }
+
+        if (error.message.toLowerCase().contains('pickup qr') ||
+            error.message.toLowerCase().contains('scan')) {
           try {
-            await ref
-                .read(activeOrderProvider.notifier)
-                .scanPickupQr(order.id, order.displayPickupOtp);
-            await ref
-                .read(activeOrderProvider.notifier)
-                .pickupSuccess(order.id);
+            await activeOrder.scanPickupQr(latest.id, latest.displayPickupOtp);
+            await activeOrder.refresh();
+            final afterScan = ref.read(activeOrderProvider).valueOrNull;
+            if (afterScan?.status == RiderOrderStatus.pickedUp) {
+              if (!mounted) return;
+              AppSnackBar.success(context, 'Pickup verified and confirmed.');
+              return;
+            }
+
+            await activeOrder.pickupSuccess(latest.id);
             if (!mounted) return;
-            AppSnackBar.success(context, 'Pickup verified & confirmed!');
+            AppSnackBar.success(context, 'Pickup verified and confirmed.');
+            return;
+          } on ApiException catch (scanError) {
+            if (_isAlreadyPickedUp(scanError)) {
+              await activeOrder.refresh();
+              if (!mounted) return;
+              AppSnackBar.success(
+                context,
+                'Pickup is already confirmed. You can start delivery.',
+              );
+              return;
+            }
+            if (!mounted) return;
+            AppSnackBar.error(
+              context,
+              riderMessageForDeliveryAction(scanError),
+            );
             return;
           } catch (_) {
             if (!mounted) return;
-            AppSnackBar.error(context,
-                'Please ask restaurant staff to verify your OTP (${order.displayPickupOtp}) on their dashboard.');
+            AppSnackBar.error(
+              context,
+              'We could not verify pickup. Please try again or contact support.',
+            );
             return;
           }
         }
+
         rethrow;
       }
     });
@@ -165,21 +265,75 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
   Future<void> _refreshPickupStatus() =>
       _run(() => ref.read(activeOrderProvider.notifier).refresh());
 
-  Future<void> _completeDelivery(String riderOrderId) async {
-    final code = _otpController.text.trim();
-    if (code.length != 6) {
-      AppSnackBar.error(context, 'Enter the 6-digit delivery OTP.');
+  Future<void> _showCollectPayment(RiderOrderModel order) async {
+    if (order.status != RiderOrderStatus.outForDelivery ||
+        !order.order.cashCollectionRequired) {
+      return;
+    }
+    final amount = CurrencyFormatter.rupees(order.order.totalPaise / 100);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirm full cash received'),
+        content: Text(
+          'Confirm only after the customer gives you $amount. This is the order amount held for Qikzoo. Your delivery earning is credited separately.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Not yet'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Cash received'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await _run(
+      () => ref.read(activeOrderProvider.notifier).collectCash(order.id),
+    );
+  }
+
+  Future<void> _completeDelivery(
+    RiderOrderModel order,
+    _DeliveryProximity proximity,
+  ) async {
+    if (!order.order.isPaid) {
+      AppSnackBar.warning(
+        context,
+        'Collect and confirm the customer payment first.',
+      );
+      return;
+    }
+    if (!proximity.isNear) {
+      AppSnackBar.warning(
+        context,
+        proximity.waitingForGps
+            ? 'Waiting for your current location.'
+            : 'Move closer to the delivery location.',
+      );
       return;
     }
     await _run(() async {
-      await ref
+      final completion = await ref
           .read(activeOrderProvider.notifier)
-          .completeDelivery(riderOrderId, code);
+          .completeDelivery(order.id);
       unawaited(ref.read(dashboardStatsProvider.notifier).refresh());
       _invalidateOrderHistory();
       if (!mounted) return;
-      AppSnackBar.success(context, 'Delivery completed!');
-      Get.offAllNamed(AppRoutes.orders);
+      Get.offAllNamed(
+        AppRoutes.deliverySuccess,
+        arguments: DeliverySuccessModel(
+          orderNumber: order.order.orderNumber,
+          paymentStatusLabel:
+              order.order.isPaidOnline ? 'Paid online' : 'Payment received',
+          collectedAmountPaise: order.order.totalPaise,
+          completedAt: completion.deliveredAt,
+          riderEarningsPaise: completion.earningsPaise,
+        ),
+      );
     });
   }
 
@@ -482,7 +636,8 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
                                   );
                                 },
                                 markers: _buildMarkers(order, locationState),
-                                polylines: _buildPolylines(order, locationState),
+                                polylines:
+                                    _buildPolylines(order, locationState),
                                 myLocationEnabled: false,
                                 myLocationButtonEnabled: false,
                                 zoomControlsEnabled: false,
@@ -598,6 +753,16 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
                           ),
                           padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
                           children: [
+                            OrderPaymentCard(
+                              order: order,
+                              canOpenCollection: order.status ==
+                                      RiderOrderStatus.outForDelivery &&
+                                  order.order.cashCollectionRequired &&
+                                  !_isProcessing,
+                              onCollectPayment: () =>
+                                  _showCollectPayment(order),
+                            ),
+                            const SizedBox(height: 12),
                             _OrderAtGlance(order: order),
                             const SizedBox(height: 12),
                             if (order.status == RiderOrderStatus.accepted ||
@@ -664,10 +829,6 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
                               _DeliveryProximityPanel(
                                 proximity: deliveryProximity,
                               ),
-                              if (deliveryProximity.isNear) ...[
-                                const SizedBox(height: AppSpacing.md),
-                                _DeliveryOtpCard(controller: _otpController),
-                              ],
                               const SizedBox(height: AppSpacing.md),
                             ],
 
@@ -728,6 +889,15 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
     RiderOrderModel order,
     _DeliveryProximity proximity,
   ) {
+    if (order.status == RiderOrderStatus.outForDelivery) {
+      return DeliveryBottomActionBar(
+        paymentVerified: order.order.isPaid,
+        proximityReady: proximity.isNear,
+        waitingForGps: proximity.waitingForGps,
+        isLoading: _isProcessing,
+        onComplete: () => _completeDelivery(order, proximity),
+      );
+    }
     switch (order.status) {
       case RiderOrderStatus.accepted:
         return _StageActionButton(
@@ -758,12 +928,42 @@ class _ActiveOrderScreenState extends ConsumerState<ActiveOrderScreen> {
         );
 
       case RiderOrderStatus.outForDelivery:
-        return _StageActionButton(
-          label: 'Delivered',
-          icon: LucideIcons.checkCircle2,
-          isLoading: _isProcessing,
-          backgroundColor: AppColors.success,
-          onPressed: _isProcessing ? null : () => _completeDelivery(order.id),
+        final paymentVerified = order.order.isPaid;
+        final canComplete =
+            paymentVerified && proximity.isNear && !_isProcessing;
+        final label = !paymentVerified
+            ? 'Payment Required'
+            : proximity.waitingForGps
+                ? 'Waiting for Location'
+                : !proximity.isNear
+                    ? 'Move Closer to Customer'
+                    : 'Mark as Delivered';
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!canComplete && !_isProcessing) ...[
+              Text(
+                !paymentVerified
+                    ? 'Collect and confirm the payment before completing this delivery.'
+                    : proximity.waitingForGps
+                        ? 'A fresh GPS location is required to complete delivery.'
+                        : 'Delivery completion is available near the customer’s location.',
+                textAlign: TextAlign.center,
+                style: AppTypography.caption,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+            _StageActionButton(
+              label: label,
+              icon:
+                  paymentVerified ? LucideIcons.checkCircle2 : LucideIcons.lock,
+              isLoading: _isProcessing,
+              backgroundColor: AppColors.success,
+              onPressed: canComplete
+                  ? () => _completeDelivery(order, proximity)
+                  : null,
+            ),
+          ],
         );
 
       default:
@@ -1015,9 +1215,8 @@ class _OrderAtGlance extends StatelessWidget {
     final distanceText = order.distanceKm != null
         ? '${order.distanceKm!.toStringAsFixed(1)} km'
         : '-- km';
-    final etaText = order.etaMinutes != null
-        ? '${order.etaMinutes!.round()} min'
-        : null;
+    final etaText =
+        order.etaMinutes != null ? '${order.etaMinutes!.round()} min' : null;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1038,7 +1237,8 @@ class _OrderAtGlance extends StatelessWidget {
           Expanded(
             child: _OrderGlanceMetric(
               label: 'Trip Distance',
-              value: etaText != null ? '$distanceText • $etaText' : distanceText,
+              value:
+                  etaText != null ? '$distanceText • $etaText' : distanceText,
             ),
           ),
           const _GlanceDivider(),
@@ -1096,54 +1296,6 @@ class _GlanceDivider extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 9),
         color: AppColors.border,
       );
-}
-
-class _DeliveryOtpCard extends StatelessWidget {
-  const _DeliveryOtpCard({required this.controller});
-
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border, width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Delivery verification',
-            style: AppTypography.bodyMedium.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Ask the customer for the 6-digit delivery OTP.',
-            style: AppTypography.caption,
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            textAlign: TextAlign.center,
-            style: AppTypography.numericMd.copyWith(letterSpacing: 4),
-            decoration: const InputDecoration(
-              hintText: '000000',
-              counterText: '',
-              contentPadding: EdgeInsets.symmetric(vertical: 10),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _DeliveryProximityPanel extends StatelessWidget {

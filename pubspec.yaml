@@ -1,7 +1,7 @@
 name: delivery_partner_app
-description: Qikzoo Delivery Partner — frontend
+description: Qikzoo Delivery Partner â€” frontend
 publish_to: 'none'
-version: 0.4.5+5
+version: 0.6.6+6
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -30,6 +30,8 @@ dependencies:
   file_picker: ^8.1.2
   sms_autofill: ^2.5.0
   url_launcher: ^6.3.1
+  share_plus: ^10.1.4
+  qr_flutter: ^4.1.0
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.6
   flutter_local_notifications: ^18.0.1
