@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/assets/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -213,93 +212,6 @@ class _IdentityCard extends StatelessWidget {
                   style: AppTypography.caption.copyWith(color: AppColors.info)),
             ],
           ],
-        ),
-      );
-}
-
-class PartnerStoreCard extends StatelessWidget {
-  const PartnerStoreCard({super.key, required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 112),
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: AppColors.ctaGradient),
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: .24),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(22),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Row(
-                  children: [
-                    Image.asset(
-                      AppAssets.profileStorefront3d,
-                      width: 56,
-                      fit: BoxFit.contain,
-                      semanticLabel: 'Storefront',
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Your Store',
-                              style: AppTypography.body
-                                  .copyWith(color: AppColors.onPrimary)),
-                          const SizedBox(height: 5),
-                          Text('Super Store Mumbai',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.h2.copyWith(
-                                  color: AppColors.onPrimary, fontSize: 17)),
-                          const SizedBox(height: 7),
-                          Row(children: [
-                            const Icon(LucideIcons.mapPin,
-                                color: AppColors.onPrimary, size: 17),
-                            const SizedBox(width: 5),
-                            Expanded(
-                                child: Text('Kamranwar Nagar, ES1de, Mumbai',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.caption.copyWith(
-                                        color: AppColors.onPrimary
-                                            .withValues(alpha: .88)))),
-                          ]),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      decoration: const BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.all(Radius.circular(24))),
-                      child: const Icon(LucideIcons.chevronRight,
-                          color: AppColors.primary, size: 20),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ),
       );
 }

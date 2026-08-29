@@ -35,7 +35,7 @@ class PushNotificationService {
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      developer.log('Received foreground message: ${message.data}');
+      developer.log('Received foreground message: type=${message.data['type']}');
       _ref.invalidate(notificationsProvider);
       if (message.data['type'] == 'NEW_DELIVERY_OFFER') {
         developer.log(
@@ -47,7 +47,7 @@ class PushNotificationService {
     // Handle background notification clicks when app is opened from notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       developer.log(
-          'App opened from background notification click: ${message.data}');
+          'App opened from background notification click: type=${message.data['type']}');
       _ref.invalidate(notificationsProvider);
       if (message.data['type'] == 'NEW_DELIVERY_OFFER') {
         _ref.read(dispatchOfferProvider.notifier).refresh();
@@ -74,7 +74,7 @@ class PushNotificationService {
               ? 'IOS'
               : 'ANDROID';
       await _repository.register(token, platform);
-      developer.log('FCM token registered successfully: $token ($platform)');
+      developer.log('FCM token registered successfully ($platform)');
     } catch (e) {
       developer.log('Failed to register FCM token: $e');
     }
@@ -85,7 +85,7 @@ class PushNotificationService {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
         await _repository.remove(token);
-        developer.log('FCM token unregistered from backend: $token');
+        developer.log('FCM token unregistered from backend');
       }
     } catch (e) {
       developer.log('Failed to remove FCM token: $e');

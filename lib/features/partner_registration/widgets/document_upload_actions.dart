@@ -111,15 +111,13 @@ Future<void> showDocumentPreviewSheet(
                 title: Text('Replace', style: AppTypography.bodyMedium),
                 onTap: () => Navigator.of(sheetContext).pop('replace'),
               ),
-              ListTile(
-                leading: const Icon(LucideIcons.trash2, color: AppColors.error),
-                title: Text(
-                  'Remove',
-                  style:
-                      AppTypography.bodyMedium.copyWith(color: AppColors.error),
-                ),
-                onTap: () => Navigator.of(sheetContext).pop('remove'),
-              ),
+              // Deliberately no "Remove" option here — the backend has no
+              // document-delete endpoint for any of profile/KYC/vehicle
+              // documents (only upload/replace), so a Remove action could
+              // only ever clear local state, making the document reappear
+              // on the next refetch while implying it was actually
+              // deleted. "Replace" is the real, backend-supported action
+              // for changing a submitted document.
             ],
           ),
         ),
@@ -127,9 +125,7 @@ Future<void> showDocumentPreviewSheet(
     ),
   );
 
-  if (action == 'remove') {
-    ref.read(documentsProvider.notifier).remove(document.type);
-  } else if (action == 'replace' && context.mounted) {
+  if (action == 'replace' && context.mounted) {
     await pickAndUploadDocument(context, ref, document.type);
   }
 }

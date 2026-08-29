@@ -18,6 +18,11 @@ import '../orders/active_order_provider.dart';
 import '../orders/dispatch_offer_provider.dart';
 import '../notifications/notifications_provider.dart';
 import '../polling/rider_polling_controller.dart';
+import '../profile/profile_provider.dart';
+import '../wallet/wallet_provider.dart';
+import '../earnings/earnings_provider.dart';
+import '../bank_details/bank_details_provider.dart';
+import '../verification_status/verification_status_provider.dart';
 
 /// UI state: the phone number currently being entered/verified.
 final phoneNumberUiProvider = StateProvider<String>((ref) => '');
@@ -62,6 +67,18 @@ class AuthSessionNotifier extends AsyncNotifier<AuthSessionModel> {
     ref.invalidate(activeOrderProvider);
     ref.invalidate(dispatchOfferProvider);
     ref.invalidate(notificationsProvider);
+    // Previously omitted — a rider logging out and a different rider
+    // logging in on the same device/app process could see the PREVIOUS
+    // rider's name/photo, wallet balance, transaction history, earnings,
+    // and masked bank details until a manual pull-to-refresh.
+    ref.invalidate(profileProvider);
+    ref.invalidate(ratingProvider);
+    ref.invalidate(walletProvider);
+    ref.invalidate(transactionsProvider);
+    ref.invalidate(earningsSummaryProvider);
+    ref.invalidate(earningsHistoryProvider);
+    ref.invalidate(bankDetailsProvider);
+    ref.invalidate(verificationStepsProvider);
   }
 
   /// Called once on app start. If a refresh token is stored, silently

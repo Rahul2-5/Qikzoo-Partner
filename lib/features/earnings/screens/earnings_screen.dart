@@ -66,12 +66,16 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        weekLabel,
-                        style: AppTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
+                      Flexible(
+                        child: Text(
+                          weekLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                     ],
@@ -160,13 +164,18 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Recent deliveries',
-                        style: AppTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      Flexible(
+                        child: Text(
+                          'Recent deliveries',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodyMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: AppSpacing.sm),
                       // "All Details" Filter Chip
                       ActionChip(
                         label: const Text('View all'),
@@ -243,14 +252,18 @@ class _WeeklyEarningsCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                _SummaryDetail(
-                  icon: LucideIcons.packageCheck,
-                  label: '$deliveries deliveries',
+                Flexible(
+                  child: _SummaryDetail(
+                    icon: LucideIcons.packageCheck,
+                    label: '$deliveries deliveries',
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.lg),
-                _SummaryDetail(
-                  icon: LucideIcons.heart,
-                  label: '${CurrencyFormatter.rupees(tips)} tips',
+                Flexible(
+                  child: _SummaryDetail(
+                    icon: LucideIcons.heart,
+                    label: '${CurrencyFormatter.rupees(tips)} tips',
+                  ),
                 ),
               ],
             ),
@@ -271,8 +284,14 @@ class _SummaryDetail extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.white70, size: 16),
           const SizedBox(width: AppSpacing.xs),
-          Text(label,
-              style: AppTypography.caption.copyWith(color: Colors.white)),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(color: Colors.white),
+            ),
+          ),
         ],
       );
 }

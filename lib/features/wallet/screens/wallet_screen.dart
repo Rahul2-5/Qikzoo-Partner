@@ -36,28 +36,34 @@ class WalletScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          LucideIcons.arrowLeft,
-                          color: AppColors.textPrimary,
-                          size: 22,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            LucideIcons.arrowLeft,
+                            color: AppColors.textPrimary,
+                            size: 22,
+                          ),
+                          onPressed: () => Get.back(),
+                          padding: EdgeInsets.zero,
+                          alignment: Alignment.centerLeft,
                         ),
-                        onPressed: () => Get.back(),
-                        padding: EdgeInsets.zero,
-                        alignment: Alignment.centerLeft,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Wallet',
-                        style: AppTypography.h1.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Wallet',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.h1.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(LucideIcons.helpCircle,
@@ -146,15 +152,20 @@ class WalletScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'TOTAL WALLET BALANCE',
-                    style: TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
+                  const Flexible(
+                    child: Text(
+                      'TOTAL WALLET BALANCE',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -190,29 +201,40 @@ class WalletScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Pending Settlement',
-                        style:
-                            TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        CurrencyFormatter.rupeesPrecise(wallet.pendingAmount),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Pending Settlement',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          CurrencyFormatter.rupeesPrecise(wallet.pendingAmount),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  ElevatedButton.icon(
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: ElevatedButton.icon(
                     onPressed: () => Get.toNamed(AppRoutes.payoutsDetail),
                     icon: const Icon(LucideIcons.arrowUpRight, size: 16),
-                    label: const Text('View Payouts'),
+                    label: const Text(
+                      'View Payouts',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -222,6 +244,7 @@ class WalletScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
+                  ),
                   ),
                 ],
               ),
@@ -417,12 +440,16 @@ class WalletScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Recent Transactions',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
+            const Flexible(
+              child: Text(
+                'Recent Transactions',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
               ),
             ),
             TextButton(

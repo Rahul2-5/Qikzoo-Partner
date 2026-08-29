@@ -466,11 +466,15 @@ class _StatusPill extends StatelessWidget {
               color: isUploaded ? AppColors.success : AppColors.secondary,
             ),
             const SizedBox(width: 6),
-            Text(
-              isUploaded ? 'Photo uploaded' : 'Face the camera directly',
-              style: AppTypography.caption.copyWith(
-                color: isUploaded ? AppColors.success : AppColors.secondary,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                isUploaded ? 'Photo uploaded' : 'Face the camera directly',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.caption.copyWith(
+                  color: isUploaded ? AppColors.success : AppColors.secondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/assets/app_assets.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/authentication/auth_flow.dart';
 import '../../../shared/widgets/layout/responsive_frame.dart';
 
 class OnboardingWelcomeScreen extends StatefulWidget {
@@ -35,7 +36,14 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
   }
 
   void _finishOnboarding() {
-    Get.offAllNamed(AppRoutes.mobileNumber);
+    // Every rider landing on this screen is brand new (this is the very
+    // first screen of the app) — must signal AuthFlow.signUp the same way
+    // the sibling onboarding CTAs do (see partner_benefits_screen.dart and
+    // earnings_onboarding_screen.dart), or MobileNumberScreen defaults to
+    // AuthFlow.login (authFlowFromRoute's fallback for a missing `flow`
+    // query param) and skips the name field a new partner still needs to
+    // fill in.
+    Get.offAllNamed(authFlowRoute(AppRoutes.mobileNumber, AuthFlow.signUp));
   }
 
   @override

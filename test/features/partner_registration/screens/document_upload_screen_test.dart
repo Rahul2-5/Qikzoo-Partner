@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:delivery_partner_app/core/routes/app_routes.dart';
+import 'package:delivery_partner_app/features/partner_registration/screens/document_upload_screen.dart';
+import 'package:delivery_partner_app/models/document_verification/document_model.dart';
+import 'package:delivery_partner_app/repositories/document_verification/document_repository.dart';
+
+class FakeDocumentRepository implements DocumentRepository {
+  FakeDocumentRepository(this._documents);
+  final List<DocumentModel> _documents;
+
+  @override
+  Future<List<DocumentModel>> getDocuments() async => _documents;
+
+  @override
+  Future<DocumentModel> uploadDocument(
+      DocumentType type, String filePath) async {
+    return DocumentModel(
+        type: type,
+        status: DocumentStatus.pendingVerification,
+        fileUrl: filePath);
+  }
+}
+
+Widget buildApp(List<DocumentModel> documents) {
+  return ProviderScope(
+    overrides: [
+      documentRepositoryProvider
+          .overrideWithValue(FakeDocumentRepository(documents)),
+    ],
+    child: GetMaterialApp(
+      initialRoute: AppRoutes.documentUpload,
+      getPages: [
+        GetPage(
+            name: AppRoutes.documentUpload,
+            page: () => const DocumentUploadScreen()),
+        GetPage(
+          name: AppRoutes.selfieVerification,
+          page: () => const Scaffold(body: Text('Selfie Verification Screen')),
+        ),
+      ],
+    ),
+  );
+}
+
+void setTallSurface(WidgetTester tester) {
+  tester.view.physicalSize = const Size(400, 1400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
+void main() {
+  test(
+      'missingRequiredDocumentLabels requires the government ID and excludes optional documents',
+      () {
+    final documents = [
+      const DocumentModel(
+          type: DocumentType.governmentId,
+          status: DocumentStatus.pendingVerification),
+      const DocumentModel(
+          type: DocumentType.drivingLicense,
+          status: DocumentStatus.notUploaded),
+      const DocumentModel(
+          type: DocumentType.vehicleRc, status: DocumentStatus.verified),
+      const DocumentModel(
+          type: DocumentType.vehicleInsurance, status: DocumentStatus.rejected),
+      const DocumentModel(
+          type: DocumentType.bankProof, status: DocumentStatus.notUploaded),
+    ];
+
+    expect(
+      missingRequiredDocumentLabels(documents),
+      ['Driving License'],
+    );
+  });
+
+  testWidgets('renders every required document with requirement labels',
+      (tester) async {
+    setTallSurface(tester);
+    await tester.pumpWidget(buildApp(
+      documentDisplayOrder
+          .map((type) =>
+              DocumentModel(type: type, status: DocumentStatus.notUploaded))
+          .toList(),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Government ID'), findsOneWidget);
+    expect(find.textContaining('Driving License'), findsOneWidget);
+    expect(find.textContaining('Vehicle RC'), findsOneWidget);
+    expect(find.textContaining('Insurance'), findsOneWidget);
+    expect(find.textContaining('Bank Details'), findsOneWidget);
+    expect(find.textContaining('(Optional)'), findsNWidgets(2));
+    expect(find.textContaining('(Required)'), findsNWidgets(3));
+  });
+
+  testWidgets('Continue shows a snackbar listing missing required documents',
+      (tester) async {
+    setTallSurface(tester);
+    await tester.pumpWidget(buildApp(
+      documentDisplayOrder
+          .map((type) =>
+              DocumentModel(type: type, status: DocumentStatus.notUploaded))
+          .toList(),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Government ID'), findsWidgets);
+    expect(find.text('Selfie Verification Screen'), findsNothing);
+  });
+
+  testWidgets(
+      'Continue navigates to selfie verification once required documents are uploaded',
+      (tester) async {
+    setTallSurface(tester);
+    const requiredTypes = [
+      DocumentType.governmentId,
+      DocumentType.drivingLicense,
+      DocumentType.vehicleRc,
+    ];
+    final documents = documentDisplayOrder.map((type) {
+      final isRequired = requiredTypes.contains(type);
+      return DocumentModel(
+        type: type,
+        status: isRequired
+            ? DocumentStatus.pendingVerification
+            : DocumentStatus.notUploaded,
+        fileUrl: isRequired ? '/tmp/${type.name}.jpg' : null,
+      );
+    }).toList();
+
+    await tester.pumpWidget(buildApp(documents));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selfie Verification Screen'), findsOneWidget);
+  });
+}

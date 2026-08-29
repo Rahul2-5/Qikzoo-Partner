@@ -472,12 +472,16 @@ class _SelfieCameraCaptureScreenState extends State<SelfieCameraCaptureScreen>
           children: [
             const Icon(LucideIcons.shieldCheck, size: 13, color: _primary),
             const SizedBox(width: 5),
-            Text(
-              'Secure Face Verification',
-              style: AppTypography.caption.copyWith(
-                color: _textSecondary,
-                fontWeight: FontWeight.w700,
-                fontSize: 11,
+            Flexible(
+              child: Text(
+                'Secure Face Verification',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.caption.copyWith(
+                  color: _textSecondary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
               ),
             ),
           ],
