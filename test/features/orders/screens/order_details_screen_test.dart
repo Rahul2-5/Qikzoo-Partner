@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/orders/screens/order_details_screen.dart';
+import 'package:delivery_partner_app/models/orders/delivery_completion_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_payment_session.dart';
 import 'package:delivery_partner_app/models/orders/order_history_page_model.dart';
 import 'package:delivery_partner_app/models/orders/rider_order_model.dart';
 import 'package:delivery_partner_app/repositories/orders/rider_orders_repository.dart';
@@ -40,7 +42,16 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   @override
   Future<void> startDelivery(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) => throw UnimplementedError();
+  Future<DeliveryPaymentSession> createPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<DeliveryPaymentSession> getPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<void> collectCash(String riderOrderId) => throw UnimplementedError();
+  @override
+  Future<DeliveryCompletionModel> completeDelivery(String riderOrderId) =>
+      throw UnimplementedError();
   @override
   Future<void> cancel(String riderOrderId, String reason) => throw UnimplementedError();
 }
@@ -89,6 +100,11 @@ RiderOrderModel mockDeliveredOrder({
         status: RestaurantOrderStatus.delivered,
         statusHistory: statusHistory,
         pickupOtp: null,
+        paymentMethod: OrderPaymentMethod.cod,
+        paymentStatus: OrderPaymentStatus.paid,
+        paidAt: DateTime(2026, 7, 23, 10, 30),
+        paymentReference: null,
+        collectionSource: null,
       ),
     );
 

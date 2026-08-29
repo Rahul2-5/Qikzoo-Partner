@@ -17,6 +17,7 @@ class CancelOrderSheet {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => const GlassBottomSheet(
+        scrollable: true,
         child: _CancelOrderSheetContent(),
       ),
     );

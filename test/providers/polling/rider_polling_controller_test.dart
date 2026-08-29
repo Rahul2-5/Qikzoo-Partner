@@ -6,6 +6,9 @@ import 'package:delivery_partner_app/core/constants/app_constants.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/core/storage/dispatch_offer_cache.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/dashboard/go_online_eligibility_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_completion_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_payment_session.dart';
 import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
 import 'package:delivery_partner_app/models/orders/order_history_page_model.dart';
 import 'package:delivery_partner_app/models/orders/rider_order_model.dart';
@@ -79,7 +82,16 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   @override
   Future<void> startDelivery(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) => throw UnimplementedError();
+  Future<DeliveryPaymentSession> createPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<DeliveryPaymentSession> getPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<void> collectCash(String riderOrderId) => throw UnimplementedError();
+  @override
+  Future<DeliveryCompletionModel> completeDelivery(String riderOrderId) =>
+      throw UnimplementedError();
   @override
   Future<void> cancel(String riderOrderId, String reason) =>
       throw UnimplementedError();
@@ -111,6 +123,15 @@ class FakeDashboardRepository implements DashboardRepository {
   Future<DashboardStatsModel> goAvailable() => getStats();
   @override
   Future<DashboardStatsModel> goOffline() => getStats();
+  @override
+  Future<GoOnlineEligibilityModel> getOnlineEligibility() async =>
+      const GoOnlineEligibilityModel(
+        eligible: true,
+        blockers: [],
+        selfieRequired: false,
+        selfieMissing: false,
+        livenessRequired: false,
+      );
 }
 
 ProviderContainer buildContainer({

@@ -197,6 +197,14 @@ class CountingWalletRepository implements WalletRepository {
 
   @override
   Future<List<TransactionModel>> getTransactions() async => const [];
+
+  @override
+  Future<CashDepositModel> createCashDeposit(int amountPaise) =>
+      throw UnimplementedError();
+
+  @override
+  Future<CashDepositModel> getCashDeposit(String depositId) =>
+      throw UnimplementedError();
 }
 
 class CountingEarningsRepository implements EarningsRepository {

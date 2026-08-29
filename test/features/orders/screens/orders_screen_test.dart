@@ -6,6 +6,9 @@ import 'package:delivery_partner_app/core/api/api_exception.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/orders/screens/orders_screen.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/dashboard/go_online_eligibility_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_completion_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_payment_session.dart';
 import 'package:delivery_partner_app/models/orders/order_history_page_model.dart';
 import 'package:delivery_partner_app/models/orders/rider_order_model.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
@@ -54,7 +57,16 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   @override
   Future<void> startDelivery(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) => throw UnimplementedError();
+  Future<DeliveryPaymentSession> createPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<DeliveryPaymentSession> getPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<void> collectCash(String riderOrderId) => throw UnimplementedError();
+  @override
+  Future<DeliveryCompletionModel> completeDelivery(String riderOrderId) =>
+      throw UnimplementedError();
   @override
   Future<void> cancel(String riderOrderId, String reason) =>
       throw UnimplementedError();
@@ -89,6 +101,16 @@ class FakeDashboardRepository implements DashboardRepository {
 
   @override
   Future<DashboardStatsModel> goAvailable() => getStats();
+
+  @override
+  Future<GoOnlineEligibilityModel> getOnlineEligibility() async =>
+      const GoOnlineEligibilityModel(
+        eligible: true,
+        blockers: [],
+        selfieRequired: false,
+        selfieMissing: false,
+        livenessRequired: false,
+      );
 }
 
 RiderOrderModel mockOrder({
@@ -135,6 +157,11 @@ RiderOrderModel mockOrder({
         status: RestaurantOrderStatus.delivered,
         statusHistory: null,
         pickupOtp: null,
+        paymentMethod: OrderPaymentMethod.cod,
+        paymentStatus: OrderPaymentStatus.paid,
+        paidAt: null,
+        paymentReference: null,
+        collectionSource: null,
       ),
     );
 

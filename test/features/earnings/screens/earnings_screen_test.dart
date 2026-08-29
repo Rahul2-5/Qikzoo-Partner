@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/earnings/screens/earnings_screen.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/dashboard/go_online_eligibility_model.dart';
 import 'package:delivery_partner_app/models/earnings/earnings_models.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
 import 'package:delivery_partner_app/repositories/earnings/earnings_repository.dart';
@@ -47,6 +48,16 @@ class FakeDashboardRepository implements DashboardRepository {
 
   @override
   Future<DashboardStatsModel> goAvailable() => getStats();
+
+  @override
+  Future<GoOnlineEligibilityModel> getOnlineEligibility() async =>
+      const GoOnlineEligibilityModel(
+        eligible: true,
+        blockers: [],
+        selfieRequired: false,
+        selfieMissing: false,
+        livenessRequired: false,
+      );
 }
 
 Widget buildApp({

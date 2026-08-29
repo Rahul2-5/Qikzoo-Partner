@@ -16,7 +16,10 @@ import 'package:delivery_partner_app/features/partner_registration/widgets/captu
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/dashboard/go_online_eligibility_model.dart';
 import 'package:delivery_partner_app/models/location/rider_location_ping.dart';
+import 'package:delivery_partner_app/models/orders/delivery_completion_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_payment_session.dart';
 import 'package:delivery_partner_app/models/orders/dispatch_offer_model.dart';
 import 'package:delivery_partner_app/models/orders/order_history_page_model.dart';
 import 'package:delivery_partner_app/models/orders/rider_order_model.dart';
@@ -37,12 +40,18 @@ import 'package:delivery_partner_app/repositories/profile/profile_repository.dar
 import '../../../support/fake_camera.dart';
 
 class FakeDashboardRepository implements DashboardRepository {
-  FakeDashboardRepository({required this.initial});
+  FakeDashboardRepository({required this.initial, this.selfieRequired = true});
   final DashboardStatsModel initial;
   DashboardStatsModel? current;
   Object? getStatsError;
   Object? toggleError;
   Object? goAvailableError;
+  // Defaults to true so the existing "going online requires ... a selfie"
+  // tests (written before GoOnlineEligibilityModel existed) keep exercising
+  // that path unchanged; the P0-1 location-gating tests below don't reach
+  // the selfie step regardless (they're blocked earlier, at the location
+  // check), so this default doesn't affect them.
+  final bool selfieRequired;
   int getStatsCalls = 0;
   int goOnlineCalls = 0;
   int goAvailableCalls = 0;
@@ -82,6 +91,16 @@ class FakeDashboardRepository implements DashboardRepository {
         .copyWith(availabilityStatus: RiderAvailabilityStatus.offline);
     return current!;
   }
+
+  @override
+  Future<GoOnlineEligibilityModel> getOnlineEligibility() async =>
+      GoOnlineEligibilityModel(
+        eligible: true,
+        blockers: const [],
+        selfieRequired: selfieRequired,
+        selfieMissing: selfieRequired,
+        livenessRequired: false,
+      );
 }
 
 /// Grants location by default — the go-online flow this suite exercises
@@ -176,7 +195,15 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   @override
   Future<void> startDelivery(String riderOrderId) => throw UnimplementedError();
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) =>
+  Future<DeliveryPaymentSession> createPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<DeliveryPaymentSession> getPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+  @override
+  Future<void> collectCash(String riderOrderId) => throw UnimplementedError();
+  @override
+  Future<DeliveryCompletionModel> completeDelivery(String riderOrderId) =>
       throw UnimplementedError();
   @override
   Future<void> cancel(String riderOrderId, String reason) =>
@@ -557,6 +584,11 @@ void main() {
     await tester.tap(find.byKey(const Key('availability-toggle')));
     await tester.pumpAndSettle();
 
+    // GoOnlineReadinessDialog's location disclosure now shows first, before
+    // the "Go online?" confirmation.
+    await tester.tap(find.text('Continue'));
+    await pumpBounded(tester);
+
     expect(find.text('Go online?'), findsOneWidget);
     expect(repo.goOnlineCalls, 0);
 
@@ -613,6 +645,8 @@ void main() {
 
     await tester.tap(find.byKey(const Key('availability-toggle')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await pumpBounded(tester);
     await tester.tap(find.text('Confirm'));
     await pumpBounded(tester);
     await tester.tap(find.text('Take selfie now'));
@@ -658,6 +692,8 @@ void main() {
     await tester.tap(find.byKey(const Key('availability-toggle')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Continue'));
+    await pumpBounded(tester);
     await tester.tap(find.text('Confirm'));
     await pumpBounded(tester);
     await tester.tap(find.text('Take selfie now'));
@@ -684,6 +720,8 @@ void main() {
     await tester.tap(find.byKey(const Key('availability-toggle')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Continue'));
+    await pumpBounded(tester);
     await tester.tap(find.text('Confirm'));
     await pumpBounded(tester);
     await tester.tap(find.text('Take selfie now'));
@@ -793,6 +831,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('availability-toggle')));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await pumpBounded(tester);
 
       expect(find.text('Turn on location'), findsOneWidget);
       // The rider never even sees the "Go online?" confirmation — location
@@ -819,6 +859,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('availability-toggle')));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await pumpBounded(tester);
 
       expect(find.text('Location permission needed'), findsOneWidget);
       expect(find.text('Open app settings'), findsOneWidget);
@@ -843,6 +885,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('availability-toggle')));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await pumpBounded(tester);
 
       expect(find.text('Location permission needed'), findsOneWidget);
       // No "Open Settings" action for a merely-denied (not permanently
@@ -868,6 +912,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('availability-toggle')));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await pumpBounded(tester);
       await tester.tap(find.text('Confirm'));
       await pumpBounded(tester);
       await tester.tap(find.text('Take selfie now'));

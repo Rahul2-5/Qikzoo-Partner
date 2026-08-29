@@ -198,13 +198,11 @@ void main() {
     await tester.pump();
     expect(find.text('Phone support is not available yet.'), findsOneWidget);
 
-    // Regression guard: "Live chat" used to navigate to a screen that
-    // fabricated a scripted conversation with a fake "Agent" persona
-    // (invented resolution history, invented timestamps). It must now be
-    // as honest as "Call us" instead of pretending a live agent exists.
-    await tester.tap(find.text('Live chat'));
-    await tester.pump();
-    expect(find.text('Live chat support is not available yet.'), findsOneWidget);
+    // "Live chat" now opens a real, backend-integrated ticket chat (see
+    // ticket_chat_screen.dart's SupportRepository-backed messaging) rather
+    // than the fabricated scripted "Agent" conversation it used to show —
+    // just confirm the entry point itself is present.
+    expect(find.text('Live chat'), findsOneWidget);
   });
 
   testWidgets('settings screen does not offer language selection',

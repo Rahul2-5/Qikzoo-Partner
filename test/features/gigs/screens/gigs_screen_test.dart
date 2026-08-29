@@ -1,5 +1,6 @@
 import 'package:delivery_partner_app/features/gigs/screens/gigs_screen.dart';
 import 'package:delivery_partner_app/models/dashboard/dashboard_stats_model.dart';
+import 'package:delivery_partner_app/models/dashboard/go_online_eligibility_model.dart';
 import 'package:delivery_partner_app/repositories/dashboard/dashboard_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,16 @@ class _OfflineDashboardRepository implements DashboardRepository {
 
   @override
   Future<DashboardStatsModel> goAvailable() async => _stats;
+
+  @override
+  Future<GoOnlineEligibilityModel> getOnlineEligibility() async =>
+      const GoOnlineEligibilityModel(
+        eligible: true,
+        blockers: [],
+        selfieRequired: false,
+        selfieMissing: false,
+        livenessRequired: false,
+      );
 }
 
 Widget buildApp() => ProviderScope(

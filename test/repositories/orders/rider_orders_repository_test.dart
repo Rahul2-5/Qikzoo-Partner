@@ -127,14 +127,14 @@ void main() {
       await buildRepository(adapter).startDelivery('rider-order-1');
     });
 
-    test('completeDelivery posts the verification OTP code to the complete-delivery endpoint',
+    test('completeDelivery posts to the complete-delivery endpoint',
         () async {
       final adapter = FakeHttpClientAdapter((options) {
         expect(options.path, ApiEndpoints.riderOrderCompleteDelivery('rider-order-1'));
-        expect(options.data, {'code': '123456'});
-        return jsonResponse('{"data":{}}', 201);
+        return jsonResponse('{"data":{"id":"rider-order-1","deliveredAt":"2026-08-22T18:30:00.000Z","earningsPaise":5500}}', 201);
       });
-      await buildRepository(adapter).completeDelivery('rider-order-1', '123456');
+      final result = await buildRepository(adapter).completeDelivery('rider-order-1');
+      expect(result.riderOrderId, 'rider-order-1');
     });
 
     test('pickupSuccess posts to the pickup-success endpoint', () async {

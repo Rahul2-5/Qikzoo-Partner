@@ -9,6 +9,8 @@ import 'package:delivery_partner_app/core/routes/app_routes.dart';
 import 'package:delivery_partner_app/features/orders/screens/active_order_screen.dart';
 import 'package:delivery_partner_app/models/authentication/auth_session_model.dart';
 import 'package:delivery_partner_app/models/authentication/otp_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_completion_model.dart';
+import 'package:delivery_partner_app/models/orders/delivery_payment_session.dart';
 import 'package:delivery_partner_app/models/orders/order_history_page_model.dart';
 import 'package:delivery_partner_app/models/orders/rider_order_model.dart';
 import 'package:delivery_partner_app/providers/location/rider_location_provider.dart';
@@ -38,10 +40,15 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   int startDeliveryCalls = 0;
   int pickupSuccessCalls = 0;
   int completeDeliveryCalls = 0;
+  int collectCashCalls = 0;
   int cancelCalls = 0;
   int getCurrentCalls = 0;
   String? lastCancelReason;
-  String? lastCompleteDeliveryCode;
+  DeliveryCompletionModel completion = DeliveryCompletionModel(
+    riderOrderId: 'rider-order-1',
+    deliveredAt: DateTime(2026, 7, 23, 11),
+    earningsPaise: 4500,
+  );
 
   @override
   Future<List<RiderOrderModel>> getCurrent() async {
@@ -95,11 +102,27 @@ class FakeRiderOrdersRepository implements RiderOrdersRepository {
   }
 
   @override
-  Future<void> completeDelivery(String riderOrderId, String code) async {
+  Future<DeliveryPaymentSession> createPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<DeliveryPaymentSession> getPaymentSession(String riderOrderId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> collectCash(String riderOrderId) async {
+    collectCashCalls++;
+    if (actionError != null) throw actionError!;
+    order = _withStatus(order!.status,
+        arrivedAt: order!.arrivedAt, pickedUpAt: order!.pickedUpAt);
+  }
+
+  @override
+  Future<DeliveryCompletionModel> completeDelivery(String riderOrderId) async {
     completeDeliveryCalls++;
-    lastCompleteDeliveryCode = code;
     if (actionError != null) throw actionError!;
     order = null;
+    return completion;
   }
 
   @override
@@ -159,6 +182,15 @@ RiderOrderModel mockOrder({
   PickupOtpInfo? pickupOtp,
   double? deliveryLat = 12.99,
   double? deliveryLng = 77.61,
+  // Defaults to "already paid" so every pre-existing test (pickup, arrival,
+  // cancel, etc.) that doesn't care about the payment-collection gate keeps
+  // seeing an order that's free to complete — only the payment-gating tests
+  // below override this to OrderPaymentStatus.pending.
+  OrderPaymentMethod paymentMethod = OrderPaymentMethod.cod,
+  OrderPaymentStatus paymentStatus = OrderPaymentStatus.paid,
+  DateTime? paidAt,
+  String? paymentReference,
+  String? collectionSource,
 }) =>
     RiderOrderModel(
       id: 'rider-order-1',
@@ -199,6 +231,11 @@ RiderOrderModel mockOrder({
         status: RestaurantOrderStatus.handedToRider,
         statusHistory: null,
         pickupOtp: pickupOtp,
+        paymentMethod: paymentMethod,
+        paymentStatus: paymentStatus,
+        paidAt: paidAt,
+        paymentReference: paymentReference,
+        collectionSource: collectionSource,
       ),
     );
 
@@ -261,6 +298,13 @@ Widget buildApp({
         GetPage(
           name: AppRoutes.welcome,
           page: () => const Scaffold(body: Text('Welcome Screen')),
+        ),
+        // _completeDelivery navigates here directly on a successful
+        // completion (see active_order_screen.dart), racing the ref.listen
+        // block's own Get.offAllNamed(AppRoutes.orders) below.
+        GetPage(
+          name: AppRoutes.deliverySuccess,
+          page: () => const Scaffold(body: Text('Delivery Success Screen')),
         ),
         // ActiveOrderScreen auto-navigates here (Get.offAllNamed) once the
         // active order disappears (e.g. right after a successful delivery
@@ -463,24 +507,19 @@ void main() {
     // Journey-snapshot label for OUT_FOR_DELIVERY (not yet arrived at the
     // customer) — see _journeySnapshot — not the raw status label.
     expect(find.text('On the way'), findsOneWidget);
-    // The new DeliveryHandoffCard section (shown only for outForDelivery)
-    // pushes this button below the initial viewport in the list — it's
-    // still built (within the sliver's cache extent) but skipOffstage's
-    // default excludes it, so it must be searched for explicitly here.
+    // The Mark-delivered button is identified by key, not by a literal
+    // "Delivered" label — DeliveryBottomActionBar's label is dynamic
+    // ('Payment Required'/'Waiting for Location'/'Move Closer to
+    // Customer'/'Mark as Delivered') depending on payment/proximity state.
     expect(
-      find.text('Delivered', skipOffstage: false),
+      find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false),
       findsOneWidget,
     );
   });
 
   testWidgets(
-      "shows 'not at the delivery location' copy with a distance, but still lets the rider "
-      'tap Delivered (the backend is the real proximity gate, not the client)', (tester) async {
-    // See the `_deliveryProximityThresholdMeters` doc comment: it's a
-    // "client-side-only UX threshold for the ... button/copy" — the backend
-    // independently enforces its own real radius server-side, and rejects a
-    // too-far completion with an error (see the dedicated rejection test
-    // below) rather than the client pre-emptively disabling the button.
+      "shows 'not at the delivery location' copy with a distance and disables Mark delivered "
+      'until the rider is closer', (tester) async {
     final repo =
         FakeRiderOrdersRepository(order: mockOrder(status: RiderOrderStatus.outForDelivery));
     final farDistance = Geolocator.distanceBetween(
@@ -497,16 +536,17 @@ void main() {
     expect(find.text("You're not at the delivery location yet", skipOffstage: false),
         findsOneWidget);
     expect(find.text(expectedDistanceLabel, skipOffstage: false), findsOneWidget);
+    expect(find.text('Move Closer to Customer', skipOffstage: false), findsOneWidget);
 
     final button = tester.widget<ElevatedButton>(
-      find.widgetWithText(ElevatedButton, 'Delivered', skipOffstage: false),
+      find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false),
     );
-    expect(button.onPressed, isNotNull);
+    expect(button.onPressed, isNull);
   });
 
   testWidgets(
       "shows 'at the delivery location' copy and enables Mark delivered once the rider's "
-      'live position is within range', (tester) async {
+      'live position is within range (order already paid)', (tester) async {
     final repo =
         FakeRiderOrdersRepository(order: mockOrder(status: RiderOrderStatus.outForDelivery));
 
@@ -519,16 +559,17 @@ void main() {
       find.text("You're at the delivery location", skipOffstage: false),
       findsOneWidget,
     );
+    expect(find.text('Mark as Delivered', skipOffstage: false), findsOneWidget);
 
     final button = tester.widget<ElevatedButton>(
-      find.widgetWithText(ElevatedButton, 'Delivered', skipOffstage: false),
+      find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false),
     );
     expect(button.onPressed, isNotNull);
   });
 
   testWidgets(
-      'shows a waiting-for-location message when there is no GPS fix yet, but still lets the '
-      'rider tap Delivered', (tester) async {
+      'shows a waiting-for-location message when there is no GPS fix yet, and disables Mark '
+      'delivered', (tester) async {
     final repo =
         FakeRiderOrdersRepository(order: mockOrder(status: RiderOrderStatus.outForDelivery));
 
@@ -538,16 +579,41 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Waiting for your location...', skipOffstage: false), findsOneWidget);
+    expect(find.text('Waiting for Location', skipOffstage: false), findsOneWidget);
 
     final button = tester.widget<ElevatedButton>(
-      find.widgetWithText(ElevatedButton, 'Delivered', skipOffstage: false),
+      find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false),
     );
-    expect(button.onPressed, isNotNull);
+    expect(button.onPressed, isNull);
   });
 
   testWidgets(
-      'entering the 6-digit delivery OTP and tapping Mark delivered calls completeDelivery '
-      'with the riderOrderId and that code', (tester) async {
+      'an unpaid COD order shows Payment Required and disables Mark delivered even when near',
+      (tester) async {
+    final repo = FakeRiderOrdersRepository(
+      order: mockOrder(
+        status: RiderOrderStatus.outForDelivery,
+        paymentStatus: OrderPaymentStatus.pending,
+      ),
+    );
+
+    await tester.pumpWidget(
+      buildApp(repository: repo, locationState: nearDeliveryLocationState),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('COD · PAYMENT REQUIRED', skipOffstage: false), findsOneWidget);
+    expect(find.text('Payment Required', skipOffstage: false), findsOneWidget);
+
+    final button = tester.widget<ElevatedButton>(
+      find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  testWidgets(
+      'tapping Mark delivered on a paid order within range calls completeDelivery and leaves '
+      'the active-order screen', (tester) async {
     final repo =
         FakeRiderOrdersRepository(order: mockOrder(status: RiderOrderStatus.outForDelivery));
 
@@ -556,48 +622,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // DeliveryHandoffCard + the proximity panel (shown for outForDelivery)
-    // push both the OTP field and the button below the initial
-    // viewport/cache extent — scroll each into view first, since a tap or
-    // enterText at an off-screen/not-yet-built target silently misses.
-    final otpFieldFinder = find.byType(TextField, skipOffstage: false);
-    await tester.ensureVisible(otpFieldFinder);
-    await tester.pump();
-    await tester.enterText(otpFieldFinder, '123456');
-    await tester.pump();
-    final markDeliveredFinder = find.text('Delivered', skipOffstage: false);
+    final markDeliveredFinder =
+        find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false);
     await tester.ensureVisible(markDeliveredFinder);
     await tester.pump();
     await tester.tap(markDeliveredFinder);
     await tester.pumpAndSettle();
 
     expect(repo.completeDeliveryCalls, 1);
-    expect(repo.lastCompleteDeliveryCode, '123456');
-    // Once the order disappears (completed), the screen auto-navigates
-    // away to the orders list rather than showing its own empty state in
-    // place — see the ref.listen block in active_order_screen.dart.
-    expect(find.text('Orders Screen'), findsOneWidget);
-  });
-
-  testWidgets(
-      'tapping Mark delivered without entering the OTP shows an error and never calls completeDelivery',
-      (tester) async {
-    final repo =
-        FakeRiderOrdersRepository(order: mockOrder(status: RiderOrderStatus.outForDelivery));
-
-    await tester.pumpWidget(
-      buildApp(repository: repo, locationState: nearDeliveryLocationState),
-    );
-    await tester.pumpAndSettle();
-
-    final markDeliveredFinder = find.text('Delivered', skipOffstage: false);
-    await tester.ensureVisible(markDeliveredFinder);
-    await tester.pump();
-    await tester.tap(markDeliveredFinder);
-    await tester.pumpAndSettle();
-
-    expect(repo.completeDeliveryCalls, 0);
-    expect(find.text('Enter the 6-digit delivery OTP.'), findsOneWidget);
+    // _completeDelivery navigates straight to the delivery-success screen;
+    // the order disappearing also races the ref.listen block's own
+    // Get.offAllNamed(AppRoutes.orders) — either way the active-order
+    // screen itself must no longer be on screen.
+    expect(find.byType(ActiveOrderScreen), findsNothing);
   });
 
   testWidgets(
@@ -611,19 +648,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final otpFieldFinder = find.byType(TextField, skipOffstage: false);
-    await tester.ensureVisible(otpFieldFinder);
-    await tester.pump();
-    await tester.enterText(otpFieldFinder, '123456');
-    await tester.pump();
-    final markDeliveredFinder = find.text('Delivered', skipOffstage: false);
+    final markDeliveredFinder =
+        find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false);
     await tester.ensureVisible(markDeliveredFinder);
     await tester.pump();
     await tester.tap(markDeliveredFinder);
     await tester.pumpAndSettle();
 
     expect(repo.completeDeliveryCalls, 1);
-    expect(find.text('You are too far from the delivery location.'), findsOneWidget);
+    // The raw backend message is mapped to a friendlier rider-facing one by
+    // riderMessageForDeliveryAction (delivery_error_message.dart) — any
+    // message containing "too far" becomes this fixed copy, not shown verbatim.
+    expect(
+      find.text('Move closer to the customer’s delivery location and try again.'),
+      findsOneWidget,
+    );
     // The order stays visible and OUT_FOR_DELIVERY — the rider can retry
     // once they've actually moved closer, never a silent success. Journey
     // snapshot label at this (near) location + outForDelivery status is
@@ -645,12 +684,8 @@ void main() {
     final callsBeforeComplete =
         repo.historyCalls[OrderHistoryFilter.completed] ?? 0;
 
-    final otpFieldFinder = find.byType(TextField, skipOffstage: false);
-    await tester.ensureVisible(otpFieldFinder);
-    await tester.pump();
-    await tester.enterText(otpFieldFinder, '123456');
-    await tester.pump();
-    final markDeliveredFinder = find.text('Delivered', skipOffstage: false);
+    final markDeliveredFinder =
+        find.byKey(const ValueKey('mark-delivered-button'), skipOffstage: false);
     await tester.ensureVisible(markDeliveredFinder);
     await tester.pump();
     await tester.tap(markDeliveredFinder);
@@ -681,7 +716,10 @@ void main() {
     // order" button stays disabled until one is selected.
     await tester.tap(find.text('Vehicle issue'));
     await tester.pump();
-    await tester.tap(find.text('Cancel order').last);
+    final confirmCancelFinder = find.text('Cancel order').last;
+    await tester.ensureVisible(confirmCancelFinder);
+    await tester.pump();
+    await tester.tap(confirmCancelFinder);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -709,7 +747,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text('Vehicle issue'));
     await tester.pump();
-    await tester.tap(find.text('Cancel order').last);
+    final confirmCancelFinder = find.text('Cancel order').last;
+    await tester.ensureVisible(confirmCancelFinder);
+    await tester.pump();
+    await tester.tap(confirmCancelFinder);
     await tester.pumpAndSettle();
 
     expect(
@@ -728,7 +769,12 @@ void main() {
     await tester.tap(find.text("I've Arrived"));
     await tester.pumpAndSettle();
 
-    expect(find.text('Something went wrong upstream.'), findsOneWidget);
+    // riderMessageForDeliveryAction maps any message it doesn't specifically
+    // recognize to this generic fallback rather than showing it verbatim.
+    expect(
+      find.text('We could not update this order. Please try again.'),
+      findsOneWidget,
+    );
     expect(find.text('Spice Route Kitchen'), findsOneWidget);
   });
 
